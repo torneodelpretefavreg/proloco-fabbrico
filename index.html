@@ -297,6 +297,36 @@
   .pl-status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;margin-bottom:8px}
   .pl-status.on{background:var(--ok-soft);color:var(--ok)}.pl-status.off{background:#f0eee8;color:var(--ink-3)}.pl-status.bad{background:var(--danger-soft);color:var(--danger)}
 
+  /* ---------- PRIORITÀ ---------- */
+  .pq-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+  .pq-col{background:#f0eee7;border-radius:10px;padding:0 8px 8px;min-height:140px;transition:background .12s}
+  .pq-col.over{background:var(--brand-soft-2)}
+  .pq-head{display:flex;align-items:center;gap:7px;padding:10px 4px 9px;border-top:3px solid;margin:0 -8px 4px;padding-left:12px;padding-right:10px;border-radius:10px 10px 0 0;font-size:13.5px}
+  .pq-flag{display:inline-flex}
+  .pq-list{display:flex;flex-direction:column;gap:8px}
+  .pq-card{background:var(--panel);border:1px solid var(--rule);border-radius:9px;padding:10px 11px;cursor:pointer;box-shadow:0 1px 2px rgba(20,20,20,.05)}
+  .pq-card:hover{box-shadow:0 4px 14px rgba(20,20,20,.1)}
+  .pq-card[draggable=true]{cursor:grab}
+  .pq-card.late{border-left:3px solid var(--danger)}
+  .pq-card.done{opacity:.55}
+  .pq-card.done .pq-title{text-decoration:line-through}
+  .pq-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+  .pq-bu{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-3);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pq-bu .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .pq-due{font-size:11px;font-weight:600;color:var(--ink-3);white-space:nowrap}
+  .pq-due.late{color:var(--danger)}.pq-due.today{color:var(--brand-dark)}.pq-due.soon{color:var(--brand)}.pq-due.ok{color:var(--ok)}
+  .pq-title{font-size:13.5px;font-weight:600;line-height:1.3;word-break:break-word}
+  .pq-prog{height:4px;background:#eeece6;border-radius:3px;margin-top:8px;overflow:hidden}
+  .pq-prog div{height:100%;border-radius:3px}
+  .pq-bottom{display:flex;align-items:center;gap:8px;margin-top:9px}
+  .pq-none{font-size:11px;color:var(--ink-3);font-style:italic}
+  .pq-sub{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--ink-3)}
+  .pq-move{margin-left:auto;display:inline-flex;gap:3px}
+  .pq-move button{width:24px;height:24px;border-radius:6px;border:1px solid var(--rule-2);background:var(--panel);font-size:11px;font-weight:700;color:var(--ink-3);padding:0}
+  .pq-move button.on{color:#fff}
+  .pq-empty{font-size:12.5px;color:var(--ink-3);font-style:italic;text-align:center;padding:14px 6px}
+  .pg-prio{display:inline-flex;vertical-align:-2px;margin-right:3px}
+
   /* ---------- mobile ---------- */
   .show-sm{display:none}
   @media (max-width:760px){
@@ -335,6 +365,9 @@
     .pl-check{width:22px;height:22px}
     .pp-item{padding:11px 14px}
     .pr-row{padding:12px}
+    .pq-board{grid-template-columns:1fr;gap:10px}
+    .pq-col{min-height:0}
+    .pq-move button{width:32px;height:32px;font-size:12px}
     .pg-bar-top{gap:8px}
     .pg-periodo{font-size:14px}
     .pl-seg button{padding:6px 9px}
@@ -693,7 +726,7 @@ function Login() {
 /* =====================================================================
    SHELL
    ===================================================================== */
-const VISTE = [["gantt", "Gantt", "gantt"], ["calendario", "Calendario", "calendar"], ["persone", "Persone", "users"], ["promemoria", "Promemoria", "bell"]];
+const VISTE = [["gantt", "Gantt", "gantt"], ["calendario", "Calendario", "calendar"], ["priorita", "Priorità", "flag"], ["persone", "Persone", "users"], ["promemoria", "Promemoria", "bell"]];
 
 function Shell({ uid }) {
   const utentiRaw = useCollection("utenti");
@@ -714,6 +747,7 @@ function Shell({ uid }) {
   const [fResp, setFResp] = useState(() => lsGet("plf-fresp") || "all");
   const [fStato, setFStato] = useState(() => lsGet("plf-fstato") || "aperte");
   const [cerca, setCerca] = useState("");
+  const [fPrio, setFPrio] = useState("all");
   useEffect(() => { lsSet("plf-fresp", fResp); lsSet("plf-fstato", fStato); }, [fResp, fStato]);
 
   const utentiTutti = utentiRaw || [];
@@ -739,9 +773,11 @@ function Shell({ uid }) {
       if (fStato === "fatte" && st !== "fatto") return false;
       if (fStato === "ritardo" && !inRitardo(a)) return false;
       if (q && !norm(`${a.titolo} ${a.note || ""} ${a.luogo || ""}`).includes(q)) return false;
+      if (vista !== "priorita" && fPrio === "none" && a.priorita) return false;
+      if (vista !== "priorita" && !["all", "none"].includes(fPrio) && a.priorita !== fPrio) return false;
       return true;
     });
-  }, [attivita, fBu, fResp, fStato, cerca, buMap, uid]);
+  }, [attivita, fBu, fResp, fStato, cerca, fPrio, vista, buMap, uid]);
 
   const firma = () => ({ modificatoDa: me.nome, modificatoDaUid: uid, modificatoIl: ora() });
   const salvaAttivita = async (d) => {
@@ -778,7 +814,7 @@ function Shell({ uid }) {
   if (!utentiRaw || !buRaw || !attRaw || !promRaw) return <div className="pl-center">Carico i dati…</div>;
 
   const promApertiMiei = (promRaw || []).filter(p => !p.done && p.assegnatoA === uid).length;
-  const sottotitolo = { gantt: "Gantt delle attività", calendario: "Calendario", persone: "Responsabili e carichi di lavoro", promemoria: "Promemoria" }[vista];
+  const sottotitolo = { gantt: "Gantt delle attività", calendario: "Calendario", priorita: "Attività per priorità", persone: "Responsabili e carichi di lavoro", promemoria: "Promemoria" }[vista];
 
   return (
     <div className="pl-shell">
@@ -797,19 +833,20 @@ function Shell({ uid }) {
       </header>
 
       <main className="pl-main">
-        {(vista === "gantt" || vista === "calendario") && (
-          <Filtri bus={bus} utenti={utenti} fBu={fBu} setFBu={setFBu} fResp={fResp} setFResp={setFResp} fStato={fStato} setFStato={setFStato} cerca={cerca} setCerca={setCerca} />
+        {(vista === "gantt" || vista === "calendario" || vista === "priorita") && (
+          <Filtri bus={bus} utenti={utenti} fBu={fBu} setFBu={setFBu} fResp={fResp} setFResp={setFResp} fStato={fStato} setFStato={setFStato} cerca={cerca} setCerca={setCerca}
+            fPrio={fPrio} setFPrio={setFPrio} conPrio={vista !== "priorita"} />
         )}
         {vista === "gantt" && <GanttView attivita={filtrate} tutte={attivita} bus={bus} buMap={buMap} fBu={fBu} utMap={utMap} isAdmin={isAdmin} mobile={mobile}
           onOpen={apri} onNew={nuova} onPatch={patchAtt} setFStato={setFStato} onSeedBu={() => setManage("bu")} />}
         {vista === "calendario" && <CalendarView attivita={filtrate} buMap={buMap} utMap={utMap} onOpen={apri} onNew={nuova} />}
+        {vista === "priorita" && <PriorityView attivita={filtrate} buMap={buMap} utMap={utMap} mobile={mobile} onOpen={apri} onPatch={patchAtt} onNew={nuova} />}
         {vista === "persone" && <PeopleView attivita={attivita} utenti={utenti} uid={uid} buMap={buMap} utMap={utMap} promemoria={promRaw} onOpen={apri} onPatch={patchAtt} />}
         {vista === "promemoria" && <ReminderView promemoria={promRaw} utenti={utenti} utMap={utMap} uid={uid} me={me} avviso={avviso} />}
       </main>
 
       <nav className="pl-bottom">
         {VISTE.map(([v, l, ic]) => <button key={v} className={vista === v ? "on" : ""} onClick={() => setVista(v)}><Icon name={ic} size={19} /><span>{l}</span></button>)}
-        <button onClick={() => setManage("profilo")}><Icon name="settings" size={19} /><span>Altro</span></button>
       </nav>
 
       {editing && <ActivityModal draft={editing} setDraft={setEditing} bus={bus} utenti={utenti} utMap={utMap} uid={uid}
@@ -822,11 +859,11 @@ function Shell({ uid }) {
   );
 }
 
-function Filtri({ bus, utenti, fBu, setFBu, fResp, setFResp, fStato, setFStato, cerca, setCerca }) {
+function Filtri({ bus, utenti, fBu, setFBu, fResp, setFResp, fStato, setFStato, cerca, setCerca, fPrio, setFPrio, conPrio }) {
   const mobile = useMedia(MOBILE_Q);
   const [aperti, setAperti] = useState(false);
   const tog = (id) => setFBu(fBu.includes(id) ? fBu.filter(x => x !== id) : [...fBu, id]);
-  const attivi = (fResp !== "all" ? 1 : 0) + (fStato !== "aperte" ? 1 : 0) + (cerca.trim() ? 1 : 0);
+  const attivi = (fResp !== "all" ? 1 : 0) + (fStato !== "aperte" ? 1 : 0) + (cerca.trim() ? 1 : 0) + (conPrio && fPrio !== "all" ? 1 : 0);
   const chips = (
     <div className="pl-chips">
       <button className={"pl-chip" + (!fBu.length ? " on" : "")} onClick={() => setFBu([])}>Tutte le BU</button>
@@ -855,6 +892,13 @@ function Filtri({ bus, utenti, fBu, setFBu, fResp, setFResp, fStato, setFStato, 
         <option value="ritardo">In ritardo</option>
         <option value="fatte">Completate</option>
       </select>
+      {conPrio && <select className="pl-select" value={fPrio} onChange={e => setFPrio(e.target.value)}>
+        <option value="all">Tutte le priorità</option>
+        <option value="alta">Priorità alta</option>
+        <option value="media">Priorità media</option>
+        <option value="bassa">Priorità bassa</option>
+        <option value="none">Senza priorità</option>
+      </select>}
       <div className="pl-search"><Icon name="search" size={14} /><input className="pl-input" placeholder="Cerca attività…" value={cerca} onChange={e => setCerca(e.target.value)} /></div>
     </div>
   );
@@ -1082,7 +1126,7 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, o
                             <Icon name={STATI[st].ic} size={12} />
                           </button>
                           {!corto && <div className="pg-lbl-main" onClick={() => onOpen(a)}>
-                            <div className={"pg-lbl-t" + (st === "fatto" ? " done" : "")} title={a.titolo}>{a.milestone ? "◆ " : ""}{a.titolo}</div>
+                            <div className={"pg-lbl-t" + (st === "fatto" ? " done" : "")} title={a.titolo}>{(a.priorita === "alta" || a.priorita === "media") && <span className="pg-prio" title={`Priorità ${a.priorita}`} style={{ color: a.priorita === "alta" ? "#b4462f" : "#a46a12" }}><Icon name="flag" size={12} /></span>}{a.milestone ? "◆ " : ""}{a.titolo}</div>
                             <div className="pg-lbl-s"><span className={late ? "late" : ""}>{fmtPeriodo(a)}{late ? " · in ritardo" : ""}</span>{!mobile && (a.responsabili || []).length === 0 && <span style={{ fontStyle: "italic" }}>senza responsabile</span>}</div>
                           </div>}
                           {!mobile && <Avatars ids={a.responsabili} utMap={utMap} size={22} max={3} />}
@@ -1246,6 +1290,83 @@ function CalendarView({ attivita, buMap, utMap, onOpen, onNew }) {
 }
 
 /* =====================================================================
+   PRIORITÀ
+   ===================================================================== */
+const COL_PRIO = [["alta", "Alta", "#b4462f"], ["media", "Media", "#a46a12"], ["bassa", "Bassa", "#5e7e52"], [null, "Senza priorità", "#8a8a82"]];
+function scadenzaInfo(a) {
+  if (statoDi(a) === "fatto") return { cls: "ok", lbl: "completata" };
+  const g = daysBetween(new Date(), fromKey(fineDi(a)));
+  if (g < 0) return { cls: "late", lbl: g === -1 ? "scaduta ieri" : `scaduta da ${-g} gg` };
+  if (g === 0) return { cls: "today", lbl: "scade oggi" };
+  if (g === 1) return { cls: "soon", lbl: "scade domani" };
+  if (g <= 7) return { cls: "soon", lbl: `tra ${g} giorni` };
+  return { cls: "", lbl: fmtData(fineDi(a)) };
+}
+function PriorityView({ attivita, buMap, utMap, mobile, onOpen, onPatch, onNew }) {
+  const [sopra, setSopra] = useState(null);
+  const ordina = (l) => l.slice().sort((x, y) => (inRitardo(y) - inRitardo(x)) || fineDi(x).localeCompare(fineDi(y)));
+  const cambia = (a, p) => { if ((a.priorita || null) !== p) onPatch(a.id, { priorita: p }); };
+  const scheda = (a) => {
+    const b = a.buId && buMap[a.buId], sc = scadenzaInfo(a), st = statoDi(a);
+    const subs = a.sottoattivita || [], fatte = subs.filter(x => x.done).length;
+    const prog = st === "fatto" ? 100 : (a.avanzamento || 0);
+    return (
+      <div key={a.id} className={"pq-card" + (inRitardo(a) ? " late" : "") + (st === "fatto" ? " done" : "")}
+        draggable={!mobile} onDragStart={e => { e.dataTransfer.setData("text/plain", a.id); e.dataTransfer.effectAllowed = "move"; }}
+        onClick={() => onOpen(a)}>
+        <div className="pq-top">
+          <span className="pq-bu"><span className="dot" style={{ background: b ? b.colore : "#8a8a82" }} />{b ? b.nome : "Senza BU"}</span>
+          <span className={"pq-due " + sc.cls}>{sc.lbl}</span>
+        </div>
+        <div className="pq-title">{a.milestone ? "◆ " : ""}{a.titolo}</div>
+        {prog > 0 && st !== "fatto" && <div className="pq-prog"><div style={{ width: prog + "%", background: b ? b.colore : "var(--brand)" }} /></div>}
+        <div className="pq-bottom">
+          {(a.responsabili || []).length ? <Avatars ids={a.responsabili} utMap={utMap} size={22} max={4} /> : <span className="pq-none">senza responsabile</span>}
+          {subs.length > 0 && <span className="pq-sub"><Icon name="check" size={11} />{fatte}/{subs.length}</span>}
+          <span className="pq-move" onClick={e => e.stopPropagation()}>
+            {COL_PRIO.filter(c => c[0]).map(([k, l, col]) => (
+              <button key={k} title={`Priorità ${l.toLowerCase()}`} className={a.priorita === k ? "on" : ""} style={a.priorita === k ? { background: col, borderColor: col } : null} onClick={() => cambia(a, a.priorita === k ? null : k)}>{l[0]}</button>
+            ))}
+          </span>
+        </div>
+      </div>
+    );
+  };
+  return (
+    <>
+      <div className="pg-fuori" style={{ marginTop: 0, marginBottom: 10 }}>
+        {mobile ? "Tocca A, M o B su una scheda per cambiarne la priorità." : "Trascina una scheda in un'altra colonna, oppure usa A · M · B, per cambiarne la priorità."} In alto le attività in ritardo, poi quelle che scadono prima.
+      </div>
+      <div className="pq-board">
+        {COL_PRIO.map(([k, l, col]) => {
+          const items = ordina(attivita.filter(a => (a.priorita || null) === k));
+          const late = items.filter(inRitardo).length;
+          const key = k || "none";
+          return (
+            <section key={key} className={"pq-col" + (sopra === key ? " over" : "")}
+              onDragOver={e => { e.preventDefault(); if (sopra !== key) setSopra(key); }}
+              onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget)) setSopra(null); }}
+              onDrop={e => { e.preventDefault(); setSopra(null); const a = attivita.find(x => x.id === e.dataTransfer.getData("text/plain")); if (a) cambia(a, k); }}>
+              <header className="pq-head" style={{ borderTopColor: col }}>
+                <span className="pq-flag" style={{ color: col }}><Icon name="flag" size={14} /></span>
+                <b>{l}</b>
+                <span className="pg-grp-c">{items.length}</span>
+                {late > 0 && <span className="pl-pill st-ritardo">{late} in ritardo</span>}
+                <button className="pl-icon" style={{ marginLeft: "auto", width: 28, height: 28 }} title={`Nuova attività con priorità ${l.toLowerCase()}`} onClick={() => onNew({ priorita: k })}><Icon name="plus" size={13} /></button>
+              </header>
+              <div className="pq-list">
+                {items.map(scheda)}
+                {!items.length && <div className="pq-empty">{k ? "Nessuna attività" : "Tutto ha una priorità 👍"}</div>}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+/* =====================================================================
    PERSONE (vista per responsabile)
    ===================================================================== */
 function PeopleView({ attivita, utenti, uid, buMap, utMap, promemoria, onOpen, onPatch }) {
@@ -1260,7 +1381,7 @@ function PeopleView({ attivita, utenti, uid, buMap, utMap, promemoria, onOpen, o
       <div key={a.id} className="pp-item" onClick={() => onOpen(a)}>
         <button className={"pl-check" + (st === "fatto" ? " on" : "")} onClick={e => { e.stopPropagation(); const n = st === "fatto" ? "da_fare" : "fatto"; onPatch(a.id, { stato: n, done: n === "fatto", ...(n === "fatto" ? { avanzamento: 100 } : {}) }); }}>{st === "fatto" && <Icon name="check" size={11} style={{ color: "#fff" }} />}</button>
         <span className="dot" style={{ background: b ? b.colore : "#8a8a82" }} />
-        <span className="t" style={st === "fatto" ? { textDecoration: "line-through", color: "var(--ink-3)" } : null}>{a.titolo}</span>
+        <span className="t" style={st === "fatto" ? { textDecoration: "line-through", color: "var(--ink-3)" } : null}>{a.priorita === "alta" && <span className="pg-prio" style={{ color: "#b4462f" }}><Icon name="flag" size={12} /></span>}{a.titolo}</span>
         {st === "in_corso" && <span className="pl-pill st-in_corso">{a.avanzamento ? a.avanzamento + "%" : "in corso"}</span>}
         <span className={"d" + (late ? " late" : "")}>{late ? "scad. " + fmtData(fineDi(a)) : fmtPeriodo(a)}</span>
       </div>
