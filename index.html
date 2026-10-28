@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Pro Loco Fabbrico · Attività</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f6fb0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Pro Loco">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+
+<style>
+  :root{
+    --bg:#f7f6f2; --panel:#ffffff; --panel-2:#fbfaf6; --ink:#1a1a1a; --ink-2:#4a4a4a; --ink-3:#8a8a82;
+    --rule:#e8e6df; --rule-2:#d8d5cc;
+    --brand:#1f6fb0; --brand-dark:#165689; --brand-soft:#eaf2f9; --brand-soft-2:#d6e6f4;
+    --ok:#2d5e3e; --ok-soft:#e8efe9; --danger:#b54343; --danger-soft:#fbecec; --warn:#a46a12; --warn-soft:#fdf3dd;
+    --shadow:0 4px 16px rgba(20,20,20,.06),0 0 0 1px rgba(20,20,20,.04);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body,#root{height:100%}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+  button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+  button{cursor:pointer}
+  .serif{font-family:'Fraunces',Georgia,serif}
+  .pl-center{height:100%;display:flex;align-items:center;justify-content:center;color:var(--ink-3)}
+
+  /* ---------- login ---------- */
+  .pl-login{min-height:100%;display:flex;align-items:center;justify-content:center;padding:20px;
+    background:radial-gradient(900px 500px at 75% -10%,var(--brand-soft-2) 0%,transparent 60%),radial-gradient(700px 400px at 0% 110%,#f4ebd7 0%,transparent 55%),var(--bg)}
+  .pl-card{width:min(410px,100%);background:var(--panel);border:1px solid var(--rule);border-radius:14px;padding:34px 30px;box-shadow:0 20px 50px rgba(20,20,20,.10)}
+  .pl-card h1{font-family:'Fraunces',serif;font-weight:500;font-size:25px;letter-spacing:-.01em}
+  .pl-card .lead{color:var(--ink-3);font-size:13px;margin:4px 0 22px;font-style:italic}
+  .pl-card .logo{width:52px;height:52px;border-radius:13px;background:var(--brand);color:#fff;display:grid;place-items:center;font-family:'Fraunces',serif;font-size:26px;margin-bottom:16px}
+  .pl-err{background:var(--danger-soft);color:var(--danger);border-radius:8px;padding:9px 12px;font-size:13px;margin-bottom:12px}
+  .pl-okmsg{background:var(--ok-soft);color:var(--ok);border-radius:8px;padding:9px 12px;font-size:13px;margin-bottom:12px}
+  .pl-link{background:none;border:none;color:var(--brand);font-weight:600;font-size:13px;padding:0}
+
+  /* ---------- struttura ---------- */
+  .pl-shell{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+  .pl-demo{background:var(--warn-soft);color:var(--warn);font-size:12px;text-align:center;padding:5px 10px;border-bottom:1px solid #eedcb4;flex-shrink:0}
+  .pl-top{flex-shrink:0;background:var(--brand);color:#fff;display:flex;align-items:center;gap:18px;padding:10px 20px;padding-top:calc(10px + env(safe-area-inset-top,0px));border-bottom:1px solid var(--brand-dark)}
+  .pl-brand{display:flex;align-items:center;gap:11px;min-width:0}
+  .pl-logo{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);display:grid;place-items:center;font-family:'Fraunces',serif;font-size:20px;flex-shrink:0}
+  .pl-title{font-family:'Fraunces',serif;font-size:17px;font-weight:500;line-height:1.1;white-space:nowrap}
+  .pl-sub{font-size:11.5px;color:rgba(255,255,255,.72);font-style:italic;white-space:nowrap}
+  .pl-tabs{display:flex;gap:3px;background:rgba(0,0,0,.14);border-radius:9px;padding:3px;margin-left:8px}
+  .pl-tabs button{display:flex;align-items:center;gap:6px;border:none;background:none;color:rgba(255,255,255,.82);padding:6px 12px;border-radius:7px;font-size:13px;font-weight:500}
+  .pl-tabs button:hover{background:rgba(255,255,255,.1)}
+  .pl-tabs button.on{background:#fff;color:var(--brand-dark)}
+  .pl-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .pl-top .pl-iconbtn{background:transparent;border:1px solid rgba(255,255,255,.32);color:#fff;width:34px;height:34px;border-radius:8px;display:grid;place-items:center}
+  .pl-top .pl-iconbtn:hover{background:rgba(255,255,255,.14)}
+  .pl-top .pl-newbtn{background:#fff;color:var(--brand-dark);border:none;border-radius:8px;padding:8px 13px;font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px}
+  .pl-me{background:none;border:none;padding:0;display:flex}
+  .pl-main{flex:1;min-height:0;overflow-y:auto;padding:18px 22px 26px;display:flex;flex-direction:column}
+  .pl-bottom{display:none}
+
+  /* ---------- elementi comuni ---------- */
+  .pl-btn{display:inline-flex;align-items:center;gap:6px;border-radius:7px;padding:8px 14px;font-size:13px;font-weight:500;border:1px solid var(--brand);background:var(--brand);color:#fff;transition:.12s;white-space:nowrap}
+  .pl-btn:hover{background:var(--brand-dark)}
+  .pl-btn.ghost{background:var(--panel);color:var(--ink);border-color:var(--rule-2)}
+  .pl-btn.ghost:hover{background:var(--bg)}
+  .pl-btn.danger{background:var(--panel);color:var(--danger);border-color:var(--rule-2)}
+  .pl-btn.danger:hover{background:var(--danger-soft)}
+  .pl-btn.sm{padding:5px 10px;font-size:12px}
+  .pl-btn.block{width:100%;justify-content:center;padding:11px}
+  .pl-btn:disabled{opacity:.5;cursor:not-allowed}
+  .pl-icon{border:1px solid var(--rule);background:var(--panel);border-radius:7px;width:30px;height:30px;display:grid;place-items:center;color:var(--ink-2);flex-shrink:0}
+  .pl-icon:hover{background:var(--bg)}
+  .pl-icon.danger{color:var(--danger)}
+  .pl-input,.pl-select,.pl-area{width:100%;border:1px solid var(--rule-2);background:var(--panel);border-radius:7px;padding:8px 10px;outline:none}
+  .pl-input:focus,.pl-select:focus,.pl-area:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+  .pl-area{resize:vertical;min-height:80px;line-height:1.5}
+  .pl-lbl{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin:14px 0 6px}
+  .pl-row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+  .pl-row3{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:12px}
+  .pl-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .pl-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule-2);background:var(--panel);border-radius:999px;padding:4px 11px;font-size:12.5px;color:var(--ink-2)}
+  .pl-chip:hover{background:var(--bg)}
+  .pl-chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .pl-chip .dot{width:9px;height:9px;border-radius:50%}
+  .pl-seg{display:inline-flex;border:1px solid var(--rule-2);border-radius:7px;overflow:hidden;background:var(--panel)}
+  .pl-seg button{border:none;background:none;padding:6px 12px;font-size:12.5px;color:var(--ink-2);display:inline-flex;align-items:center;gap:5px}
+  .pl-seg button+button{border-left:1px solid var(--rule)}
+  .pl-seg button.on{background:var(--brand);color:#fff}
+  .pl-nav{display:inline-flex;align-items:center;gap:4px}
+  .pl-nav button{border:1px solid var(--rule-2);background:var(--panel);height:32px;min-width:32px;border-radius:7px;display:grid;place-items:center;color:var(--ink-2);font-size:12.5px;font-weight:500}
+  .pl-nav button:hover{background:var(--bg)}
+  .pl-nav .oggi{padding:0 12px}
+  .pl-av{display:inline-grid;place-items:center;border-radius:50%;color:#fff;font-weight:600;flex-shrink:0;border:2px solid #fff;letter-spacing:-.02em}
+  .pl-avs{display:inline-flex}
+  .pl-avs .pl-av+.pl-av{margin-left:-7px}
+  .pl-av.more{background:var(--ink-3)}
+  .pl-panel{background:var(--panel);border:1px solid var(--rule);border-radius:10px}
+  .pl-empty{padding:36px 20px;text-align:center;color:var(--ink-3);font-style:italic}
+  .pl-hint{font-size:12.5px;color:var(--ink-3);line-height:1.5}
+  .pl-pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:600;white-space:nowrap}
+  .st-da_fare{background:#f0eee8;color:#6b675e}
+  .st-in_corso{background:var(--brand-soft);color:var(--brand-dark)}
+  .st-fatto{background:var(--ok-soft);color:var(--ok)}
+  .st-ritardo{background:var(--danger-soft);color:var(--danger)}
+  .pr-alta{background:#f7e0d8;color:#b4462f}.pr-media{background:var(--warn-soft);color:var(--warn)}.pr-bassa{background:#eef4e8;color:#5e7e52}
+  .pl-check{width:18px;height:18px;border-radius:5px;border:2px solid var(--rule-2);background:#fff;display:grid;place-items:center;flex-shrink:0;padding:0}
+  .pl-check.on{background:var(--ok);border-color:var(--ok)}
+  .pl-toggle{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--rule-2);border-radius:8px;padding:9px 12px;cursor:pointer;margin-top:6px;user-select:none}
+  .pl-toggle .sw{width:38px;height:22px;border-radius:12px;background:var(--rule-2);position:relative;transition:.15s;flex-shrink:0}
+  .pl-toggle .sw::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .pl-toggle.on .sw{background:var(--brand)}
+  .pl-toggle.on .sw::after{transform:translateX(16px)}
+  .pl-swatches{display:flex;flex-wrap:wrap;gap:7px}
+  .pl-sw{width:26px;height:26px;border-radius:7px;border:2px solid transparent;display:grid;place-items:center}
+  .pl-sw.on{border-color:var(--ink)}
+  .pl-toast{position:fixed;bottom:22px;right:22px;background:var(--brand);color:#fff;padding:11px 16px;border-radius:8px;font-size:13px;box-shadow:0 10px 30px rgba(20,20,20,.2);z-index:300;max-width:420px}
+  .pl-toast.error{background:var(--danger)}
+
+  /* ---------- filtri ---------- */
+  .pl-filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px}
+  .pl-filters .pl-select{width:auto;padding:6px 9px;font-size:12.5px}
+  .pl-search{position:relative;flex:0 1 220px}
+  .pl-search input{padding-left:30px;font-size:12.5px;padding-top:6px;padding-bottom:6px}
+  .pl-search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--ink-3)}
+
+  /* ---------- KPI ---------- */
+  .pl-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
+  .pl-kpi{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:11px 14px;text-align:left;border-left:3px solid var(--rule-2)}
+  .pl-kpi .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600}
+  .pl-kpi .v{font-family:'Fraunces',serif;font-size:24px;line-height:1.15;margin-top:2px}
+  .pl-kpi.blue{border-left-color:var(--brand)}.pl-kpi.blue .v{color:var(--brand-dark)}
+  .pl-kpi.red{border-left-color:var(--danger)}.pl-kpi.red .v{color:var(--danger)}
+  .pl-kpi.green{border-left-color:var(--ok)}.pl-kpi.green .v{color:var(--ok)}
+  .pl-kpi.clic{cursor:pointer}.pl-kpi.clic:hover{background:var(--panel-2)}
+
+  /* ---------- GANTT ---------- */
+  .pg-bar-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .pg-periodo{font-family:'Fraunces',serif;font-size:16px}
+  .pg-scroll{flex:1;min-height:380px;overflow:auto;background:var(--panel);border:1px solid var(--rule);border-radius:10px;position:relative}
+  .pg-head{position:sticky;top:0;z-index:20;display:flex;background:var(--panel);border-bottom:1px solid var(--rule-2)}
+  .pg-head-lbl{position:sticky;left:0;z-index:22;background:var(--panel-2);border-right:1px solid var(--rule);display:flex;align-items:flex-end;padding:0 12px 7px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);flex-shrink:0}
+  .pg-head-track{flex-shrink:0}
+  .pg-mrow,.pg-drow{display:flex;height:22px}
+  .pg-m{flex-shrink:0;font-size:11px;font-weight:600;padding:4px 6px;border-left:1px solid var(--rule);white-space:nowrap;overflow:hidden;color:var(--ink-2);text-transform:capitalize}
+  .pg-d{flex-shrink:0;font-size:10px;text-align:center;color:var(--ink-3);padding-top:4px;overflow:hidden;white-space:nowrap}
+  .pg-d.we{color:#b3afa4}
+  .pg-d.oggi{color:#fff;font-weight:700}
+  .pg-d.oggi span{background:var(--brand);border-radius:4px;padding:1px 4px}
+  .pg-body{position:relative}
+  .pg-bg{position:absolute;top:0;bottom:0;pointer-events:none;z-index:0}
+  .pg-we{position:absolute;top:0;bottom:0;background:#f8f6f0}
+  .pg-msep{position:absolute;top:0;bottom:0;border-left:1px solid var(--rule)}
+  .pg-now{position:absolute;top:0;bottom:0;width:2px;background:var(--brand);opacity:.8}
+  .pg-row{display:flex;position:relative;border-bottom:1px solid #f1efe9;height:44px}
+  .pg-row:hover .pg-lbl{background:var(--brand-soft)}
+  .pg-lbl{position:sticky;left:0;z-index:12;background:var(--panel);border-right:1px solid var(--rule);display:flex;align-items:center;gap:8px;padding:0 10px;flex-shrink:0;min-width:0}
+  .pg-lbl-main{flex:1;min-width:0;cursor:pointer}
+  .pg-lbl-t{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pg-lbl-t.done{text-decoration:line-through;color:var(--ink-3)}
+  .pg-lbl-s{font-size:11px;color:var(--ink-3);display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+  .pg-lbl-s .late{color:var(--danger);font-weight:600}
+  .pg-track{position:relative;flex-shrink:0;z-index:1}
+  .pg-grp{height:36px;border-bottom:1px solid var(--rule)}
+  .pg-grp .pg-lbl{background:var(--panel-2);gap:8px}
+  .pg-grp .pg-track{background:rgba(251,250,246,.6)}
+  .pg-grp-dot{width:11px;height:11px;border-radius:4px;flex-shrink:0}
+  .pg-grp-n{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;cursor:pointer}
+  .pg-grp-c{font-size:11px;color:var(--ink-3);background:#efede6;border-radius:999px;padding:1px 8px}
+  .pg-stbtn{width:22px;height:22px;border-radius:50%;border:none;display:grid;place-items:center;flex-shrink:0;padding:0}
+  .pg-bar{position:absolute;top:9px;height:26px;border-radius:6px;display:flex;align-items:center;overflow:hidden;cursor:pointer;border:1px solid transparent;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:pan-x pan-y;box-shadow:0 1px 2px rgba(20,20,20,.08)}
+  .pg-bar:hover{box-shadow:0 3px 10px rgba(20,20,20,.16);z-index:3}
+  .pg-bar.drag{box-shadow:0 6px 18px rgba(20,20,20,.25);z-index:5;opacity:.92}
+  .pg-bar.late{outline:2px solid var(--danger);outline-offset:1px}
+  .pg-bar.done{opacity:.5}
+  .pg-bar-prog{position:absolute;left:0;top:0;bottom:0;pointer-events:none}
+  .pg-bar-t{position:relative;font-size:11.5px;font-weight:600;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+  .pg-bar.cl-l{border-top-left-radius:0;border-bottom-left-radius:0}
+  .pg-bar.cl-r{border-top-right-radius:0;border-bottom-right-radius:0}
+  .pg-handle{position:absolute;top:0;bottom:0;width:8px;cursor:ew-resize;z-index:2}
+  .pg-handle.l{left:0}.pg-handle.r{right:0}
+  .pg-handle:hover{background:rgba(0,0,0,.12)}
+  .pg-out{position:absolute;top:13px;font-size:11.5px;color:var(--ink-2);white-space:nowrap;pointer-events:none}
+  .pg-ms{position:absolute;top:13px;width:18px;height:18px;transform:rotate(45deg);border-radius:3px;cursor:pointer;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .pg-tip{position:fixed;z-index:200;background:var(--ink);color:#fff;font-size:12px;padding:6px 10px;border-radius:6px;pointer-events:none;white-space:nowrap}
+  .pg-dragtip{position:fixed;top:calc(70px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:210;background:var(--brand-dark);color:#fff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:999px;box-shadow:0 8px 24px rgba(20,20,20,.25);white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+  .pg-grp-float{position:sticky;left:8px;display:inline-block;margin-top:9px;font-size:12px;font-weight:700;white-space:nowrap;padding-left:8px}
+  .pg-fuori{font-size:12px;color:var(--ink-3);margin-top:8px}
+
+  /* ---------- CALENDARIO ---------- */
+  .pc-mhead{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-bottom:1px solid var(--rule)}
+  .pc-mhead div{padding:8px 6px;text-align:center;font-size:10.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em}
+  .pc-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-auto-rows:minmax(108px,auto)}
+  .pc-cell{border-left:1px solid #f0eee8;border-bottom:1px solid #f0eee8;padding:5px;cursor:copy;display:flex;flex-direction:column;gap:3px;min-width:0}
+  .pc-cell:nth-child(7n+1){border-left:none}
+  .pc-cell.out{background:#fbfaf6}
+  .pc-cell.we{background:#fcfbf8}
+  .pc-day{font-size:12px;font-weight:600;color:var(--ink-3);align-self:flex-end;width:24px;height:24px;display:grid;place-items:center;border-radius:50%}
+  .pc-cell.out .pc-day{color:#cbc7bc}
+  .pc-cell.oggi .pc-day{background:var(--brand);color:#fff}
+  .pc-pill{display:flex;align-items:center;gap:5px;border:none;border-radius:5px;padding:2px 6px;font-size:11px;font-weight:600;text-align:left;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border-left:3px solid}
+  .pc-pill.cont{opacity:.7;font-weight:500}
+  .pc-pill.done{text-decoration:line-through;opacity:.5}
+  .pc-more{font-size:10.5px;color:var(--ink-3);padding-left:4px}
+  .pc-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+  .pc-wcol{border-left:1px solid var(--rule);min-height:360px;padding:8px 6px;display:flex;flex-direction:column;gap:6px;cursor:copy}
+  .pc-wcol:first-child{border-left:none}
+  .pc-wcol.oggi{background:var(--brand-soft)}
+  .pc-whead{text-align:center;padding-bottom:6px;border-bottom:1px solid var(--rule);margin-bottom:2px}
+  .pc-whead .wd{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:700}
+  .pc-whead .dn{font-family:'Fraunces',serif;font-size:20px}
+  .pc-card{border:none;text-align:left;border-radius:7px;padding:6px 8px;border-left:3px solid;font-size:12px;display:flex;flex-direction:column;gap:2px;width:100%}
+  .pc-card .t{font-weight:600;line-height:1.25}
+  .pc-card .s{font-size:10.5px;color:var(--ink-2);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .pc-list-day{display:flex;gap:14px;padding:12px 14px;border-bottom:1px solid var(--rule)}
+  .pc-list-date{width:62px;flex-shrink:0;text-align:center}
+  .pc-list-date .wd{font-size:10.5px;text-transform:uppercase;color:var(--ink-3);font-weight:700}
+  .pc-list-date .dn{font-family:'Fraunces',serif;font-size:24px;line-height:1.1}
+  .pc-list-date .mm{font-size:11px;color:var(--ink-3)}
+  .pc-list-date.oggi .dn{color:var(--brand)}
+  .pc-list-items{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+
+  /* ---------- PERSONE ---------- */
+  .pp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr));gap:14px;align-items:start}
+  .pp-card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+  .pp-card.me{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-soft)}
+  .pp-head{display:flex;align-items:center;gap:11px;padding:13px 14px;border-bottom:1px solid var(--rule)}
+  .pp-name{font-weight:600;font-size:14.5px}
+  .pp-role{font-size:11.5px;color:var(--ink-3)}
+  .pp-counts{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+  .pp-item{display:flex;align-items:center;gap:9px;padding:8px 14px;border-bottom:1px solid #f3f1ec;cursor:pointer}
+  .pp-item:last-child{border-bottom:none}
+  .pp-item:hover{background:var(--panel-2)}
+  .pp-item .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+  .pp-item .t{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pp-item .d{font-size:11.5px;color:var(--ink-3);white-space:nowrap}
+  .pp-item .d.late{color:var(--danger);font-weight:600}
+  .pp-load{display:flex;gap:2px;padding:10px 14px 12px;align-items:flex-end;height:58px;border-bottom:1px solid #f3f1ec}
+  .pp-load .b{flex:1;background:var(--brand-soft-2);border-radius:3px 3px 0 0;position:relative;min-height:2px}
+  .pp-load .b.cur{background:var(--brand)}
+  .pp-loadlbl{display:flex;justify-content:space-between;font-size:10px;color:var(--ink-3);padding:0 14px 8px}
+
+  /* ---------- PROMEMORIA ---------- */
+  .pr-add{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .pr-add .pl-input{flex:1 1 240px}
+  .pr-add .pl-select,.pr-add .pr-date{flex:0 0 170px}
+  .pr-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #f1efe9}
+  .pr-row:last-child{border-bottom:none}
+  .pr-text{flex:1;min-width:0;font-size:13.5px;cursor:text;word-break:break-word}
+  .pr-text.done{text-decoration:line-through;color:var(--ink-3)}
+  .pr-meta{display:flex;align-items:center;gap:7px;flex-shrink:0}
+  .pr-due{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:#f0eee8;color:var(--ink-2);white-space:nowrap}
+  .pr-due.late{background:var(--danger-soft);color:var(--danger)}
+  .pr-due.today{background:var(--brand-soft);color:var(--brand-dark)}
+  .pr-sec{font-family:'Fraunces',serif;font-size:15px;color:var(--ink-2);margin:18px 0 8px}
+
+  /* ---------- MODALE / DRAWER ---------- */
+  .pl-overlay{position:fixed;inset:0;z-index:100;background:rgba(20,20,20,.38);display:flex;align-items:center;justify-content:center;padding:16px;animation:fade .15s}
+  .pl-overlay.right{justify-content:flex-end;align-items:stretch;padding:0}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .pl-modal{width:min(620px,100%);max-height:92vh;overflow-y:auto;background:var(--panel);border-radius:12px;box-shadow:0 24px 60px rgba(20,20,20,.22)}
+  .pl-mhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px;border-bottom:1px solid var(--rule);position:sticky;top:0;background:var(--panel);z-index:2}
+  .pl-mhead h3{font-family:'Fraunces',serif;font-weight:500;font-size:18px}
+  .pl-mbody{padding:6px 20px 18px}
+  .pl-mfoot{display:flex;align-items:center;gap:8px;padding:12px 20px;border-top:1px solid var(--rule);position:sticky;bottom:0;background:var(--panel)}
+  .pl-mfoot .dx{margin-left:auto;display:flex;gap:8px}
+  .pl-meta{font-size:11.5px;color:var(--ink-3);margin-top:14px;line-height:1.5}
+  .pl-drawer{width:min(440px,100%);height:100%;background:var(--panel-2);overflow-y:auto;padding:18px 20px 30px;box-shadow:-12px 0 40px rgba(20,20,20,.15)}
+  .pl-dtabs{display:flex;gap:3px;background:#eeece5;border-radius:8px;padding:3px;margin:14px 0 16px;flex-wrap:wrap}
+  .pl-dtabs button{flex:1;border:none;background:none;padding:7px 6px;border-radius:6px;font-size:12.5px;color:var(--ink-2);font-weight:500;white-space:nowrap}
+  .pl-dtabs button.on{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .pl-box{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:14px;margin-bottom:12px}
+  .pl-box h4{font-size:13.5px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+  .pl-urow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid #f1efe9}
+  .pl-urow:first-of-type{border-top:none}
+  .pl-urow .nm{flex:1;min-width:0}
+  .pl-urow .nm b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pl-urow .nm span{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+  .pl-urow.off{opacity:.55}
+  .pl-sub-row{display:flex;align-items:center;gap:8px;padding:4px 0}
+  .pl-sub-row .t{flex:1;min-width:0;font-size:13px;word-break:break-word}
+  .pl-sub-row.done .t{text-decoration:line-through;color:var(--ink-3)}
+  .pl-range{width:100%;accent-color:var(--brand)}
+  .pl-status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;margin-bottom:8px}
+  .pl-status.on{background:var(--ok-soft);color:var(--ok)}.pl-status.off{background:#f0eee8;color:var(--ink-3)}.pl-status.bad{background:var(--danger-soft);color:var(--danger)}
+
+  /* ---------- mobile ---------- */
+  .show-sm{display:none}
+  @media (max-width:760px){
+    .hide-sm{display:none!important}
+    .show-sm{display:inline}
+    .pl-top{padding:9px 12px;padding-top:calc(9px + env(safe-area-inset-top,0px));gap:10px}
+    .pl-sub{display:none}
+    .pl-title{font-size:15.5px}
+    .pl-top .pl-newbtn{padding:8px 10px}
+    .pl-main{padding:12px 10px 16px}
+    .pl-bottom{display:flex;flex-shrink:0;background:rgba(255,255,255,.97);border-top:1px solid var(--rule);padding:5px 4px calc(5px + env(safe-area-inset-bottom,0px));gap:2px}
+    .pl-bottom button{flex:1;min-width:0;border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 2px;border-radius:9px;font-size:10px;font-weight:600;color:var(--ink-3)}
+    .pl-bottom button.on{color:var(--brand);background:var(--brand-soft)}
+    .pl-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:10px}
+    .pl-kpi{padding:6px 8px}
+    .pl-kpi .k{font-size:8.5px;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pl-kpi .v{font-size:18px}
+    .pl-filters{gap:6px;margin-bottom:10px}
+    .pl-filters .pl-chips{flex-wrap:nowrap;overflow-x:auto;width:100%;padding-bottom:2px;scrollbar-width:none}
+    .pl-filters .pl-chips::-webkit-scrollbar{display:none}
+    .pl-chip{flex-shrink:0}
+    .pl-filters-m{flex-wrap:nowrap}
+    .pl-filters-m .pl-chips{width:auto;flex:1;min-width:0}
+    .pl-fbtn{flex-shrink:0;font-weight:600}
+    .pg-lbl{padding:0 6px;gap:6px}
+    .pg-lbl-t{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:12.5px;line-height:1.2}
+    .pg-lbl-s{display:none}
+    .pg-row{height:52px}
+    .pg-bar{top:12px;height:28px}
+    .pg-ms{top:16px}
+    .pg-out{top:17px}
+    .pg-grp{height:38px}
+    .pg-bar.armed{box-shadow:0 0 0 3px var(--brand),0 6px 18px rgba(20,20,20,.25)}
+    .pg-stbtn{width:26px;height:26px}
+    .pl-icon{width:36px;height:36px}
+    .pl-check{width:22px;height:22px}
+    .pp-item{padding:11px 14px}
+    .pr-row{padding:12px}
+    .pg-bar-top{gap:8px}
+    .pg-periodo{font-size:14px}
+    .pl-seg button{padding:6px 9px}
+    .pl-demo{font-size:11px;padding:4px 8px}
+    .pg-scroll{min-height:60dvh}
+    .pl-row2{grid-template-columns:1fr}
+    .pl-row3{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+    .pl-filters .pl-select{flex:1 1 140px}
+    .pl-search{flex:1 1 100%}
+    .pg-row{height:46px}
+    .pc-grid{grid-auto-rows:minmax(70px,auto)}
+    .pc-cell{padding:3px 2px}
+    .pc-pill{font-size:9.5px;padding:1px 3px;border-left-width:2px}
+    .pc-day{width:20px;height:20px;font-size:11px}
+    .pc-week{grid-template-columns:1fr}
+    .pc-wcol{border-left:none;border-top:1px solid var(--rule);min-height:0;flex-direction:column}
+    .pc-whead{text-align:left;display:flex;gap:8px;align-items:baseline}
+    .pl-overlay{padding:0;align-items:flex-end}
+    .pl-modal{width:100%;max-height:94dvh;border-radius:16px 16px 0 0}
+    .pl-mfoot{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+    .pl-input,.pl-select,.pl-area{font-size:16px}
+    .pl-toast{left:12px;right:12px;bottom:80px;text-align:center}
+    .pr-add .pl-select,.pr-add .pr-date{flex:1 1 140px}
+  }
+</style>
+</head>
+<body>
+<div id="root"><div class="pl-center">Carico…</div></div>
+
+<script type="text/babel" data-presets="react">
+/* =====================================================================
+   CONFIGURAZIONE — l'unica parte da modificare
+   ---------------------------------------------------------------------
+   1) incolla qui la configurazione web del progetto Firebase
+      (Console Firebase → Impostazioni progetto → Le tue app → Config)
+   2) in ADMIN_EMAILS metti l'email con cui entrerà l'amministratore.
+   Finché apiKey contiene "INCOLLA" l'app gira in MODALITÀ PROVA:
+   dati finti, salvati solo nel browser.
+   ===================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDNDyh4671mqETRzEYyBnrjg_SvMwlRWEI",
+  authDomain: "proloco-fabbrico.firebaseapp.com",
+  projectId: "proloco-fabbrico",
+  storageBucket: "proloco-fabbrico.firebasestorage.app",
+  messagingSenderId: "842802975890",
+  appId: "1:842802975890:web:716840a5d68dc51b85024b",
+};
+const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
+// chiave web push (Firebase → Cloud Messaging → Certificati push web)
+const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
+const ENTE = "Pro Loco Fabbrico";
+
+/* ===================================================================== */
+const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
+const DEMO = !CONFIGURATO;
+let auth = null, db = null;
+if (CONFIGURATO && window.firebase) {
+  firebase.initializeApp(firebaseConfig);
+  auth = firebase.auth();
+  db = firebase.firestore();
+}
+const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+/* ---------- utilità ---------- */
+const MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+const GIORNI = ["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
+const PALETTE = ["#1f6fb0","#165689","#0e7490","#2d5e3e","#4d7c0f","#b8954b","#c2410c","#b54343","#be185d","#7c3aed","#3b4a5a","#78716c"];
+const pad = (n) => String(n).padStart(2, "0");
+const toKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fromKey = (k) => { const [y, m, d] = String(k || "").split("-").map(Number); return new Date(y || 2000, (m || 1) - 1, d || 1); };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const startOfWeek = (d) => { const x = startOfDay(d); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
+const daysBetween = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / 86400000);
+const oggiKey = () => toKey(new Date());
+const wd = (d) => (d.getDay() + 6) % 7;
+const fmtData = (k) => { if (!k) return ""; const d = fromKey(k); return `${d.getDate()} ${MESI[d.getMonth()].slice(0, 3)}`; };
+const fmtDataLunga = (k) => { if (!k) return ""; const d = fromKey(k); return `${GIORNI[wd(d)]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}`; };
+const fmtPeriodo = (a) => (!a.fine || a.fine === a.inizio) ? fmtData(a.inizio) : `${fmtData(a.inizio)} – ${fmtData(a.fine)}`;
+const hexA = (hex, a) => { const h = String(hex || "#888888").replace("#", ""); return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`; };
+const nid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const pulisci = (o) => JSON.parse(JSON.stringify(o));
+const iniziali = (n) => String(n || "?").trim().split(/\s+/).map(x => x[0] || "").slice(0, 2).join("").toUpperCase() || "?";
+const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const lsDel = (k) => { try { localStorage.removeItem(k); } catch (e) {} };
+const ora = () => new Date().toISOString();
+const statoDi = (a) => a.stato || (a.done ? "fatto" : "da_fare");
+const fineDi = (a) => a.fine || a.inizio;
+const inRitardo = (a) => statoDi(a) !== "fatto" && !!fineDi(a) && fineDi(a) < oggiKey();
+const STATI = { da_fare: { lbl: "Da fare", ic: "circle" }, in_corso: { lbl: "In corso", ic: "hourglass" }, fatto: { lbl: "Fatto", ic: "check" } };
+const PROSSIMO = { da_fare: "in_corso", in_corso: "fatto", fatto: "da_fare" };
+const PRIORITA = { alta: "Alta", media: "Media", bassa: "Bassa" };
+const MOBILE_Q = "(max-width:760px)";
+
+function useMedia(q) {
+  const [m, setM] = useState(() => window.matchMedia(q).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(q); const f = () => setM(mq.matches); f();
+    if (mq.addEventListener) mq.addEventListener("change", f); else mq.addListener(f);
+    return () => { if (mq.removeEventListener) mq.removeEventListener("change", f); else mq.removeListener(f); };
+  }, [q]);
+  return m;
+}
+
+/* =====================================================================
+   ARCHIVIO DATI — stessa interfaccia per Firestore e per la modalità prova
+   ===================================================================== */
+function seedDemo() {
+  const t = new Date(); const k = (n) => toKey(addDays(t, n));
+  const utenti = {
+    "demo-admin": { nome: "Davide Lodi", email: "presidente@prova.it", ruolo: "admin", incarico: "Presidente", colore: "#1f6fb0", attivo: true },
+    "u-giulia": { nome: "Giulia Bianchi", email: "giulia@prova.it", ruolo: "membro", incarico: "Segretaria", colore: "#b8954b", attivo: true },
+    "u-marco": { nome: "Marco Rossi", email: "marco@prova.it", ruolo: "membro", incarico: "Tesoriere", colore: "#2d5e3e", attivo: true },
+    "u-sara": { nome: "Sara Ferrari", email: "sara@prova.it", ruolo: "membro", incarico: "Consigliera", colore: "#7c3aed", attivo: true },
+  };
+  const bu = {
+    "bu-gen": { nome: "Generale", colore: "#3b4a5a", ordine: 0 },
+    "bu-sagra": { nome: "Sagra", colore: "#1f6fb0", ordine: 1 },
+    "bu-eventi": { nome: "Eventi e manifestazioni", colore: "#c2410c", ordine: 2 },
+    "bu-tur": { nome: "Turismo e promozione", colore: "#2d5e3e", ordine: 3 },
+  };
+  const A = (titolo, buId, resp, da, a, extra) => ({ titolo, buId, responsabili: resp, inizio: k(da), fine: k(a), stato: "da_fare", avanzamento: 0, sottoattivita: [], note: "", notifica: true, creatoDa: "Davide Lodi", creatoIl: ora(), ...(extra || {}) });
+  const attivita = {
+    a1: A("Rinnovo iscrizione Albo Pro Loco", "bu-gen", ["demo-admin"], -20, -3, { stato: "in_corso", avanzamento: 60 }),
+    a2: A("Assemblea dei soci", "bu-gen", ["demo-admin", "u-giulia"], 12, 12, { milestone: true, luogo: "Sala civica" }),
+    a3: A("Bilancio preventivo", "bu-gen", ["u-marco"], -5, 18, { stato: "in_corso", avanzamento: 30, priorita: "alta" }),
+    a4: A("Richiesta permessi e SCIA", "bu-sagra", ["u-giulia"], 3, 25, { priorita: "alta", sottoattivita: [{ id: "s1", text: "Modulo SCIA al Comune", done: true }, { id: "s2", text: "Piano sicurezza", done: false }] }),
+    a5: A("Ricerca sponsor", "bu-sagra", ["demo-admin", "u-sara"], -10, 40, { stato: "in_corso", avanzamento: 40 }),
+    a6: A("Ordine materiale cucina", "bu-sagra", ["u-marco"], 30, 45),
+    a7: A("Mercatino di Natale", "bu-eventi", ["u-sara", "u-giulia"], 38, 40, { luogo: "Piazza" }),
+    a8: A("Volantini e social", "bu-eventi", ["u-sara"], 15, 36),
+    a9: A("Aggiornamento sito e pagina Facebook", "bu-tur", ["u-giulia"], -14, -2, { stato: "fatto", avanzamento: 100 }),
+    a10: A("Visite guidate primavera", "bu-tur", [], 60, 90),
+  };
+  const promemoria = {
+    p1: { testo: "Chiamare il Comune per il palco", scadenza: k(2), done: false, assegnatoA: "demo-admin", creatoDa: "demo-admin", creatoIl: ora() },
+    p2: { testo: "Rinnovare assicurazione volontari", scadenza: k(-1), done: false, assegnatoA: "u-marco", creatoDa: "demo-admin", creatoIl: ora() },
+  };
+  return { utenti, bu, attivita, promemoria };
+}
+
+function creaArchivioLocale() {
+  const KEY = "plf-prova-dati";
+  let data = null;
+  try { data = JSON.parse(lsGet(KEY) || "null"); } catch (e) {}
+  if (!data) data = seedDemo();
+  const ascolti = {};
+  const lista = (c) => Object.entries(data[c] || {}).map(([id, v]) => ({ id, ...v }));
+  const salva = () => lsSet(KEY, JSON.stringify(data));
+  const avvisa = (c) => (ascolti[c] || []).forEach(cb => cb(lista(c)));
+  return {
+    subscribe(c, cb) { (ascolti[c] = ascolti[c] || []).push(cb); setTimeout(() => cb(lista(c)), 0); return () => { ascolti[c] = ascolti[c].filter(x => x !== cb); }; },
+    watchDoc(c, id, cb) { const f = (l) => cb(l.find(x => x.id === id) || null); return this.subscribe(c, f); },
+    async add(c, v) { const id = nid(); data[c] = data[c] || {}; data[c][id] = pulisci(v); salva(); avvisa(c); return id; },
+    async set(c, id, v) { data[c] = data[c] || {}; data[c][id] = pulisci(v); salva(); avvisa(c); },
+    async update(c, id, p) { data[c] = data[c] || {}; data[c][id] = { ...(data[c][id] || {}), ...pulisci(p) }; salva(); avvisa(c); },
+    async del(c, id) { if (data[c]) delete data[c][id]; salva(); avvisa(c); },
+    async getDoc(c, id) { return data[c] && data[c][id] ? { id, ...data[c][id] } : null; },
+    azzera() { lsDel(KEY); location.reload(); },
+  };
+}
+
+function creaArchivioFirestore() {
+  return {
+    subscribe(c, cb, onErr) {
+      return db.collection(c).onSnapshot(s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), e => { console.warn(c, e); cb([]); onErr && onErr(e); });
+    },
+    watchDoc(c, id, cb) { return db.collection(c).doc(id).onSnapshot(s => cb(s.exists ? { id: s.id, ...s.data() } : null), () => cb(null)); },
+    async add(c, v) { const r = await db.collection(c).add(pulisci(v)); return r.id; },
+    set: (c, id, v) => db.collection(c).doc(id).set(pulisci(v)),
+    update: (c, id, p) => db.collection(c).doc(id).set(pulisci(p), { merge: true }),
+    del: (c, id) => db.collection(c).doc(id).delete(),
+    async getDoc(c, id) { const s = await db.collection(c).doc(id).get(); return s.exists ? { id: s.id, ...s.data() } : null; },
+  };
+}
+const store = CONFIGURATO ? creaArchivioFirestore() : creaArchivioLocale();
+
+function useCollection(nome) {
+  const [rows, setRows] = useState(null);
+  useEffect(() => store.subscribe(nome, setRows), [nome]);
+  return rows;
+}
+
+/* =====================================================================
+   NOTIFICHE PUSH (lato dispositivo)
+   ===================================================================== */
+const LS_TOKEN = "plf-push-token";
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+function nomeDispositivo() {
+  const u = navigator.userAgent;
+  const os = /iphone/i.test(u) ? "iPhone" : /ipad/i.test(u) ? "iPad" : /android/i.test(u) ? "Android" : /mac/i.test(u) ? "Mac" : /windows/i.test(u) ? "Windows" : "Dispositivo";
+  const br = /edg\//i.test(u) ? "Edge" : /firefox|fxios/i.test(u) ? "Firefox" : /crios|chrome/i.test(u) ? "Chrome" : /safari/i.test(u) ? "Safari" : "";
+  return isStandalone() ? `${os} · app` : `${os}${br ? " · " + br : ""}`;
+}
+let swPromise = null;
+function getSw() {
+  if (!CONFIGURATO || !("serviceWorker" in navigator)) return Promise.resolve(null);
+  if (!swPromise) swPromise = navigator.serviceWorker.register("./sw.js?cfg=" + encodeURIComponent(JSON.stringify(firebaseConfig)))
+    .then(() => navigator.serviceWorker.ready).catch(e => { console.warn("SW", e); swPromise = null; return null; });
+  return swPromise;
+}
+let messagingInst = null;
+async function getMessaging() {
+  if (messagingInst) return messagingInst;
+  try {
+    if (!CONFIGURATO || !firebase.messaging) return null;
+    if (!(await Promise.resolve(firebase.messaging.isSupported()))) return null;
+    messagingInst = firebase.messaging(); return messagingInst;
+  } catch (e) { return null; }
+}
+async function registraDispositivo(uid, vapidKey) {
+  const reg = await getSw(); if (!reg) throw new Error("Questo browser non supporta le notifiche dell'app.");
+  const m = await getMessaging(); if (!m) throw new Error("Su questo browser le notifiche push non sono supportate.");
+  const token = await m.getToken({ vapidKey, serviceWorkerRegistration: reg });
+  if (!token) throw new Error("Firebase non ha restituito il codice del dispositivo.");
+  await db.collection("pushTokens").doc(token.replace(/\//g, "_")).set({ uid, token, device: nomeDispositivo(), aggiornatoIl: Date.now() }, { merge: true });
+  const vecchio = lsGet(LS_TOKEN);
+  if (vecchio && vecchio !== token) db.collection("pushTokens").doc(vecchio.replace(/\//g, "_")).delete().catch(() => {});
+  lsSet(LS_TOKEN, token);
+  return token;
+}
+getSw();
+
+/* =====================================================================
+   ICONE
+   ===================================================================== */
+function Icon({ name, size = 18, style }) {
+  const c = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", style };
+  switch (name) {
+    case "plus": return <svg {...c}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>;
+    case "x": return <svg {...c}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>;
+    case "check": return <svg {...c}><polyline points="20 6 9 17 4 12" /></svg>;
+    case "left": return <svg {...c}><polyline points="15 18 9 12 15 6" /></svg>;
+    case "right": return <svg {...c}><polyline points="9 18 15 12 9 6" /></svg>;
+    case "down": return <svg {...c}><polyline points="6 9 12 15 18 9" /></svg>;
+    case "up": return <svg {...c}><polyline points="18 15 12 9 6 15" /></svg>;
+    case "trash": return <svg {...c}><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /></svg>;
+    case "pencil": return <svg {...c}><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>;
+    case "calendar": return <svg {...c}><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="16" y1="2" x2="16" y2="6" /></svg>;
+    case "gantt": return <svg {...c}><line x1="8" y1="6" x2="21" y2="6" /><line x1="4" y1="12" x2="15" y2="12" /><line x1="11" y1="18" x2="19" y2="18" /></svg>;
+    case "users": return <svg {...c}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>;
+    case "bell": return <svg {...c}><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>;
+    case "settings": return <svg {...c}><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>;
+    case "logout": return <svg {...c}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>;
+    case "circle": return <svg {...c}><circle cx="12" cy="12" r="8" /></svg>;
+    case "hourglass": return <svg {...c}><path d="M6 3h12M6 21h12M8 3v4a4 4 0 0 0 8 0V3M8 21v-4a4 4 0 0 1 8 0v4" /></svg>;
+    case "search": return <svg {...c}><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>;
+    case "copy": return <svg {...c}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>;
+    case "pin": return <svg {...c}><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>;
+    case "flag": return <svg {...c}><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" /></svg>;
+    case "list": return <svg {...c}><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>;
+    case "layers": return <svg {...c}><path d="M12 2 2 7l10 5 10-5-10-5z" /><path d="M2 12l10 5 10-5" /><path d="M2 17l10 5 10-5" /></svg>;
+    case "user": return <svg {...c}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>;
+    case "mail": return <svg {...c}><rect x="2" y="4" width="20" height="16" rx="2" /><polyline points="22 6 12 13 2 6" /></svg>;
+    default: return null;
+  }
+}
+
+function Avatar({ u, size = 24 }) {
+  const nome = u ? u.nome : "?";
+  return <span className="pl-av" title={nome} style={{ width: size, height: size, fontSize: Math.round(size * 0.4), background: (u && u.colore) || "#8a8a82" }}>{iniziali(nome)}</span>;
+}
+function Avatars({ ids, utMap, size = 22, max = 3 }) {
+  const l = (ids || []).map(id => utMap[id]).filter(Boolean);
+  if (!l.length) return null;
+  return <span className="pl-avs">{l.slice(0, max).map(u => <Avatar key={u.id} u={u} size={size} />)}{l.length > max && <span className="pl-av more" style={{ width: size, height: size, fontSize: Math.round(size * 0.38) }}>+{l.length - max}</span>}</span>;
+}
+function Swatches({ value, onPick }) {
+  return <div className="pl-swatches">{PALETTE.map(c => <button type="button" key={c} className={"pl-sw" + (value === c ? " on" : "")} style={{ background: c }} onClick={() => onPick(c)}>{value === c && <Icon name="check" size={13} style={{ color: "#fff" }} />}</button>)}</div>;
+}
+function Toggle({ on, onChange, children }) {
+  return <div className={"pl-toggle" + (on ? " on" : "")} onClick={() => onChange(!on)}><div className="sw" /><span style={{ fontSize: 13.5 }}>{children}</span></div>;
+}
+
+/* =====================================================================
+   APP: accesso
+   ===================================================================== */
+function App() {
+  const [s, setS] = useState({ fase: "carico" });
+  useEffect(() => {
+    if (DEMO) { setS({ fase: "ok", uid: "demo-admin" }); return; }
+    return auth.onAuthStateChanged(async (u) => {
+      if (!u) { setS({ fase: "login" }); return; }
+      try {
+        let p = await store.getDoc("utenti", u.uid);
+        const mail = (u.email || "").toLowerCase();
+        if (!p && ADMIN_EMAILS.map(x => x.toLowerCase()).includes(mail)) {
+          const nuovo = { nome: mail.split("@")[0], email: mail, ruolo: "admin", incarico: "Presidente", colore: PALETTE[0], attivo: true, creatoIl: ora() };
+          await store.set("utenti", u.uid, nuovo); p = { id: u.uid, ...nuovo };
+        }
+        if (!p) { setS({ fase: "bloccato", motivo: "Questo account non è ancora abilitato. Chiedi all'amministratore della Pro Loco di aggiungerti." }); return; }
+        if (p.attivo === false) { setS({ fase: "bloccato", motivo: "Il tuo account è stato disattivato. Contatta l'amministratore." }); return; }
+        setS({ fase: "ok", uid: u.uid });
+      } catch (e) {
+        setS({ fase: "bloccato", motivo: "Non riesco a leggere il tuo profilo (" + (e.code || e.message) + "). Controlla le regole di Firestore." });
+      }
+    });
+  }, []);
+  if (s.fase === "carico") return <div className="pl-center">Carico…</div>;
+  if (s.fase === "login") return <Login />;
+  if (s.fase === "bloccato") return (
+    <div className="pl-login"><div className="pl-card">
+      <div className="logo">P</div><h1>{ENTE}</h1>
+      <p className="lead">Accesso non disponibile</p>
+      <div className="pl-err">{s.motivo}</div>
+      <button className="pl-btn ghost block" onClick={() => auth.signOut()}>Esci</button>
+    </div></div>
+  );
+  return <Shell uid={s.uid} />;
+}
+
+function Login() {
+  const [modo, setModo] = useState("entra"); // entra | primo | reset
+  const [email, setEmail] = useState(""), [pw, setPw] = useState(""), [err, setErr] = useState(""), [msg, setMsg] = useState(""), [busy, setBusy] = useState(false);
+  const errori = { "auth/invalid-credential": "Email o password non corretti.", "auth/invalid-email": "Email non valida.", "auth/weak-password": "La password deve avere almeno 6 caratteri.", "auth/email-already-in-use": "Account già esistente: usa Entra.", "auth/wrong-password": "Password errata.", "auth/user-not-found": "Nessun account con questa email.", "auth/too-many-requests": "Troppi tentativi. Riprova tra qualche minuto." };
+  const invia = async () => {
+    setErr(""); setMsg(""); setBusy(true);
+    try {
+      const mail = email.trim();
+      if (modo === "entra") await auth.signInWithEmailAndPassword(mail, pw);
+      else if (modo === "reset") { await auth.sendPasswordResetEmail(mail); setMsg("Ti abbiamo mandato un'email per impostare una nuova password."); }
+      else {
+        if (!ADMIN_EMAILS.map(x => x.toLowerCase()).includes(mail.toLowerCase())) throw { code: "x", message: "Questa email non è quella dell'amministratore. Gli altri membri ricevono l'accesso dall'amministratore." };
+        await auth.createUserWithEmailAndPassword(mail, pw);
+      }
+    } catch (e) { setErr(errori[e.code] || e.message || String(e)); }
+    finally { setBusy(false); }
+  };
+  const key = (e) => e.key === "Enter" && invia();
+  return (
+    <div className="pl-login"><div className="pl-card">
+      <div className="logo">P</div><h1>{ENTE}</h1>
+      <p className="lead">{modo === "entra" ? "Attività, calendario e responsabili" : modo === "reset" ? "Recupero password" : "Primo accesso dell'amministratore"}</p>
+      {err && <div className="pl-err">{err}</div>}
+      {msg && <div className="pl-okmsg">{msg}</div>}
+      <label className="pl-lbl">Email</label>
+      <input className="pl-input" type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={key} autoComplete="email" />
+      {modo !== "reset" && <><label className="pl-lbl">Password</label>
+        <input className="pl-input" type="password" value={pw} onChange={e => setPw(e.target.value)} onKeyDown={key} autoComplete={modo === "entra" ? "current-password" : "new-password"} /></>}
+      <button className="pl-btn block" style={{ marginTop: 18 }} disabled={busy || !email || (modo !== "reset" && !pw)} onClick={invia}>
+        {busy ? "Attendi…" : modo === "entra" ? "Entra" : modo === "reset" ? "Mandami l'email" : "Crea account amministratore"}
+      </button>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, gap: 10, flexWrap: "wrap" }}>
+        {modo === "entra"
+          ? <><button className="pl-link" onClick={() => { setModo("reset"); setErr(""); }}>Password dimenticata?</button>
+              <button className="pl-link" onClick={() => { setModo("primo"); setErr(""); }}>Primo accesso amministratore</button></>
+          : <button className="pl-link" onClick={() => { setModo("entra"); setErr(""); setMsg(""); }}>← Torna all'accesso</button>}
+      </div>
+    </div></div>
+  );
+}
+
+/* =====================================================================
+   SHELL
+   ===================================================================== */
+const VISTE = [["gantt", "Gantt", "gantt"], ["calendario", "Calendario", "calendar"], ["persone", "Persone", "users"], ["promemoria", "Promemoria", "bell"]];
+
+function Shell({ uid }) {
+  const utentiRaw = useCollection("utenti");
+  const buRaw = useCollection("bu");
+  const attRaw = useCollection("attivita");
+  const promRaw = useCollection("promemoria");
+  const mobile = useMedia(MOBILE_Q);
+
+  const [vista, setVistaS] = useState(() => lsGet("plf-vista") || "gantt");
+  const setVista = (v) => { setVistaS(v); lsSet("plf-vista", v); };
+  const [editing, setEditing] = useState(null);
+  const [manage, setManage] = useState(null);
+  const [toast, setToast] = useState(null);
+  const avviso = useCallback((msg, tipo) => { setToast({ msg, tipo }); setTimeout(() => setToast(null), 2800); }, []);
+
+  // filtri condivisi tra Gantt e Calendario
+  const [fBu, setFBu] = useState([]);
+  const [fResp, setFResp] = useState(() => lsGet("plf-fresp") || "all");
+  const [fStato, setFStato] = useState(() => lsGet("plf-fstato") || "aperte");
+  const [cerca, setCerca] = useState("");
+  useEffect(() => { lsSet("plf-fresp", fResp); lsSet("plf-fstato", fStato); }, [fResp, fStato]);
+
+  const utentiTutti = utentiRaw || [];
+  const utenti = useMemo(() => utentiTutti.filter(u => u.attivo !== false).sort((a, b) => String(a.nome).localeCompare(String(b.nome), "it")), [utentiRaw]);
+  const utMap = useMemo(() => { const m = {}; utentiTutti.forEach(u => { m[u.id] = u; }); return m; }, [utentiRaw]);
+  const bus = useMemo(() => (buRaw || []).slice().sort((a, b) => (a.ordine ?? 0) - (b.ordine ?? 0) || String(a.nome).localeCompare(String(b.nome))), [buRaw]);
+  const buMap = useMemo(() => { const m = {}; bus.forEach(b => { m[b.id] = b; }); return m; }, [bus]);
+  const attivita = attRaw || [];
+  const me = utMap[uid] || { id: uid, nome: "…", ruolo: "membro" };
+  const isAdmin = me.ruolo === "admin";
+
+  const filtrate = useMemo(() => {
+    const q = norm(cerca.trim());
+    return attivita.filter(a => {
+      const b = a.buId && buMap[a.buId] ? a.buId : "__none";
+      if (fBu.length && !fBu.includes(b)) return false;
+      const r = a.responsabili || [];
+      if (fResp === "me" && !r.includes(uid)) return false;
+      if (fResp === "none" && r.length) return false;
+      if (!["all", "me", "none"].includes(fResp) && !r.includes(fResp)) return false;
+      const st = statoDi(a);
+      if (fStato === "aperte" && st === "fatto") return false;
+      if (fStato === "fatte" && st !== "fatto") return false;
+      if (fStato === "ritardo" && !inRitardo(a)) return false;
+      if (q && !norm(`${a.titolo} ${a.note || ""} ${a.luogo || ""}`).includes(q)) return false;
+      return true;
+    });
+  }, [attivita, fBu, fResp, fStato, cerca, buMap, uid]);
+
+  const firma = () => ({ modificatoDa: me.nome, modificatoDaUid: uid, modificatoIl: ora() });
+  const salvaAttivita = async (d) => {
+    const st = d.stato || "da_fare";
+    const p = {
+      titolo: (d.titolo || "").trim() || "Senza titolo", buId: d.buId || null, responsabili: d.responsabili || [],
+      inizio: d.inizio, fine: d.milestone ? d.inizio : (d.fine < d.inizio ? d.inizio : d.fine), ora: d.ora || "",
+      milestone: !!d.milestone, luogo: (d.luogo || "").trim(), stato: st, done: st === "fatto",
+      priorita: d.priorita || null, avanzamento: st === "fatto" ? 100 : Math.max(0, Math.min(100, Number(d.avanzamento) || 0)),
+      note: d.note || "", sottoattivita: d.sottoattivita || [], notifica: d.notifica !== false, ...firma(),
+    };
+    try {
+      if (d.id) await store.update("attivita", d.id, p);
+      else await store.add("attivita", { ...p, creatoDa: me.nome, creatoDaUid: uid, creatoIl: ora() });
+      setEditing(null); avviso(d.id ? "Attività aggiornata" : "Attività creata");
+    } catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
+  const patchAtt = async (id, patch) => {
+    try { await store.update("attivita", id, { ...patch, ...firma() }); }
+    catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
+  const eliminaAtt = async (a) => {
+    if (!confirm(`Eliminare l'attività "${a.titolo}"?`)) return;
+    try { await store.del("attivita", a.id); setEditing(null); avviso("Attività eliminata"); }
+    catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
+  const nuova = (preset) => {
+    const giorno = (preset && preset.inizio) || oggiKey();
+    const buDef = (preset && "buId" in preset) ? preset.buId : (fBu.length === 1 && fBu[0] !== "__none" ? fBu[0] : (bus[0] ? bus[0].id : null));
+    setEditing({ id: null, titolo: "", buId: buDef, responsabili: [uid], inizio: giorno, fine: (preset && preset.fine) || toKey(addDays(fromKey(giorno), 6)), ora: "", milestone: false, luogo: "", stato: "da_fare", priorita: null, avanzamento: 0, note: "", sottoattivita: [], notifica: true, ...(preset || {}) });
+  };
+  const apri = (a) => setEditing(pulisci({ ...a, fine: fineDi(a), sottoattivita: a.sottoattivita || [], responsabili: a.responsabili || [] }));
+
+  if (!utentiRaw || !buRaw || !attRaw || !promRaw) return <div className="pl-center">Carico i dati…</div>;
+
+  const promApertiMiei = (promRaw || []).filter(p => !p.done && p.assegnatoA === uid).length;
+  const sottotitolo = { gantt: "Gantt delle attività", calendario: "Calendario", persone: "Responsabili e carichi di lavoro", promemoria: "Promemoria" }[vista];
+
+  return (
+    <div className="pl-shell">
+      {DEMO && <div className="pl-demo">Modalità prova: dati di esempio salvati solo in questo browser · <button className="pl-link" style={{ fontSize: 12 }} onClick={() => { if (confirm("Ripristino i dati di esempio?")) store.azzera(); }}>ripristina</button></div>}
+      <header className="pl-top">
+        <div className="pl-brand"><div className="pl-logo">P</div><div><div className="pl-title">{ENTE}</div><div className="pl-sub">{sottotitolo}</div></div></div>
+        <nav className="pl-tabs hide-sm">
+          {VISTE.map(([v, l, ic]) => <button key={v} className={vista === v ? "on" : ""} onClick={() => setVista(v)}><Icon name={ic} size={15} />{l}{v === "promemoria" && promApertiMiei > 0 && <span style={{ fontSize: 10.5, background: vista === v ? "var(--brand)" : "#fff", color: vista === v ? "#fff" : "var(--brand)", borderRadius: 999, padding: "0 6px", fontWeight: 700 }}>{promApertiMiei}</span>}</button>)}
+        </nav>
+        <div className="pl-actions">
+          <button className="pl-newbtn" onClick={() => nuova()}><Icon name="plus" size={16} /><span className="hide-sm">Nuova attività</span></button>
+          <button className="pl-iconbtn hide-sm" title="Impostazioni" onClick={() => setManage("profilo")}><Icon name="settings" size={17} /></button>
+          <button className="pl-me" title={`${me.nome} · impostazioni`} onClick={() => setManage("profilo")}><Avatar u={me} size={32} /></button>
+          {!DEMO && <button className="pl-iconbtn hide-sm" title="Esci" onClick={() => auth.signOut()}><Icon name="logout" size={16} /></button>}
+        </div>
+      </header>
+
+      <main className="pl-main">
+        {(vista === "gantt" || vista === "calendario") && (
+          <Filtri bus={bus} utenti={utenti} fBu={fBu} setFBu={setFBu} fResp={fResp} setFResp={setFResp} fStato={fStato} setFStato={setFStato} cerca={cerca} setCerca={setCerca} />
+        )}
+        {vista === "gantt" && <GanttView attivita={filtrate} tutte={attivita} bus={bus} buMap={buMap} fBu={fBu} utMap={utMap} isAdmin={isAdmin} mobile={mobile}
+          onOpen={apri} onNew={nuova} onPatch={patchAtt} setFStato={setFStato} onSeedBu={() => setManage("bu")} />}
+        {vista === "calendario" && <CalendarView attivita={filtrate} buMap={buMap} utMap={utMap} onOpen={apri} onNew={nuova} />}
+        {vista === "persone" && <PeopleView attivita={attivita} utenti={utenti} uid={uid} buMap={buMap} utMap={utMap} promemoria={promRaw} onOpen={apri} onPatch={patchAtt} />}
+        {vista === "promemoria" && <ReminderView promemoria={promRaw} utenti={utenti} utMap={utMap} uid={uid} me={me} avviso={avviso} />}
+      </main>
+
+      <nav className="pl-bottom">
+        {VISTE.map(([v, l, ic]) => <button key={v} className={vista === v ? "on" : ""} onClick={() => setVista(v)}><Icon name={ic} size={19} /><span>{l}</span></button>)}
+        <button onClick={() => setManage("profilo")}><Icon name="settings" size={19} /><span>Altro</span></button>
+      </nav>
+
+      {editing && <ActivityModal draft={editing} setDraft={setEditing} bus={bus} utenti={utenti} utMap={utMap} uid={uid}
+        onClose={() => setEditing(null)} onSave={salvaAttivita} onDelete={eliminaAtt}
+        onDuplicate={(d) => setEditing({ ...pulisci(d), id: null, titolo: d.titolo + " (copia)", stato: "da_fare", avanzamento: 0, creatoDa: null, modificatoDa: null })} />}
+      {manage && <ManageDrawer tab={manage} setTab={setManage} onClose={() => setManage(null)} me={me} uid={uid} isAdmin={isAdmin}
+        utenti={utentiTutti} bus={bus} attivita={attivita} avviso={avviso} />}
+      {toast && <div className={"pl-toast " + (toast.tipo || "")}>{toast.msg}</div>}
+    </div>
+  );
+}
+
+function Filtri({ bus, utenti, fBu, setFBu, fResp, setFResp, fStato, setFStato, cerca, setCerca }) {
+  const mobile = useMedia(MOBILE_Q);
+  const [aperti, setAperti] = useState(false);
+  const tog = (id) => setFBu(fBu.includes(id) ? fBu.filter(x => x !== id) : [...fBu, id]);
+  const attivi = (fResp !== "all" ? 1 : 0) + (fStato !== "aperte" ? 1 : 0) + (cerca.trim() ? 1 : 0);
+  const chips = (
+    <div className="pl-chips">
+      <button className={"pl-chip" + (!fBu.length ? " on" : "")} onClick={() => setFBu([])}>Tutte le BU</button>
+      {bus.map(b => <button key={b.id} className={"pl-chip" + (fBu.includes(b.id) ? " on" : "")} onClick={() => tog(b.id)}><span className="dot" style={{ background: fBu.includes(b.id) ? "#fff" : b.colore }} />{b.nome}</button>)}
+    </div>
+  );
+  if (mobile && !aperti) return (
+    <div className="pl-filters pl-filters-m">
+      <button className={"pl-chip pl-fbtn" + (attivi ? " on" : "")} onClick={() => setAperti(true)}><Icon name="search" size={13} />Filtri{attivi ? ` · ${attivi}` : ""}</button>
+      {chips}
+    </div>
+  );
+  return (
+    <div className="pl-filters">
+      {mobile && <button className="pl-chip pl-fbtn on" onClick={() => setAperti(false)}><Icon name="up" size={13} />Chiudi filtri</button>}
+      {chips}
+      <select className="pl-select" value={fResp} onChange={e => setFResp(e.target.value)}>
+        <option value="all">Tutti i responsabili</option>
+        <option value="me">Solo le mie</option>
+        <option value="none">Senza responsabile</option>
+        {utenti.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
+      </select>
+      <select className="pl-select" value={fStato} onChange={e => setFStato(e.target.value)}>
+        <option value="aperte">Da fare e in corso</option>
+        <option value="tutte">Tutte</option>
+        <option value="ritardo">In ritardo</option>
+        <option value="fatte">Completate</option>
+      </select>
+      <div className="pl-search"><Icon name="search" size={14} /><input className="pl-input" placeholder="Cerca attività…" value={cerca} onChange={e => setCerca(e.target.value)} /></div>
+    </div>
+  );
+}
+
+/* =====================================================================
+   GANTT
+   ===================================================================== */
+const ZOOM = {
+  "4s": { lbl: "4 settimane", giorni: 28, col: 40, colM: 26, prima: 1, passo: 7 },
+  "3m": { lbl: "3 mesi", giorni: 91, col: 16, colM: 11, prima: 2, passo: 28 },
+  "6m": { lbl: "6 mesi", giorni: 182, col: 8, colM: 6, prima: 4, passo: 56 },
+  "12m": { lbl: "Anno", giorni: 364, col: 4, colM: 3, prima: 6, passo: 91 },
+};
+
+function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, onOpen, onNew, onPatch, setFStato, onSeedBu }) {
+  const [zoom, setZoomS] = useState(() => (ZOOM[lsGet("plf-zoom")] ? lsGet("plf-zoom") : (mobile ? "4s" : "3m")));
+  const Z = ZOOM[zoom];
+  const inizioPer = (z) => addDays(startOfWeek(new Date()), -7 * ZOOM[z].prima);
+  const [start, setStart] = useState(() => inizioPer(zoom));
+  const setZoom = (z) => { setZoomS(z); lsSet("plf-zoom", z); setStart(inizioPer(z)); };
+  const colW = mobile ? Z.colM : Z.col;
+  const [compatto, setCompattoS] = useState(() => lsGet("plf-compatto") === "1");
+  const setCompatto = (v) => { setCompattoS(v); lsSet("plf-compatto", v ? "1" : "0"); };
+  const corto = mobile && compatto;
+  const N = Z.giorni, W = N * colW, LBL = mobile ? (compatto ? 40 : 128) : 280;
+  const startK = toKey(start), fineK = toKey(addDays(start, N - 1));
+  const days = useMemo(() => Array.from({ length: N }, (_, i) => addDays(start, i)), [startK, N]);
+  const oggi = oggiKey();
+  const iOggi = daysBetween(start, new Date());
+
+  const [chiusi, setChiusi] = useState(() => { try { return JSON.parse(lsGet("plf-chiusi") || "{}"); } catch (e) { return {}; } });
+  const togGruppo = (k) => { const n = { ...chiusi, [k]: !chiusi[k] }; setChiusi(n); lsSet("plf-chiusi", JSON.stringify(n)); };
+
+  // ---- trascinamento (solo mouse) ----
+  const [drag, setDrag] = useState(null);
+  const dragRef = useRef(null), justRef = useRef(false);
+  const dateTrascinate = (d) => {
+    const s0 = fromKey(d.s0), e0 = fromKey(d.e0);
+    if (d.mode === "start") { const s = addDays(s0, d.dd); return { inizio: toKey(s > e0 ? e0 : s), fine: d.e0 }; }
+    if (d.mode === "end") { const e = addDays(e0, d.dd); return { inizio: d.s0, fine: toKey(e < s0 ? s0 : e) }; }
+    return { inizio: toKey(addDays(s0, d.dd)), fine: toKey(addDays(e0, d.dd)) };
+  };
+  // mouse: trascino subito · dito: tengo premuto mezzo secondo, poi trascino
+  const pressRef = useRef(null);
+  const startDrag = (e, a, mode) => {
+    const d = { id: a.id, mode, x0: e.clientX, y0: e.clientY, s0: a.inizio, e0: fineDi(a), dd: 0, moved: false };
+    if (e.pointerType === "mouse") {
+      if (e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+      dragRef.current = d; setDrag(d); return;
+    }
+    e.stopPropagation();
+    if (pressRef.current) clearTimeout(pressRef.current.t);
+    const annulla = (ev) => {
+      if (!pressRef.current) return;
+      if (ev.type === "pointermove" && Math.hypot(ev.clientX - d.x0, ev.clientY - d.y0) < 8) return;
+      clearTimeout(pressRef.current.t); pressRef.current = null;
+      window.removeEventListener("pointermove", annulla); window.removeEventListener("pointerup", annulla); window.removeEventListener("pointercancel", annulla);
+    };
+    pressRef.current = { t: setTimeout(() => {
+      window.removeEventListener("pointermove", annulla); window.removeEventListener("pointerup", annulla); window.removeEventListener("pointercancel", annulla);
+      pressRef.current = null;
+      if (navigator.vibrate) { try { navigator.vibrate(15); } catch (er) {} }
+      d.touch = true; d.moved = true; dragRef.current = d; setDrag({ ...d });
+    }, 450) };
+    window.addEventListener("pointermove", annulla); window.addEventListener("pointerup", annulla); window.addEventListener("pointercancel", annulla);
+  };
+  // mentre trascino col dito blocco lo scorrimento della pagina
+  useEffect(() => {
+    const blocca = (ev) => { if (dragRef.current && dragRef.current.touch) ev.preventDefault(); };
+    window.addEventListener("touchmove", blocca, { passive: false });
+    return () => window.removeEventListener("touchmove", blocca);
+  }, []);
+  useEffect(() => {
+    if (!drag) return;
+    const move = (e) => {
+      const d = dragRef.current; if (!d) return;
+      if (Math.abs(e.clientX - d.x0) > 4) d.moved = true;
+      const dd = Math.round((e.clientX - d.x0) / colW);
+      if (dd !== d.dd) { d.dd = dd; setDrag({ ...d }); }
+    };
+    const up = () => {
+      const d = dragRef.current; dragRef.current = null; setDrag(null);
+      if (d && d.moved) {
+        justRef.current = true; setTimeout(() => { justRef.current = false; }, 250);
+        if (d.dd !== 0) onPatch(d.id, dateTrascinate(d));
+      }
+    };
+    window.addEventListener("pointermove", move); window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up);
+    return () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up); };
+  }, [drag && drag.id, colW]);
+
+  const dateDi = (a) => (drag && drag.id === a.id) ? dateTrascinate(drag) : { inizio: a.inizio, fine: fineDi(a) };
+  const visibili = attivita.filter(a => { const d = dateDi(a); return a.inizio && d.fine >= startK && d.inizio <= fineK; });
+  const fuori = attivita.filter(a => a.inizio).length - visibili.length;
+  const mostraNone = !fBu.length || fBu.includes("__none");
+  const gruppi = [...bus.filter(b => !fBu.length || fBu.includes(b.id)).map(b => ({ id: b.id, nome: b.nome, colore: b.colore })),
+    ...(mostraNone ? [{ id: null, nome: "Senza business unit", colore: "#8a8a82" }] : [])]
+    .map(g => ({ ...g, items: visibili.filter(a => (a.buId && buMap[a.buId] ? a.buId : null) === g.id).sort((x, y) => x.inizio.localeCompare(y.inizio) || fineDi(x).localeCompare(fineDi(y))) }))
+    .filter(g => g.items.length || g.id !== null);
+
+  // KPI su tutte le attività (non solo quelle nel periodo)
+  const kTot = tutte.length, kCorso = tutte.filter(a => statoDi(a) === "in_corso").length;
+  const kRit = tutte.filter(inRitardo).length, kFatte = tutte.filter(a => statoDi(a) === "fatto").length;
+
+  // intestazione mesi
+  const mesiSeg = [];
+  days.forEach(d => { const k = d.getFullYear() * 12 + d.getMonth(); const l = mesiSeg[mesiSeg.length - 1]; if (l && l.k === k) l.n++; else mesiSeg.push({ k, n: 1, d }); });
+  const etichettaMese = (s) => { const w = s.n * colW; const m = MESI[s.d.getMonth()]; if (w > 110) return `${m} ${s.d.getFullYear()}`; if (w > 60) return m; if (w > 26) return m.slice(0, 3); return ""; };
+  const perGiorno = colW >= 14;
+
+  const periodoLbl = `${fmtData(startK)} ${fromKey(startK).getFullYear() !== fromKey(fineK).getFullYear() ? fromKey(startK).getFullYear() + " " : ""}– ${fmtData(fineK)} ${fromKey(fineK).getFullYear()}`;
+  const [tip, setTip] = useState(null);
+
+  const barra = (a) => {
+    const d = dateDi(a);
+    const off = daysBetween(start, fromKey(d.inizio));
+    const len = daysBetween(fromKey(d.inizio), fromKey(d.fine)) + 1;
+    const clipL = off < 0, clipR = off + len > N;
+    const left = Math.max(0, off) * colW, right = Math.min(N, off + len) * colW;
+    const w = Math.max(colW, right - left) - 2;
+    const b = a.buId && buMap[a.buId] ? buMap[a.buId] : null;
+    const col = b ? b.colore : "#8a8a82";
+    const st = statoDi(a), late = inRitardo(a), prog = st === "fatto" ? 100 : (a.avanzamento || 0);
+    const isDrag = drag && drag.id === a.id;
+    const tipTxt = `${a.titolo} · ${fmtPeriodo({ inizio: d.inizio, fine: d.fine })}${prog ? ` · ${prog}%` : ""}`;
+    const click = () => { if (!justRef.current) onOpen(a); };
+    if (a.milestone) {
+      return <>
+        <div className="pg-ms" style={{ left: off * colW + colW / 2 - 9, background: late ? "var(--danger)" : col }} title={tipTxt}
+          onPointerDown={e => startDrag(e, a, "move")} onClick={click} />
+        <span className="pg-out" style={{ left: off * colW + colW / 2 + 14 }}>{a.titolo}</span>
+      </>;
+    }
+    const dentro = w > (corto ? 60 : 76);
+    return <>
+      <div className={`pg-bar${late ? " late" : ""}${st === "fatto" ? " done" : ""}${isDrag ? " drag" : ""}${clipL ? " cl-l" : ""}${clipR ? " cl-r" : ""}`}
+        style={{ left: left + 1, width: w, background: hexA(col, 0.2), borderColor: hexA(col, 0.55) }}
+        onPointerDown={e => startDrag(e, a, "move")} onClick={click}
+        onMouseEnter={e => !drag && setTip({ x: e.clientX, y: e.clientY, t: tipTxt })} onMouseMove={e => !drag && setTip({ x: e.clientX, y: e.clientY, t: tipTxt })} onMouseLeave={() => setTip(null)}>
+        <div className="pg-bar-prog" style={{ width: prog + "%", background: hexA(col, 0.55) }} />
+        {!clipL && <span className="pg-handle l" onPointerDown={e => startDrag(e, a, "start")} />}
+        {!clipR && <span className="pg-handle r" onPointerDown={e => startDrag(e, a, "end")} />}
+        {dentro && <span className="pg-bar-t" style={{ color: "#1a1a1a" }}>{a.titolo}</span>}
+      </div>
+      {!dentro && right < W - 40 && <span className="pg-out" style={{ left: left + w + 8 }}>{a.titolo}</span>}
+    </>;
+  };
+
+  return (
+    <>
+      <div className="pl-kpis">
+        <button className="pl-kpi blue clic" onClick={() => setFStato("tutte")}><div className="k">Attività</div><div className="v">{kTot}</div></button>
+        <button className="pl-kpi blue clic" onClick={() => setFStato("aperte")}><div className="k">In corso</div><div className="v">{kCorso}</div></button>
+        <button className="pl-kpi red clic" onClick={() => setFStato("ritardo")}><div className="k">In ritardo</div><div className="v">{kRit}</div></button>
+        <button className="pl-kpi green clic" onClick={() => setFStato("fatte")}><div className="k">Completate</div><div className="v">{kFatte}</div></button>
+      </div>
+      <div className="pg-bar-top">
+        <div className="pl-nav">
+          <button onClick={() => setStart(addDays(start, -Z.passo))}><Icon name="left" size={16} /></button>
+          <button className="oggi" onClick={() => setStart(inizioPer(zoom))}>Oggi</button>
+          <button onClick={() => setStart(addDays(start, Z.passo))}><Icon name="right" size={16} /></button>
+        </div>
+        <span className="pg-periodo">{periodoLbl}</span>
+        <div className="pl-seg" style={{ marginLeft: "auto" }}>
+          {Object.entries(ZOOM).map(([k, z]) => <button key={k} className={zoom === k ? "on" : ""} onClick={() => setZoom(k)}>{z.lbl}</button>)}
+        </div>
+      </div>
+
+      {!bus.length && (
+        <div className="pl-panel" style={{ padding: 16, marginBottom: 10 }}>
+          <b>Non ci sono ancora business unit.</b> <span className="pl-hint">Servono a raggruppare le attività nel Gantt (es. Sagra, Eventi, Generale).</span>
+          {isAdmin && <div style={{ marginTop: 10 }}><button className="pl-btn sm" onClick={onSeedBu}>Crea le business unit</button></div>}
+        </div>
+      )}
+
+      <div className="pg-scroll">
+        <div style={{ width: LBL + W, position: "relative" }}>
+          <div className="pg-head">
+            <div className="pg-head-lbl" style={{ width: LBL, padding: mobile ? "0 4px 5px" : undefined }}>{mobile ? <button className="pl-icon" style={{ width: 30, height: 30 }} title={compatto ? "Mostra i nomi" : "Nascondi i nomi"} onClick={() => setCompatto(!compatto)}><Icon name={compatto ? "right" : "left"} size={15} /></button> : "Attività"}</div>
+            <div className="pg-head-track" style={{ width: W }}>
+              <div className="pg-mrow">{mesiSeg.map(s => <div key={s.k} className="pg-m" style={{ width: s.n * colW }}>{etichettaMese(s)}</div>)}</div>
+              <div className="pg-drow">
+                {perGiorno
+                  ? days.map(d => { const k = toKey(d); return <div key={k} className={"pg-d" + (wd(d) >= 5 ? " we" : "") + (k === oggi ? " oggi" : "")} style={{ width: colW }}><span>{colW >= 28 ? `${GIORNI[wd(d)].slice(0, 1)} ${d.getDate()}` : d.getDate()}</span></div>; })
+                  : days.map((d, i) => wd(d) === 0 || i === 0 ? <div key={toKey(d)} className={"pg-d" + (daysBetween(d, new Date()) >= 0 && daysBetween(d, new Date()) < 7 ? " oggi" : "")} style={{ width: Math.min(7 - (i === 0 ? wd(d) : 0), N - i) * colW, textAlign: "left", paddingLeft: 3 }}>{colW * 7 >= 22 && <span>{d.getDate()}</span>}</div> : null)}
+              </div>
+            </div>
+          </div>
+
+          <div className="pg-body">
+            <div className="pg-bg" style={{ left: LBL, width: W }}>
+              {colW >= 6 && days.map((d, i) => wd(d) >= 5 ? <div key={i} className="pg-we" style={{ left: i * colW, width: colW }} /> : null)}
+              {mesiSeg.slice(1).reduce((acc, s, i) => { const x = acc.x + mesiSeg[i].n * colW; acc.el.push(<div key={s.k} className="pg-msep" style={{ left: x }} />); acc.x = x; return acc; }, { x: 0, el: [] }).el}
+              {iOggi >= 0 && iOggi < N && <div className="pg-now" style={{ left: iOggi * colW + colW / 2 - 1 }} />}
+            </div>
+
+            {gruppi.map(g => {
+              const k = g.id || "__none", chiuso = !!chiusi[k];
+              return (
+                <React.Fragment key={k}>
+                  <div className="pg-row pg-grp">
+                    <div className="pg-lbl" style={{ width: LBL }}>
+                      {corto ? <span className="pg-grp-dot" style={{ background: g.colore, margin: "0 auto", width: 14, height: 14 }} onClick={() => togGruppo(k)} /> : <>
+                      <button className="pl-icon" style={{ width: 22, height: 22, border: "none", background: "none" }} onClick={() => togGruppo(k)}><Icon name={chiuso ? "right" : "down"} size={14} /></button>
+                      <span className="pg-grp-dot" style={{ background: g.colore }} />
+                      <span className="pg-grp-n" onClick={() => togGruppo(k)} title={g.nome}>{g.nome}</span>
+                      <span className="pg-grp-c hide-sm">{g.items.length}</span>
+                      <button className="pl-icon hide-sm" style={{ width: 24, height: 24 }} title={`Nuova attività in ${g.nome}`} onClick={() => onNew({ buId: g.id })}><Icon name="plus" size={13} /></button></>}
+                    </div>
+                    <div className="pg-track" style={{ width: W }}>
+                      {corto && <span className="pg-grp-float" style={{ color: g.colore, left: LBL + 6 }}>{g.nome}</span>}
+                      {chiuso && g.items.map(a => { const d = dateDi(a); const off = Math.max(0, daysBetween(start, fromKey(d.inizio))); const end = Math.min(N, daysBetween(start, fromKey(d.fine)) + 1); return <div key={a.id} style={{ position: "absolute", top: 15, height: 6, borderRadius: 3, left: off * colW, width: Math.max(3, (end - off) * colW - 1), background: hexA(g.colore, 0.5) }} />; })}
+                    </div>
+                  </div>
+                  {!chiuso && g.items.map(a => {
+                    const st = statoDi(a), late = inRitardo(a);
+                    return (
+                      <div key={a.id} className="pg-row">
+                        <div className="pg-lbl" style={{ width: LBL }}>
+                          <button className="pg-stbtn" title={`${STATI[st].lbl} · tocca per cambiare`}
+                            style={{ background: st === "fatto" ? "var(--ok)" : st === "in_corso" ? "var(--brand-soft-2)" : "#efede6", color: st === "fatto" ? "#fff" : st === "in_corso" ? "var(--brand-dark)" : "var(--ink-3)" }}
+                            onClick={() => onPatch(a.id, { stato: PROSSIMO[st], done: PROSSIMO[st] === "fatto", ...(PROSSIMO[st] === "fatto" ? { avanzamento: 100 } : {}) })}>
+                            <Icon name={STATI[st].ic} size={12} />
+                          </button>
+                          {!corto && <div className="pg-lbl-main" onClick={() => onOpen(a)}>
+                            <div className={"pg-lbl-t" + (st === "fatto" ? " done" : "")} title={a.titolo}>{a.milestone ? "◆ " : ""}{a.titolo}</div>
+                            <div className="pg-lbl-s"><span className={late ? "late" : ""}>{fmtPeriodo(a)}{late ? " · in ritardo" : ""}</span>{!mobile && (a.responsabili || []).length === 0 && <span style={{ fontStyle: "italic" }}>senza responsabile</span>}</div>
+                          </div>}
+                          {!mobile && <Avatars ids={a.responsabili} utMap={utMap} size={22} max={3} />}
+                        </div>
+                        <div className="pg-track" style={{ width: W }}>{barra(a)}</div>
+                      </div>
+                    );
+                  })}
+                </React.Fragment>
+              );
+            })}
+            {!gruppi.length && <div className="pl-empty">Nessuna attività con questi filtri.</div>}
+          </div>
+        </div>
+      </div>
+      <div className="pg-fuori">
+        {fuori > 0 && <>{fuori} attività {fuori === 1 ? "è" : "sono"} fuori dal periodo visualizzato. </>}
+        {mobile ? "Tieni premuta una barra e trascinala per spostarla. Tocca il pallino per cambiare lo stato." : "Trascina una barra per spostarla, i bordi per cambiarne le date. Tocca il pallino per cambiare lo stato."}
+      </div>
+      {tip && !drag && <div className="pg-tip" style={{ left: tip.x + 14, top: tip.y + 14 }}>{tip.t}</div>}
+      {drag && <div className="pg-dragtip">{(attivita.find(x => x.id === drag.id) || {}).titolo} · {fmtPeriodo(dateTrascinate(drag))}</div>}
+    </>
+  );
+}
+
+/* =====================================================================
+   CALENDARIO
+   ===================================================================== */
+function CalendarView({ attivita, buMap, utMap, onOpen, onNew }) {
+  const mobile = useMedia(MOBILE_Q);
+  const [modo, setModoS] = useState(() => lsGet("plf-calmodo") || "mese");
+  const setModo = (m) => { setModoS(m); lsSet("plf-calmodo", m); };
+  const [cursor, setCursor] = useState(() => startOfDay(new Date()));
+  const oggi = oggiKey();
+  const swRef = useRef(null);
+  const colore = (a) => (a.buId && buMap[a.buId] ? buMap[a.buId].colore : "#8a8a82");
+
+  // le attività brevi compaiono in ogni giorno; quelle lunghe (più di 7 giorni)
+  // solo all'inizio e alla scadenza, per non riempire il calendario
+  const perGiorno = useMemo(() => {
+    const m = {};
+    const metti = (k, a) => { (m[k] = m[k] || []).push(a); };
+    attivita.forEach(a => {
+      if (!a.inizio) return;
+      const durata = daysBetween(fromKey(a.inizio), fromKey(fineDi(a))) + 1;
+      if (durata > 7 && modo !== "settimana") { metti(a.inizio, a); metti(fineDi(a), a); return; }
+      let d = fromKey(a.inizio); const e = fromKey(fineDi(a)); let g = 0;
+      while (d <= e && g < 400) { metti(toKey(d), a); d = addDays(d, 1); g++; }
+    });
+    Object.values(m).forEach(l => l.sort((x, y) => (x.ora || "99").localeCompare(y.ora || "99") || x.inizio.localeCompare(y.inizio)));
+    return m;
+  }, [attivita, modo]);
+  const segno = (a, k) => {
+    const durata = daysBetween(fromKey(a.inizio), fromKey(fineDi(a))) + 1;
+    if (durata <= 7 || modo === "settimana") return a.inizio !== k ? "↳ " : "";
+    return k === a.inizio ? "▸ " : "⚑ ";
+  };
+
+  const sposta = (n) => {
+    if (modo === "mese") setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + n, 1));
+    else if (modo === "settimana") setCursor(addDays(cursor, 7 * n));
+    else setCursor(addDays(cursor, 30 * n));
+  };
+  const settStart = startOfWeek(cursor);
+  const etichetta = modo === "mese" ? `${MESI[cursor.getMonth()]} ${cursor.getFullYear()}`
+    : modo === "settimana" ? `${fmtData(toKey(settStart))} – ${fmtData(toKey(addDays(settStart, 6)))} ${addDays(settStart, 6).getFullYear()}`
+    : `Dal ${fmtDataLunga(toKey(cursor))}`;
+
+  const card = (a, giorno) => {
+    const c = colore(a), st = statoDi(a);
+    return (
+      <button key={a.id + giorno} className="pc-card" style={{ background: hexA(c, 0.12), borderLeftColor: c, opacity: st === "fatto" ? 0.6 : 1 }} onClick={(e) => { e.stopPropagation(); onOpen(a); }}>
+        <span className="t" style={{ textDecoration: st === "fatto" ? "line-through" : "none" }}>{a.milestone ? "◆ " : ""}{a.titolo}</span>
+        <span className="s">
+          {a.ora && <span>{a.ora}</span>}
+          {a.inizio !== fineDi(a) && <span>{fmtPeriodo(a)}</span>}
+          {inRitardo(a) && <span style={{ color: "var(--danger)", fontWeight: 600 }}>in ritardo</span>}
+          <Avatars ids={a.responsabili} utMap={utMap} size={18} max={3} />
+        </span>
+      </button>
+    );
+  };
+
+  let corpo;
+  if (modo === "mese") {
+    const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    const gs = startOfWeek(first);
+    const celle = Array.from({ length: 42 }, (_, i) => addDays(gs, i));
+    const max = mobile ? 2 : 3;
+    corpo = (
+      <div className="pl-panel" style={{ overflow: "hidden" }}>
+        <div className="pc-mhead">{GIORNI.map(g => <div key={g}>{g}</div>)}</div>
+        <div className="pc-grid">
+          {celle.map(d => {
+            const k = toKey(d), l = perGiorno[k] || [];
+            return (
+              <div key={k} className={"pc-cell" + (d.getMonth() !== cursor.getMonth() ? " out" : "") + (wd(d) >= 5 ? " we" : "") + (k === oggi ? " oggi" : "")} onClick={() => onNew({ inizio: k, fine: k })}>
+                <span className="pc-day">{d.getDate()}</span>
+                {l.slice(0, max).map(a => {
+                  const c = colore(a), sg = segno(a, k), cont = sg === "↳ ";
+                  return <button key={a.id} className={"pc-pill" + (cont ? " cont" : "") + (statoDi(a) === "fatto" ? " done" : "")} style={{ background: hexA(c, 0.14), borderLeftColor: c, color: "#1a1a1a" }} title={`${a.titolo} · ${fmtPeriodo(a)}${sg === "⚑ " ? " · scadenza" : sg === "▸ " ? " · inizio" : ""}`} onClick={e => { e.stopPropagation(); onOpen(a); }}>{sg}{a.ora && !sg ? a.ora + " " : ""}{a.titolo}</button>;
+                })}
+                {l.length > max && <span className="pc-more">+{l.length - max}</span>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  } else if (modo === "settimana") {
+    corpo = (
+      <div className="pl-panel pc-week">
+        {Array.from({ length: 7 }, (_, i) => addDays(settStart, i)).map(d => {
+          const k = toKey(d), l = perGiorno[k] || [];
+          return (
+            <div key={k} className={"pc-wcol" + (k === oggi ? " oggi" : "")} onClick={() => onNew({ inizio: k, fine: k })}>
+              <div className="pc-whead"><div className="wd">{GIORNI[wd(d)]}</div><div className="dn">{d.getDate()}</div></div>
+              {l.map(a => card(a, k))}
+              {!l.length && !mobile && <span className="pl-hint" style={{ textAlign: "center", marginTop: 8 }}>—</span>}
+            </div>
+          );
+        })}
+      </div>
+    );
+  } else {
+    const giorni = Array.from({ length: 60 }, (_, i) => addDays(cursor, i)).filter(d => (perGiorno[toKey(d)] || []).length);
+    corpo = (
+      <div className="pl-panel">
+        {!giorni.length && <div className="pl-empty">Nessuna attività nei prossimi 60 giorni.</div>}
+        {giorni.map(d => {
+          const k = toKey(d);
+          return (
+            <div key={k} className="pc-list-day">
+              <div className={"pc-list-date" + (k === oggi ? " oggi" : "")}><div className="wd">{GIORNI[wd(d)]}</div><div className="dn">{d.getDate()}</div><div className="mm">{MESI[d.getMonth()].slice(0, 3)}</div></div>
+              <div className="pc-list-items">{perGiorno[k].map(a => card(a, k))}</div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="pg-bar-top">
+        <div className="pl-nav">
+          <button onClick={() => sposta(-1)}><Icon name="left" size={16} /></button>
+          <button className="oggi" onClick={() => setCursor(startOfDay(new Date()))}>Oggi</button>
+          <button onClick={() => sposta(1)}><Icon name="right" size={16} /></button>
+        </div>
+        <span className="pg-periodo" style={{ textTransform: "capitalize" }}>{etichetta}</span>
+        <div className="pl-seg" style={{ marginLeft: "auto" }}>
+          {[["mese", "Mese"], ["settimana", "Settimana"], ["elenco", "Elenco"]].map(([k, l]) => <button key={k} className={modo === k ? "on" : ""} onClick={() => setModo(k)}>{l}</button>)}
+        </div>
+      </div>
+      <div onTouchStart={e => { swRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }}
+        onTouchEnd={e => { const s0 = swRef.current; swRef.current = null; if (!s0) return; const dx = e.changedTouches[0].clientX - s0.x, dy = e.changedTouches[0].clientY - s0.y; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) sposta(dx < 0 ? 1 : -1); }}>{corpo}</div>
+      <div className="pg-fuori">Tocca un giorno per creare un'attività in quella data{mobile ? ", scorri di lato per cambiare periodo" : ""}.{modo !== "settimana" && " Le attività più lunghe di una settimana compaiono solo all'inizio (▸) e alla scadenza (⚑)."}</div>
+    </>
+  );
+}
+
+/* =====================================================================
+   PERSONE (vista per responsabile)
+   ===================================================================== */
+function PeopleView({ attivita, utenti, uid, buMap, utMap, promemoria, onOpen, onPatch }) {
+  const [mostraFatte, setMostraFatte] = useState(false);
+  const oggi = oggiKey(), tra7 = toKey(addDays(new Date(), 7));
+  const ordinati = [...utenti].sort((a, b) => (a.id === uid ? -1 : b.id === uid ? 1 : 0));
+  const settimane = Array.from({ length: 8 }, (_, i) => addDays(startOfWeek(new Date()), 7 * i));
+
+  const riga = (a) => {
+    const st = statoDi(a), late = inRitardo(a), b = a.buId && buMap[a.buId];
+    return (
+      <div key={a.id} className="pp-item" onClick={() => onOpen(a)}>
+        <button className={"pl-check" + (st === "fatto" ? " on" : "")} onClick={e => { e.stopPropagation(); const n = st === "fatto" ? "da_fare" : "fatto"; onPatch(a.id, { stato: n, done: n === "fatto", ...(n === "fatto" ? { avanzamento: 100 } : {}) }); }}>{st === "fatto" && <Icon name="check" size={11} style={{ color: "#fff" }} />}</button>
+        <span className="dot" style={{ background: b ? b.colore : "#8a8a82" }} />
+        <span className="t" style={st === "fatto" ? { textDecoration: "line-through", color: "var(--ink-3)" } : null}>{a.titolo}</span>
+        {st === "in_corso" && <span className="pl-pill st-in_corso">{a.avanzamento ? a.avanzamento + "%" : "in corso"}</span>}
+        <span className={"d" + (late ? " late" : "")}>{late ? "scad. " + fmtData(fineDi(a)) : fmtPeriodo(a)}</span>
+      </div>
+    );
+  };
+  const blocco = (lista, titolo, isMe, u) => {
+    const aperte = lista.filter(a => statoDi(a) !== "fatto");
+    const late = aperte.filter(inRitardo).length, presto = aperte.filter(a => !inRitardo(a) && fineDi(a) <= tra7).length;
+    const visibili = (mostraFatte ? lista : aperte).slice().sort((x, y) => (inRitardo(y) - inRitardo(x)) || fineDi(x).localeCompare(fineDi(y)));
+    const carico = settimane.map(s => { const sk = toKey(s), ek = toKey(addDays(s, 6)); return aperte.filter(a => a.inizio <= ek && fineDi(a) >= sk).length; });
+    const maxC = Math.max(1, ...carico);
+    const promU = u ? promemoria.filter(p => !p.done && p.assegnatoA === u.id).length : 0;
+    return (
+      <div className={"pp-card" + (isMe ? " me" : "")} key={u ? u.id : "__none"}>
+        <div className="pp-head">
+          {u ? <Avatar u={u} size={38} /> : <span className="pl-av" style={{ width: 38, height: 38, background: "#c9c5bb", fontSize: 15 }}>?</span>}
+          <div style={{ minWidth: 0 }}><div className="pp-name">{titolo}{isMe && <span style={{ color: "var(--brand)", fontWeight: 500, fontSize: 12 }}> · tu</span>}</div>
+            <div className="pp-role">{u ? (u.incarico || (u.ruolo === "admin" ? "Amministratore" : "Membro")) : "Da assegnare"}{promU ? ` · ${promU} promemoria` : ""}</div></div>
+          <div className="pp-counts">
+            <span className="pl-pill st-da_fare">{aperte.length} aperte</span>
+            {late > 0 && <span className="pl-pill st-ritardo">{late} in ritardo</span>}
+            {presto > 0 && <span className="pl-pill st-in_corso">{presto} entro 7 gg</span>}
+          </div>
+        </div>
+        {u && aperte.length > 0 && <>
+          <div className="pp-load" title="Attività aperte per settimana, prossime 8 settimane">
+            {carico.map((c, i) => <div key={i} className={"b" + (i === 0 ? " cur" : "")} style={{ height: `${Math.max(4, (c / maxC) * 100)}%` }} title={`Settimana del ${fmtData(toKey(settimane[i]))}: ${c}`} />)}
+          </div>
+          <div className="pp-loadlbl"><span>questa settimana</span><span>fra 8 settimane</span></div>
+        </>}
+        {visibili.length ? visibili.map(riga) : <div className="pl-empty" style={{ padding: 18 }}>Niente da fare 🎉</div>}
+      </div>
+    );
+  };
+  const senza = attivita.filter(a => !(a.responsabili || []).length);
+  return (
+    <>
+      <div className="pg-bar-top">
+        <span className="pg-periodo">Chi fa cosa</span>
+        <label style={{ marginLeft: "auto", fontSize: 13, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+          <input type="checkbox" checked={mostraFatte} onChange={e => setMostraFatte(e.target.checked)} /> Mostra anche le completate
+        </label>
+      </div>
+      <div className="pp-grid">
+        {ordinati.map(u => blocco(attivita.filter(a => (a.responsabili || []).includes(u.id)), u.nome, u.id === uid, u))}
+        {senza.filter(a => mostraFatte || statoDi(a) !== "fatto").length > 0 && blocco(senza, "Senza responsabile", false, null)}
+      </div>
+    </>
+  );
+}
+
+/* =====================================================================
+   PROMEMORIA
+   ===================================================================== */
+function ReminderView({ promemoria, utenti, utMap, uid, me, avviso }) {
+  const [testo, setTesto] = useState(""), [scad, setScad] = useState(""), [chi, setChi] = useState(uid);
+  const [filtro, setFiltro] = useState("miei");
+  const [editId, setEditId] = useState(null), [editTxt, setEditTxt] = useState("");
+  const oggi = oggiKey();
+  const aggiungi = async () => {
+    if (!testo.trim()) return;
+    try { await store.add("promemoria", { testo: testo.trim(), scadenza: scad || "", done: false, assegnatoA: chi || null, creatoDa: uid, creatoDaNome: me.nome, creatoIl: ora() }); setTesto(""); setScad(""); }
+    catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
+  const upd = (id, p) => store.update("promemoria", id, p).catch(e => avviso("Errore: " + (e.code || e.message), "error"));
+  const del = (id) => store.del("promemoria", id).catch(e => avviso("Errore: " + (e.code || e.message), "error"));
+  const lista = promemoria.filter(p => filtro === "tutti" || (filtro === "miei" ? p.assegnatoA === uid : p.creatoDa === uid));
+  const aperti = lista.filter(p => !p.done).sort((a, b) => (a.scadenza || "9999").localeCompare(b.scadenza || "9999"));
+  const fatti = lista.filter(p => p.done).sort((a, b) => String(b.creatoIl || "").localeCompare(String(a.creatoIl || "")));
+  const badge = (p) => {
+    if (!p.scadenza) return null;
+    let cls = "", lbl = fmtData(p.scadenza);
+    if (!p.done && p.scadenza < oggi) { cls = "late"; lbl = "scaduto " + lbl; } else if (!p.done && p.scadenza === oggi) { cls = "today"; lbl = "oggi"; }
+    return <span className={"pr-due " + cls}>{lbl}</span>;
+  };
+  const riga = (p) => (
+    <div key={p.id} className="pr-row">
+      <button className={"pl-check" + (p.done ? " on" : "")} onClick={() => upd(p.id, { done: !p.done })}>{p.done && <Icon name="check" size={11} style={{ color: "#fff" }} />}</button>
+      {editId === p.id
+        ? <input className="pl-input" autoFocus value={editTxt} onChange={e => setEditTxt(e.target.value)} onBlur={() => { if (editTxt.trim()) upd(p.id, { testo: editTxt.trim() }); setEditId(null); }} onKeyDown={e => { if (e.key === "Enter") e.target.blur(); if (e.key === "Escape") setEditId(null); }} />
+        : <span className={"pr-text" + (p.done ? " done" : "")} onClick={() => { setEditId(p.id); setEditTxt(p.testo); }}>{p.testo}</span>}
+      <div className="pr-meta">
+        {badge(p)}
+        {p.assegnatoA && utMap[p.assegnatoA] && <Avatar u={utMap[p.assegnatoA]} size={24} />}
+        <button className="pl-icon danger" title="Elimina" onClick={() => del(p.id)}><Icon name="trash" size={14} /></button>
+      </div>
+    </div>
+  );
+  return (
+    <>
+      <div className="pg-bar-top">
+        <span className="pg-periodo">Promemoria</span>
+        <div className="pl-seg" style={{ marginLeft: "auto" }}>
+          {[["miei", "Assegnati a me"], ["creati", "Creati da me"], ["tutti", "Tutti"]].map(([k, l]) => <button key={k} className={filtro === k ? "on" : ""} onClick={() => setFiltro(k)}>{l}</button>)}
+        </div>
+      </div>
+      <div className="pr-add">
+        <input className="pl-input" placeholder="Aggiungi un promemoria…" value={testo} onChange={e => setTesto(e.target.value)} onKeyDown={e => e.key === "Enter" && aggiungi()} />
+        <input className="pl-input pr-date" type="date" value={scad} onChange={e => setScad(e.target.value)} />
+        <select className="pl-select" value={chi || ""} onChange={e => setChi(e.target.value)}>
+          {utenti.map(u => <option key={u.id} value={u.id}>{u.id === uid ? "A me" : u.nome}</option>)}
+        </select>
+        <button className="pl-btn" onClick={aggiungi}><Icon name="plus" size={15} />Aggiungi</button>
+      </div>
+      <div className="pl-panel">
+        {aperti.length ? aperti.map(riga) : <div className="pl-empty">Nessun promemoria aperto.</div>}
+      </div>
+      {fatti.length > 0 && <><div className="pr-sec">Completati ({fatti.length})</div><div className="pl-panel">{fatti.map(riga)}</div></>}
+    </>
+  );
+}
+
+/* =====================================================================
+   SCHEDA ATTIVITÀ
+   ===================================================================== */
+function ActivityModal({ draft, setDraft, bus, utenti, utMap, uid, onClose, onSave, onDelete, onDuplicate }) {
+  const set = (p) => setDraft({ ...draft, ...p });
+  const [nuovaSub, setNuovaSub] = useState("");
+  const st = draft.stato || "da_fare";
+  const subs = draft.sottoattivita || [];
+  const subFatte = subs.filter(s => s.done).length;
+  const togResp = (id) => set({ responsabili: draft.responsabili.includes(id) ? draft.responsabili.filter(x => x !== id) : [...draft.responsabili, id] });
+  const cambiaInizio = (v) => {
+    if (!v) return;
+    const dur = Math.max(0, daysBetween(fromKey(draft.inizio), fromKey(draft.fine || draft.inizio)));
+    set({ inizio: v, fine: toKey(addDays(fromKey(v), dur)) });
+  };
+  const addSub = () => { const t = nuovaSub.trim(); if (!t) return; set({ sottoattivita: [...subs, { id: nid(), text: t, done: false }] }); setNuovaSub(""); };
+  const valido = draft.titolo.trim() && draft.inizio;
+  const responsabiliMancanti = (draft.responsabili || []).filter(id => !utenti.find(u => u.id === id));
+  return (
+    <div className="pl-overlay" onClick={onClose}>
+      <div className="pl-modal" onClick={e => e.stopPropagation()}>
+        <div className="pl-mhead"><h3>{draft.id ? "Attività" : "Nuova attività"}</h3><button className="pl-icon" onClick={onClose}><Icon name="x" size={16} /></button></div>
+        <div className="pl-mbody">
+          <label className="pl-lbl">Titolo</label>
+          <input className="pl-input" autoFocus={!draft.id} value={draft.titolo} placeholder="Es. Richiesta permessi Sagra" onChange={e => set({ titolo: e.target.value })} />
+
+          <label className="pl-lbl">Business unit</label>
+          <div className="pl-chips">
+            {bus.map(b => <button key={b.id} type="button" className={"pl-chip" + (draft.buId === b.id ? " on" : "")} style={draft.buId === b.id ? { background: b.colore, borderColor: b.colore } : null} onClick={() => set({ buId: b.id })}><span className="dot" style={{ background: draft.buId === b.id ? "#fff" : b.colore }} />{b.nome}</button>)}
+            <button type="button" className={"pl-chip" + (!draft.buId ? " on" : "")} onClick={() => set({ buId: null })}>Nessuna</button>
+          </div>
+
+          <label className="pl-lbl">Responsabili</label>
+          <div className="pl-chips">
+            {utenti.map(u => { const on = draft.responsabili.includes(u.id); return (
+              <button key={u.id} type="button" className={"pl-chip" + (on ? " on" : "")} style={on ? { background: u.colore, borderColor: u.colore } : null} onClick={() => togResp(u.id)}>
+                <Avatar u={u} size={18} />{u.nome}{u.id === uid ? " (tu)" : ""}
+              </button>); })}
+            {responsabiliMancanti.map(id => <span key={id} className="pl-chip" style={{ opacity: .6 }} title="Utente disattivato">{(utMap[id] && utMap[id].nome) || "Utente rimosso"} <button type="button" className="pl-link" onClick={() => togResp(id)}>✕</button></span>)}
+          </div>
+
+          <div className="pl-row3">
+            <div><label className="pl-lbl">{draft.milestone ? "Data" : "Inizio"}</label><input className="pl-input" type="date" value={draft.inizio} onChange={e => cambiaInizio(e.target.value)} /></div>
+            {!draft.milestone && <div><label className="pl-lbl">Fine / scadenza</label><input className="pl-input" type="date" value={draft.fine} min={draft.inizio} onChange={e => set({ fine: e.target.value })} /></div>}
+            <div><label className="pl-lbl">Orario (facoltativo)</label><input className="pl-input" type="time" value={draft.ora || ""} onChange={e => set({ ora: e.target.value })} /></div>
+          </div>
+          <Toggle on={!!draft.milestone} onChange={v => set({ milestone: v, fine: v ? draft.inizio : draft.fine })}>Traguardo di un solo giorno (es. assemblea, inaugurazione)</Toggle>
+
+          <label className="pl-lbl">Luogo</label>
+          <input className="pl-input" value={draft.luogo || ""} placeholder="Facoltativo" onChange={e => set({ luogo: e.target.value })} />
+
+          <div className="pl-row2">
+            <div>
+              <label className="pl-lbl">Stato</label>
+              <div className="pl-seg" style={{ display: "flex" }}>
+                {Object.entries(STATI).map(([k, s]) => <button key={k} type="button" style={{ flex: 1, justifyContent: "center" }} className={st === k ? "on" : ""} onClick={() => set({ stato: k, avanzamento: k === "fatto" ? 100 : (draft.avanzamento === 100 ? 0 : draft.avanzamento) })}><Icon name={s.ic} size={13} />{s.lbl}</button>)}
+              </div>
+            </div>
+            <div>
+              <label className="pl-lbl">Priorità</label>
+              <div className="pl-chips">
+                {Object.entries(PRIORITA).map(([k, l]) => <button key={k} type="button" className={"pl-chip" + (draft.priorita === k ? " on" : "")} onClick={() => set({ priorita: draft.priorita === k ? null : k })}><Icon name="flag" size={11} />{l}</button>)}
+              </div>
+            </div>
+          </div>
+
+          {st !== "fatto" && !draft.milestone && <>
+            <label className="pl-lbl">Avanzamento · {draft.avanzamento || 0}%</label>
+            <input className="pl-range" type="range" min="0" max="100" step="10" value={draft.avanzamento || 0} onChange={e => set({ avanzamento: Number(e.target.value), stato: Number(e.target.value) > 0 && st === "da_fare" ? "in_corso" : st })} />
+          </>}
+
+          <label className="pl-lbl">Sotto-attività {subs.length ? `· ${subFatte}/${subs.length}` : ""}</label>
+          {subs.map(s => (
+            <div key={s.id} className={"pl-sub-row" + (s.done ? " done" : "")}>
+              <button type="button" className={"pl-check" + (s.done ? " on" : "")} onClick={() => set({ sottoattivita: subs.map(x => x.id === s.id ? { ...x, done: !x.done } : x) })}>{s.done && <Icon name="check" size={11} style={{ color: "#fff" }} />}</button>
+              <span className="t">{s.text}</span>
+              <button type="button" className="pl-icon" style={{ width: 24, height: 24 }} onClick={() => set({ sottoattivita: subs.filter(x => x.id !== s.id) })}><Icon name="x" size={12} /></button>
+            </div>
+          ))}
+          <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+            <input className="pl-input" value={nuovaSub} placeholder="Aggiungi una sotto-attività…" onChange={e => setNuovaSub(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addSub(); } }} />
+            <button type="button" className="pl-btn ghost" onClick={addSub}><Icon name="plus" size={14} /></button>
+          </div>
+
+          <label className="pl-lbl">Note</label>
+          <textarea className="pl-area" value={draft.note || ""} placeholder="Dettagli, contatti, link a documenti…" onChange={e => set({ note: e.target.value })} />
+
+          <Toggle on={draft.notifica !== false} onChange={v => set({ notifica: v })}><Icon name="bell" size={14} style={{ verticalAlign: "-2px", marginRight: 4 }} />Avvisa i responsabili prima della scadenza</Toggle>
+
+          {(draft.creatoDa || draft.modificatoDa) && (
+            <div className="pl-meta">
+              {draft.creatoDa && <>Creata da <b>{draft.creatoDa}</b>{draft.creatoIl ? ` il ${new Date(draft.creatoIl).toLocaleDateString("it-IT")}` : ""}. </>}
+              {draft.modificatoDa && <>Ultima modifica di <b>{draft.modificatoDa}</b>{draft.modificatoIl ? ` il ${new Date(draft.modificatoIl).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}` : ""}.</>}
+            </div>
+          )}
+        </div>
+        <div className="pl-mfoot">
+          {draft.id && <button className="pl-btn danger" onClick={() => onDelete(draft)}><Icon name="trash" size={14} /><span className="hide-sm">Elimina</span></button>}
+          {draft.id && <button className="pl-btn ghost" title="Crea una copia, ad esempio per l'edizione successiva" onClick={() => onDuplicate(draft)}><Icon name="copy" size={14} /><span className="hide-sm">Duplica</span></button>}
+          <div className="dx">
+            <button className="pl-btn ghost" onClick={onClose}>Annulla</button>
+            <button className="pl-btn" disabled={!valido} onClick={() => onSave(draft)}><Icon name="check" size={15} />Salva</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =====================================================================
+   GESTIONE (profilo, utenti, business unit, notifiche)
+   ===================================================================== */
+function ManageDrawer({ tab, setTab, onClose, me, uid, isAdmin, utenti, bus, attivita, avviso }) {
+  const tabs = [["profilo", "Profilo"], ...(isAdmin ? [["utenti", "Utenti"]] : []), ["bu", "Business Unit"], ["notifiche", "Notifiche"]];
+  return (
+    <div className="pl-overlay right" onClick={onClose}>
+      <aside className="pl-drawer" onClick={e => e.stopPropagation()}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <h3 className="serif" style={{ fontWeight: 500, fontSize: 20, display: "flex", gap: 8, alignItems: "center" }}><Icon name="settings" size={18} />Gestione</h3>
+          <button className="pl-icon" onClick={onClose}><Icon name="x" size={16} /></button>
+        </div>
+        <div className="pl-dtabs">{tabs.map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>)}</div>
+        {tab === "profilo" && <ProfiloTab me={me} uid={uid} avviso={avviso} />}
+        {tab === "utenti" && isAdmin && <UtentiTab utenti={utenti} uid={uid} me={me} avviso={avviso} />}
+        {tab === "bu" && <BuTab bus={bus} attivita={attivita} isAdmin={isAdmin} avviso={avviso} />}
+        {tab === "notifiche" && <NotifichePanel uid={uid} isAdmin={isAdmin} avviso={avviso} />}
+      </aside>
+    </div>
+  );
+}
+
+function ProfiloTab({ me, uid, avviso }) {
+  const [nome, setNome] = useState(me.nome || ""), [incarico, setIncarico] = useState(me.incarico || ""), [colore, setColore] = useState(me.colore || PALETTE[0]);
+  const salva = async () => {
+    try { await store.update("utenti", uid, { nome: nome.trim() || me.nome, incarico: incarico.trim(), colore }); avviso("Profilo aggiornato"); }
+    catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
+  const resetPw = async () => {
+    if (DEMO) { avviso("In modalità prova non si inviano email"); return; }
+    try { await auth.sendPasswordResetEmail(me.email); avviso("Ti abbiamo mandato un'email per cambiare la password"); }
+    catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
+  return (
+    <>
+      <div className="pl-box">
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
+          <Avatar u={{ nome, colore }} size={46} />
+          <div><div style={{ fontWeight: 600 }}>{nome || "—"}</div><div className="pl-hint">{me.email} · {me.ruolo === "admin" ? "Amministratore" : "Membro"}</div></div>
+        </div>
+        <label className="pl-lbl">Nome e cognome</label>
+        <input className="pl-input" value={nome} onChange={e => setNome(e.target.value)} />
+        <label className="pl-lbl">Incarico nella Pro Loco</label>
+        <input className="pl-input" value={incarico} placeholder="Es. Tesoriere, Consigliere" onChange={e => setIncarico(e.target.value)} />
+        <label className="pl-lbl">Colore</label>
+        <Swatches value={colore} onPick={setColore} />
+        <div style={{ marginTop: 14, display: "flex", gap: 8 }}><button className="pl-btn" onClick={salva}><Icon name="check" size={14} />Salva</button></div>
+      </div>
+      <div className="pl-box">
+        <h4><Icon name="mail" size={15} />Password</h4>
+        <p className="pl-hint">Ricevi un'email con il link per impostarne una nuova.</p>
+        <button className="pl-btn ghost sm" style={{ marginTop: 10 }} onClick={resetPw}>Cambia password</button>
+      </div>
+      {!DEMO && <button className="pl-btn ghost block" onClick={() => auth.signOut()}><Icon name="logout" size={15} />Esci</button>}
+    </>
+  );
+}
+
+function UtentiTab({ utenti, uid, me, avviso }) {
+  const [form, setForm] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const ordinati = [...utenti].sort((a, b) => (a.attivo === false) - (b.attivo === false) || String(a.nome).localeCompare(String(b.nome), "it"));
+  const admins = utenti.filter(u => u.ruolo === "admin" && u.attivo !== false);
+
+  const crea = async () => {
+    const nome = (form.nome || "").trim(), email = (form.email || "").trim().toLowerCase();
+    if (!nome || !/^\S+@\S+\.\S+$/.test(email)) { avviso("Servono nome ed email valida", "error"); return; }
+    if (utenti.some(u => (u.email || "").toLowerCase() === email)) { avviso("Esiste già un utente con questa email", "error"); return; }
+    setBusy(true);
+    try {
+      const dati = { nome, email, incarico: (form.incarico || "").trim(), ruolo: form.ruolo || "membro", colore: form.colore || PALETTE[utenti.length % PALETTE.length], attivo: true, creatoIl: ora(), creatoDa: me.nome };
+      if (DEMO) { await store.add("utenti", dati); avviso(`${nome} aggiunto (in prova non parte l'email)`); }
+      else {
+        // un'app Firebase secondaria crea l'account senza far uscire l'amministratore
+        const sec = firebase.apps.find(a => a.name === "secondaria") || firebase.initializeApp(firebaseConfig, "secondaria");
+        const tmp = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2, 6).toUpperCase() + "!7";
+        const cred = await sec.auth().createUserWithEmailAndPassword(email, tmp);
+        await store.set("utenti", cred.user.uid, dati);
+        await sec.auth().signOut();
+        await auth.sendPasswordResetEmail(email);
+        avviso(`${nome} aggiunto: riceverà un'email per scegliere la password`);
+      }
+      setForm(null);
+    } catch (e) {
+      const m = { "auth/email-already-in-use": "Questa email ha già un account Firebase: se è stata disattivata, riattivala dall'elenco.", "auth/invalid-email": "Email non valida." };
+      avviso(m[e.code] || ("Errore: " + (e.code || e.message)), "error");
+    } finally { setBusy(false); }
+  };
+  const upd = (u, p) => store.update("utenti", u.id, p).catch(e => avviso("Errore: " + (e.code || e.message), "error"));
+  const cambiaRuolo = (u, r) => {
+    if (u.ruolo === "admin" && r !== "admin" && admins.length <= 1) { avviso("Serve almeno un amministratore", "error"); return; }
+    upd(u, { ruolo: r });
+  };
+  const disattiva = (u) => {
+    if (u.id === uid) { avviso("Non puoi disattivare te stesso", "error"); return; }
+    if (u.attivo !== false && !confirm(`Disattivare ${u.nome}? Non potrà più entrare; le attività assegnate restano.`)) return;
+    upd(u, { attivo: u.attivo === false });
+  };
+  const reinvia = async (u) => {
+    if (DEMO) { avviso("In modalità prova non si inviano email"); return; }
+    try { await auth.sendPasswordResetEmail(u.email); avviso(`Email inviata a ${u.email}`); } catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
+  return (
+    <>
+      <p className="pl-hint" style={{ marginBottom: 12 }}>Solo gli utenti di questo elenco possono entrare e possono essere scelti come responsabili. Chi aggiungi riceve un'email per impostare la propria password.</p>
+      <div className="pl-box">
+        {ordinati.map(u => (
+          <div key={u.id} className={"pl-urow" + (u.attivo === false ? " off" : "")}>
+            <Avatar u={u} size={32} />
+            <div className="nm"><b>{u.nome}{u.id === uid ? " (tu)" : ""}</b><span>{u.email}{u.incarico ? " · " + u.incarico : ""}</span></div>
+            <select className="pl-select" style={{ width: 112, padding: "5px 6px", fontSize: 12 }} value={u.ruolo || "membro"} disabled={u.id === uid} onChange={e => cambiaRuolo(u, e.target.value)}>
+              <option value="membro">Membro</option><option value="admin">Admin</option>
+            </select>
+            {u.id !== uid && <button className="pl-icon" title="Reinvia email per la password" onClick={() => reinvia(u)}><Icon name="mail" size={14} /></button>}
+            {u.id !== uid && <button className={"pl-icon" + (u.attivo === false ? "" : " danger")} title={u.attivo === false ? "Riattiva" : "Disattiva"} onClick={() => disattiva(u)}><Icon name={u.attivo === false ? "check" : "x"} size={14} /></button>}
+          </div>
+        ))}
+      </div>
+      {form ? (
+        <div className="pl-box">
+          <h4><Icon name="user" size={15} />Nuovo utente</h4>
+          <label className="pl-lbl">Nome e cognome</label><input className="pl-input" autoFocus value={form.nome || ""} onChange={e => setForm({ ...form, nome: e.target.value })} />
+          <label className="pl-lbl">Email</label><input className="pl-input" type="email" value={form.email || ""} onChange={e => setForm({ ...form, email: e.target.value })} />
+          <label className="pl-lbl">Incarico</label><input className="pl-input" value={form.incarico || ""} placeholder="Facoltativo" onChange={e => setForm({ ...form, incarico: e.target.value })} />
+          <label className="pl-lbl">Ruolo</label>
+          <div className="pl-seg"><button className={form.ruolo !== "admin" ? "on" : ""} onClick={() => setForm({ ...form, ruolo: "membro" })}>Membro</button><button className={form.ruolo === "admin" ? "on" : ""} onClick={() => setForm({ ...form, ruolo: "admin" })}>Amministratore</button></div>
+          <label className="pl-lbl">Colore</label><Swatches value={form.colore} onPick={c => setForm({ ...form, colore: c })} />
+          <div style={{ display: "flex", gap: 8, marginTop: 14, justifyContent: "flex-end" }}>
+            <button className="pl-btn ghost" onClick={() => setForm(null)}>Annulla</button>
+            <button className="pl-btn" disabled={busy} onClick={crea}>{busy ? "Creo…" : "Aggiungi utente"}</button>
+          </div>
+        </div>
+      ) : <button className="pl-btn block" onClick={() => setForm({ ruolo: "membro", colore: PALETTE[utenti.length % PALETTE.length] })}><Icon name="plus" size={15} />Aggiungi utente</button>}
+      <p className="pl-hint" style={{ marginTop: 12 }}>Gli Amministratori gestiscono utenti e business unit. Tutti possono creare e modificare le attività.</p>
+    </>
+  );
+}
+
+const BU_DEFAULT = [["Generale", "#3b4a5a"], ["Sagra", "#1f6fb0"], ["Eventi e manifestazioni", "#c2410c"], ["Turismo e promozione", "#2d5e3e"]];
+function BuTab({ bus, attivita, isAdmin, avviso }) {
+  const [form, setForm] = useState(null);
+  const conta = (id) => attivita.filter(a => a.buId === id).length;
+  const salva = async () => {
+    const nome = (form.nome || "").trim(); if (!nome) return;
+    try {
+      if (form.id) await store.update("bu", form.id, { nome, colore: form.colore });
+      else await store.add("bu", { nome, colore: form.colore, ordine: bus.length });
+      setForm(null);
+    } catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
+  const sposta = async (i, dir) => {
+    const j = i + dir; if (j < 0 || j >= bus.length) return;
+    const arr = [...bus]; [arr[i], arr[j]] = [arr[j], arr[i]];
+    try { await Promise.all(arr.map((b, k) => store.update("bu", b.id, { ordine: k }))); } catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
+  const elimina = async (b) => {
+    const n = conta(b.id);
+    if (!confirm(`Eliminare la business unit "${b.nome}"?${n ? `\n\n${n} attività finiranno in "Senza business unit".` : ""}`)) return;
+    try { await store.del("bu", b.id); } catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
+  const creaDefault = async () => {
+    try { for (let i = 0; i < BU_DEFAULT.length; i++) await store.add("bu", { nome: BU_DEFAULT[i][0], colore: BU_DEFAULT[i][1], ordine: bus.length + i }); avviso("Business unit create"); }
+    catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
+  return (
+    <>
+      <p className="pl-hint" style={{ marginBottom: 12 }}>Le business unit raggruppano le attività nel Gantt e nei filtri.{!isAdmin && " Solo gli amministratori possono modificarle."}</p>
+      <div className="pl-box">
+        {!bus.length && <div className="pl-hint">Nessuna business unit.</div>}
+        {bus.map((b, i) => (
+          <div key={b.id} className="pl-urow">
+            <span style={{ width: 14, height: 14, borderRadius: 4, background: b.colore, flexShrink: 0 }} />
+            <div className="nm"><b>{b.nome}</b><span>{conta(b.id)} attività</span></div>
+            {isAdmin && <>
+              <button className="pl-icon" disabled={i === 0} onClick={() => sposta(i, -1)}><Icon name="up" size={14} /></button>
+              <button className="pl-icon" disabled={i === bus.length - 1} onClick={() => sposta(i, 1)}><Icon name="down" size={14} /></button>
+              <button className="pl-icon" onClick={() => setForm({ ...b })}><Icon name="pencil" size={14} /></button>
+              <button className="pl-icon danger" onClick={() => elimina(b)}><Icon name="trash" size={14} /></button>
+            </>}
+          </div>
+        ))}
+      </div>
+      {isAdmin && (form ? (
+        <div className="pl-box">
+          <h4>{form.id ? "Modifica business unit" : "Nuova business unit"}</h4>
+          <label className="pl-lbl">Nome</label><input className="pl-input" autoFocus value={form.nome || ""} placeholder="Es. Sagra" onChange={e => setForm({ ...form, nome: e.target.value })} onKeyDown={e => e.key === "Enter" && salva()} />
+          <label className="pl-lbl">Colore</label><Swatches value={form.colore} onPick={c => setForm({ ...form, colore: c })} />
+          <div style={{ display: "flex", gap: 8, marginTop: 14, justifyContent: "flex-end" }}>
+            <button className="pl-btn ghost" onClick={() => setForm(null)}>Annulla</button>
+            <button className="pl-btn" onClick={salva}>Salva</button>
+          </div>
+        </div>
+      ) : <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button className="pl-btn" onClick={() => setForm({ nome: "", colore: PALETTE[bus.length % PALETTE.length] })}><Icon name="plus" size={15} />Nuova business unit</button>
+            {!bus.length && <button className="pl-btn ghost" onClick={creaDefault}>Crea quelle di partenza</button>}
+          </div>)}
+    </>
+  );
+}
+
+const NT_DEFAULT = { scadenze: true, giorniPrima: 2, assegnazioni: true, riepilogo: "settimanale" };
+function NotifichePanel({ uid, isAdmin, avviso }) {
+  const [pref, setPref] = useState(null);
+  const [cfg, setCfg] = useState(null);
+  const [mioToken, setMioToken] = useState(() => lsGet(LS_TOKEN));
+  const [busy, setBusy] = useState(false), [chiave, setChiave] = useState("");
+  const [supportato, setSupportato] = useState(null);
+  useEffect(() => store.watchDoc("pushSettings", uid, (d) => setPref({ ...NT_DEFAULT, ...(d || {}) })), [uid]);
+  useEffect(() => store.watchDoc("config", "push", (d) => setCfg({ vapidKey: VAPID_KEY, ...(d || {}) })), []);
+  useEffect(() => { getMessaging().then(m => setSupportato(!!m)); }, []);
+  const salvaPref = (p) => { setPref(x => ({ ...x, ...p })); store.set("pushSettings", uid, { ...pref, ...p, uid }).catch(e => avviso("Errore: " + (e.code || e.message), "error")); };
+  if (!pref || !cfg) return <div className="pl-hint">Carico…</div>;
+  const perm = typeof Notification !== "undefined" ? Notification.permission : "unsupported";
+  const attive = !!mioToken && perm === "granted";
+  const attiva = async () => {
+    if (!cfg.vapidKey) { avviso("Manca la chiave web push: la imposta l'amministratore qui sotto", "error"); return; }
+    setBusy(true);
+    try {
+      const p = await Notification.requestPermission();
+      if (p !== "granted") throw new Error(p === "denied" ? "Le notifiche sono bloccate nelle impostazioni del telefono o del browser." : "Permesso non concesso.");
+      setMioToken(await registraDispositivo(uid, cfg.vapidKey)); avviso("Notifiche attive su questo dispositivo");
+    } catch (e) { avviso(e.message || String(e), "error"); } finally { setBusy(false); }
+  };
+  const disattiva = async () => {
+    if (mioToken) await db.collection("pushTokens").doc(mioToken.replace(/\//g, "_")).delete().catch(() => {});
+    const m = await getMessaging(); if (m) { try { await m.deleteToken(); } catch (e) {} }
+    lsDel(LS_TOKEN); setMioToken(null); avviso("Notifiche disattivate su questo dispositivo");
+  };
+  const prova = async () => {
+    const reg = await getSw(); if (!reg) return;
+    reg.showNotification(ENTE, { body: "Notifica di prova: su questo dispositivo funzionano ✅", icon: "icon-192.png", badge: "icon-192.png", tag: "prova" });
+  };
+  return (
+    <>
+      <p className="pl-hint" style={{ marginBottom: 12 }}>Avvisi sul telefono anche ad app chiusa: scadenze delle tue attività, nuove assegnazioni e un riepilogo.</p>
+      {DEMO && <div className="pl-box" style={{ background: "var(--warn-soft)", borderColor: "#eedcb4" }}><span className="pl-hint" style={{ color: "var(--warn)" }}>In modalità prova le notifiche non partono: si attivano quando l'app è collegata a Firebase. Puoi già scegliere le preferenze.</span></div>}
+      {!DEMO && isIOS() && !isStandalone() && (
+        <div className="pl-box" style={{ background: "var(--brand-soft)", borderColor: "var(--brand-soft-2)" }}>
+          <span className="pl-hint" style={{ color: "var(--brand-dark)" }}>Su iPhone le notifiche funzionano solo se l'app è installata: in Safari tocca <b>Condividi</b> → <b>Aggiungi alla schermata Home</b>, poi apri l'app dall'icona.</span>
+        </div>
+      )}
+      {!DEMO && (
+        <div className="pl-box">
+          <h4><Icon name="bell" size={15} />Questo dispositivo</h4>
+          {supportato === false ? <span className="pl-status bad">Notifiche non supportate qui</span>
+            : perm === "denied" ? <span className="pl-status bad">Bloccate nelle impostazioni</span>
+            : attive ? <span className="pl-status on">Notifiche attive</span> : <span className="pl-status off">Non attive</span>}
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+            {!attive ? <button className="pl-btn sm" disabled={busy || supportato === false} onClick={attiva}>{busy ? "Attendi…" : "Attiva notifiche"}</button>
+              : <><button className="pl-btn ghost sm" onClick={prova}>Prova subito</button><button className="pl-btn danger sm" onClick={disattiva}>Disattiva</button></>}
+          </div>
+        </div>
+      )}
+      <div className="pl-box">
+        <h4>Cosa vuoi ricevere</h4>
+        <Toggle on={pref.scadenze} onChange={v => salvaPref({ scadenze: v })}>Scadenza delle mie attività</Toggle>
+        {pref.scadenze && <div className="pl-chips" style={{ marginTop: 8 }}>
+          {[[0, "Il giorno stesso"], [1, "1 giorno prima"], [2, "2 giorni prima"], [7, "1 settimana prima"]].map(([g, l]) => <button key={g} className={"pl-chip" + (Number(pref.giorniPrima) === g ? " on" : "")} onClick={() => salvaPref({ giorniPrima: g })}>{l}</button>)}
+        </div>}
+        <Toggle on={pref.assegnazioni} onChange={v => salvaPref({ assegnazioni: v })}>Quando mi assegnano un'attività</Toggle>
+        <label className="pl-lbl">Riepilogo</label>
+        <div className="pl-seg">{[["nessuno", "Nessuno"], ["giornaliero", "Ogni mattina"], ["settimanale", "Ogni lunedì"]].map(([k, l]) => <button key={k} className={pref.riepilogo === k ? "on" : ""} onClick={() => salvaPref({ riepilogo: k })}>{l}</button>)}</div>
+      </div>
+      {isAdmin && (
+        <div className="pl-box">
+          <h4><Icon name="settings" size={15} />Configurazione (amministratore)</h4>
+          <p className="pl-hint">Chiave web push di Firebase: Impostazioni progetto → Cloud Messaging → Certificati push web.</p>
+          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+            <input className="pl-input" placeholder={cfg.vapidKey ? "Chiave impostata · incolla per sostituirla" : "Chiave (inizia di solito con B…)"} value={chiave} onChange={e => setChiave(e.target.value)} />
+            <button className="pl-btn" disabled={!chiave.trim()} onClick={() => store.set("config", "push", { ...cfg, vapidKey: chiave.trim() }).then(() => { setChiave(""); avviso("Chiave salvata"); }).catch(e => avviso("Errore: " + (e.code || e.message), "error"))}>Salva</button>
+          </div>
+          <p className="pl-hint" style={{ marginTop: 8 }}>{cfg.ultimoInvio ? `Ultimo controllo automatico: ${new Date(cfg.ultimoInvio).toLocaleString("it-IT")}` : "Il controllo automatico che invia le notifiche non è ancora attivo."}</p>
+        </div>
+      )}
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+// con l'app aperta mostro io le notifiche in arrivo
+getMessaging().then(m => { if (!m) return; m.onMessage(async (p) => {
+  const n = p.notification || {}, reg = await getSw();
+  if (reg && Notification.permission === "granted") reg.showNotification(n.title || ENTE, { body: n.body || "", icon: "icon-192.png", badge: "icon-192.png", data: { url: location.href } });
+}); });
+</script>
+</body>
+</html>

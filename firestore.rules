@@ -1,0 +1,65 @@
+rules_version = '2';
+// Regole Firestore — Pro Loco Fabbrico
+// Incollale in: Console Firebase → Firestore Database → Regole → Pubblica.
+// Se cambi l'email dell'amministratore in index.html (ADMIN_EMAILS), cambiala anche qui sotto.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function profilo() { return get(/databases/$(database)/documents/utenti/$(request.auth.uid)).data; }
+    function attivo() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/utenti/$(request.auth.uid))
+        && profilo().get('attivo', true) != false;
+    }
+    function admin() { return attivo() && profilo().ruolo == 'admin'; }
+    function emailAdmin() {
+      return signedIn() && request.auth.token.email != null
+        && request.auth.token.email.lower() in ['davide.lodi69@gmail.com'];
+    }
+
+    // Membri del direttivo
+    match /utenti/{userId} {
+      allow read: if attivo() || (signedIn() && request.auth.uid == userId);
+      // primo accesso dell'amministratore: crea da solo il proprio profilo
+      allow create: if admin() || (emailAdmin() && request.auth.uid == userId && request.resource.data.ruolo == 'admin');
+      // ognuno può cambiare nome, incarico e colore; il resto solo l'admin
+      allow update: if admin()
+        || (attivo() && request.auth.uid == userId
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'incarico', 'colore']));
+      allow delete: if admin();
+    }
+
+    // Business unit: le vedono tutti, le gestisce l'admin
+    match /bu/{id} {
+      allow read: if attivo();
+      allow write: if admin();
+    }
+
+    // Attività e promemoria: lavoro condiviso di tutto il direttivo
+    match /attivita/{id} {
+      allow read, write: if attivo();
+    }
+    match /promemoria/{id} {
+      allow read, write: if attivo();
+    }
+
+    // Dispositivi registrati per le notifiche
+    match /pushTokens/{id} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create, update: if attivo() && request.resource.data.uid == request.auth.uid;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // Preferenze notifiche personali
+    match /pushSettings/{userId} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+
+    // Configurazione generale (chiave web push ecc.)
+    match /config/{id} {
+      allow read: if attivo();
+      allow write: if admin();
+    }
+  }
+}
