@@ -290,6 +290,12 @@
   .pl-urow .nm b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pl-urow .nm span{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
   .pl-urow.off{opacity:.55}
+  .pl-cred{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .pl-cred div{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:8px 10px}
+  .pl-cred span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);font-weight:600}
+  .pl-cred b{font-family:ui-monospace,Menlo,monospace;font-size:14px;word-break:break-all}
+  .pl-inline{background:var(--panel-2);border:1px solid var(--rule);border-radius:8px;padding:8px 10px 10px;margin:0 0 8px}
+  a.pl-btn{text-decoration:none}
   .pl-sub-row{display:flex;align-items:center;gap:8px;padding:4px 0}
   .pl-sub-row .t{flex:1;min-width:0;font-size:13px;word-break:break-word}
   .pl-sub-row.done .t{text-decoration:line-through;color:var(--ink-3)}
@@ -682,42 +688,73 @@ function App() {
   return <Shell uid={s.uid} />;
 }
 
+// ---- credenziali assegnate dall'amministratore ----
+// chi non ha un'email entra con un "nome utente": dietro le quinte diventa un'email interna mai usata
+const USER_DOMAIN = "utenti.proloco-fabbrico.firebaseapp.com";
+const isInterna = (e) => String(e || "").toLowerCase().endsWith("@" + USER_DOMAIN);
+const normUser = (s) => norm(s).trim().replace(/\s+/g, ".").replace(/[^a-z0-9._-]/g, "").replace(/\.{2,}/g, ".").replace(/^\.|\.$/g, "");
+const suggerisciUser = (nome) => normUser(String(nome || "").split(/\s+/).filter(Boolean).slice(0, 2).join("."));
+function generaPassword() {
+  const parole = ["sagra", "piazza", "festa", "fiera", "torre", "banco", "estate", "lambrusco", "tortelli", "borgo"];
+  const r = new Uint32Array(2); (window.crypto || window.msCrypto).getRandomValues(r);
+  return parole[r[0] % parole.length] + "-" + String(1000 + (r[1] % 9000));
+}
+const credenzialiTesto = (nome, user, pw) => `Ciao ${String(nome).split(" ")[0]}, ecco il tuo accesso all'app della ${ENTE}:\n${location.origin + location.pathname}\nNome utente: ${user}\nPassword: ${pw}\nDopo il primo accesso puoi cambiarla toccando il tuo cerchietto in alto a destra.`;
+const mostraAccesso = (u) => u ? (u.username ? "@" + u.username : (isInterna(u.email) ? "" : u.email)) : "";
+async function emailDaLogin(input) {
+  const v = String(input || "").trim();
+  if (v.includes("@")) return v.toLowerCase();
+  const u = normUser(v);
+  try { const d = await store.getDoc("accessi", u); if (d && d.email) return d.email; } catch (e) {}
+  return `${u}@${USER_DOMAIN}`;
+}
+// crea un account con un'app Firebase secondaria, così l'amministratore resta collegato
+async function creaAccount(email, pw) {
+  const sec = firebase.apps.find(a => a.name === "secondaria") || firebase.initializeApp(firebaseConfig, "secondaria");
+  const cred = await sec.auth().createUserWithEmailAndPassword(email, pw);
+  const id = cred.user.uid; await sec.auth().signOut(); return id;
+}
+const ERR_AUTH = { "auth/invalid-credential": "Nome utente o password non corretti.", "auth/invalid-login-credentials": "Nome utente o password non corretti.", "auth/invalid-email": "Nome utente o email non validi.", "auth/weak-password": "La password deve avere almeno 6 caratteri.", "auth/email-already-in-use": "Questo nome utente o email è già in uso.", "auth/wrong-password": "Password errata.", "auth/user-not-found": "Nome utente non trovato.", "auth/too-many-requests": "Troppi tentativi. Riprova tra qualche minuto.", "auth/requires-recent-login": "Per sicurezza esci e rientra, poi riprova." };
+
 function Login() {
-  const [modo, setModo] = useState("entra"); // entra | primo | reset
-  const [email, setEmail] = useState(""), [pw, setPw] = useState(""), [err, setErr] = useState(""), [msg, setMsg] = useState(""), [busy, setBusy] = useState(false);
-  const errori = { "auth/invalid-credential": "Email o password non corretti.", "auth/invalid-email": "Email non valida.", "auth/weak-password": "La password deve avere almeno 6 caratteri.", "auth/email-already-in-use": "Account già esistente: usa Entra.", "auth/wrong-password": "Password errata.", "auth/user-not-found": "Nessun account con questa email.", "auth/too-many-requests": "Troppi tentativi. Riprova tra qualche minuto." };
+  const [modo, setModo] = useState("entra"); // entra | primo | aiuto
+  const [chi, setChi] = useState(""), [pw, setPw] = useState(""), [err, setErr] = useState(""), [msg, setMsg] = useState(""), [busy, setBusy] = useState(false);
   const invia = async () => {
     setErr(""); setMsg(""); setBusy(true);
     try {
-      const mail = email.trim();
-      if (modo === "entra") await auth.signInWithEmailAndPassword(mail, pw);
-      else if (modo === "reset") { await auth.sendPasswordResetEmail(mail); setMsg("Ti abbiamo mandato un'email per impostare una nuova password."); }
-      else {
-        if (!ADMIN_EMAILS.map(x => x.toLowerCase()).includes(mail.toLowerCase())) throw { code: "x", message: "Questa email non è quella dell'amministratore. Gli altri membri ricevono l'accesso dall'amministratore." };
+      if (modo === "entra") await auth.signInWithEmailAndPassword(await emailDaLogin(chi), pw);
+      else if (modo === "aiuto") {
+        if (!chi.includes("@")) throw { message: "Chiedi all'amministratore della Pro Loco: ti darà una nuova password." };
+        await auth.sendPasswordResetEmail(chi.trim()); setMsg("Ti abbiamo mandato un'email per impostare una nuova password.");
+      } else {
+        const mail = chi.trim().toLowerCase();
+        if (!ADMIN_EMAILS.map(x => x.toLowerCase()).includes(mail)) throw { message: "Questa non è l'email dell'amministratore. Gli altri membri ricevono nome utente e password dall'amministratore." };
         await auth.createUserWithEmailAndPassword(mail, pw);
       }
-    } catch (e) { setErr(errori[e.code] || e.message || String(e)); }
+    } catch (e) { setErr(ERR_AUTH[e.code] || e.message || String(e)); }
     finally { setBusy(false); }
   };
   const key = (e) => e.key === "Enter" && invia();
+  const vai = (m) => { setModo(m); setErr(""); setMsg(""); };
   return (
     <div className="pl-login"><div className="pl-card">
       <div className="logo">P</div><h1>{ENTE}</h1>
-      <p className="lead">{modo === "entra" ? "Attività, calendario e responsabili" : modo === "reset" ? "Recupero password" : "Primo accesso dell'amministratore"}</p>
+      <p className="lead">{modo === "entra" ? "Attività, calendario e responsabili" : modo === "aiuto" ? "Password dimenticata" : "Primo accesso dell'amministratore"}</p>
       {err && <div className="pl-err">{err}</div>}
       {msg && <div className="pl-okmsg">{msg}</div>}
-      <label className="pl-lbl">Email</label>
-      <input className="pl-input" type="email" value={email} onChange={e => setEmail(e.target.value)} onKeyDown={key} autoComplete="email" />
-      {modo !== "reset" && <><label className="pl-lbl">Password</label>
+      {modo === "aiuto" && <p className="pl-hint" style={{ marginBottom: 6 }}>Se entri con un nome utente, chiedi una nuova password all'amministratore. Se entri con un'email, scrivila qui e ti mandiamo il link.</p>}
+      <label className="pl-lbl">{modo === "primo" ? "Email dell'amministratore" : modo === "aiuto" ? "Email" : "Nome utente o email"}</label>
+      <input className="pl-input" value={chi} onChange={e => setChi(e.target.value)} onKeyDown={key} autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
+      {modo !== "aiuto" && <><label className="pl-lbl">Password</label>
         <input className="pl-input" type="password" value={pw} onChange={e => setPw(e.target.value)} onKeyDown={key} autoComplete={modo === "entra" ? "current-password" : "new-password"} /></>}
-      <button className="pl-btn block" style={{ marginTop: 18 }} disabled={busy || !email || (modo !== "reset" && !pw)} onClick={invia}>
-        {busy ? "Attendi…" : modo === "entra" ? "Entra" : modo === "reset" ? "Mandami l'email" : "Crea account amministratore"}
+      <button className="pl-btn block" style={{ marginTop: 18 }} disabled={busy || !chi || (modo !== "aiuto" && !pw)} onClick={invia}>
+        {busy ? "Attendi…" : modo === "entra" ? "Entra" : modo === "aiuto" ? "Mandami l'email" : "Crea account amministratore"}
       </button>
       <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, gap: 10, flexWrap: "wrap" }}>
         {modo === "entra"
-          ? <><button className="pl-link" onClick={() => { setModo("reset"); setErr(""); }}>Password dimenticata?</button>
-              <button className="pl-link" onClick={() => { setModo("primo"); setErr(""); }}>Primo accesso amministratore</button></>
-          : <button className="pl-link" onClick={() => { setModo("entra"); setErr(""); setMsg(""); }}>← Torna all'accesso</button>}
+          ? <><button className="pl-link" onClick={() => vai("aiuto")}>Password dimenticata?</button>
+              <button className="pl-link" onClick={() => vai("primo")}>Primo accesso amministratore</button></>
+          : <button className="pl-link" onClick={() => vai("entra")}>← Torna all'accesso</button>}
       </div>
     </div></div>
   );
@@ -853,7 +890,7 @@ function Shell({ uid }) {
         onClose={() => setEditing(null)} onSave={salvaAttivita} onDelete={eliminaAtt}
         onDuplicate={(d) => setEditing({ ...pulisci(d), id: null, titolo: d.titolo + " (copia)", stato: "da_fare", avanzamento: 0, creatoDa: null, modificatoDa: null })} />}
       {manage && <ManageDrawer tab={manage} setTab={setManage} onClose={() => setManage(null)} me={me} uid={uid} isAdmin={isAdmin}
-        utenti={utentiTutti} bus={bus} attivita={attivita} avviso={avviso} />}
+        utenti={utentiTutti} bus={bus} attivita={attivita} promemoria={promRaw} avviso={avviso} />}
       {toast && <div className={"pl-toast " + (toast.tipo || "")}>{toast.msg}</div>}
     </div>
   );
@@ -1606,7 +1643,7 @@ function ActivityModal({ draft, setDraft, bus, utenti, utMap, uid, onClose, onSa
 /* =====================================================================
    GESTIONE (profilo, utenti, business unit, notifiche)
    ===================================================================== */
-function ManageDrawer({ tab, setTab, onClose, me, uid, isAdmin, utenti, bus, attivita, avviso }) {
+function ManageDrawer({ tab, setTab, onClose, me, uid, isAdmin, utenti, bus, attivita, promemoria, avviso }) {
   const tabs = [["profilo", "Profilo"], ...(isAdmin ? [["utenti", "Utenti"]] : []), ["bu", "Business Unit"], ["notifiche", "Notifiche"]];
   return (
     <div className="pl-overlay right" onClick={onClose}>
@@ -1617,7 +1654,7 @@ function ManageDrawer({ tab, setTab, onClose, me, uid, isAdmin, utenti, bus, att
         </div>
         <div className="pl-dtabs">{tabs.map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>)}</div>
         {tab === "profilo" && <ProfiloTab me={me} uid={uid} avviso={avviso} />}
-        {tab === "utenti" && isAdmin && <UtentiTab utenti={utenti} uid={uid} me={me} avviso={avviso} />}
+        {tab === "utenti" && isAdmin && <UtentiTab utenti={utenti} uid={uid} me={me} avviso={avviso} attivita={attivita} promemoria={promemoria} />}
         {tab === "bu" && <BuTab bus={bus} attivita={attivita} isAdmin={isAdmin} avviso={avviso} />}
         {tab === "notifiche" && <NotifichePanel uid={uid} isAdmin={isAdmin} avviso={avviso} />}
       </aside>
@@ -1631,17 +1668,25 @@ function ProfiloTab({ me, uid, avviso }) {
     try { await store.update("utenti", uid, { nome: nome.trim() || me.nome, incarico: incarico.trim(), colore }); avviso("Profilo aggiornato"); }
     catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
   };
-  const resetPw = async () => {
-    if (DEMO) { avviso("In modalità prova non si inviano email"); return; }
-    try { await auth.sendPasswordResetEmail(me.email); avviso("Ti abbiamo mandato un'email per cambiare la password"); }
-    catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  const [pwVecchia, setPwVecchia] = useState(""), [pwNuova, setPwNuova] = useState(""), [pwBusy, setPwBusy] = useState(false);
+  const cambiaPw = async () => {
+    if (pwNuova.length < 6) { avviso("La nuova password deve avere almeno 6 caratteri", "error"); return; }
+    if (DEMO) { avviso("In modalità prova la password non si cambia"); return; }
+    setPwBusy(true);
+    try {
+      const u = auth.currentUser;
+      await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, pwVecchia));
+      await u.updatePassword(pwNuova);
+      setPwVecchia(""); setPwNuova(""); avviso("Password cambiata");
+    } catch (e) { avviso(e.code === "auth/invalid-credential" || e.code === "auth/wrong-password" ? "La password attuale non è corretta" : (ERR_AUTH[e.code] || "Errore: " + (e.code || e.message)), "error"); }
+    finally { setPwBusy(false); }
   };
   return (
     <>
       <div className="pl-box">
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
           <Avatar u={{ nome, colore }} size={46} />
-          <div><div style={{ fontWeight: 600 }}>{nome || "—"}</div><div className="pl-hint">{me.email} · {me.ruolo === "admin" ? "Amministratore" : "Membro"}</div></div>
+          <div><div style={{ fontWeight: 600 }}>{nome || "—"}</div><div className="pl-hint">{mostraAccesso(me)}{mostraAccesso(me) ? " · " : ""}{me.ruolo === "admin" ? "Amministratore" : "Membro"}</div></div>
         </div>
         <label className="pl-lbl">Nome e cognome</label>
         <input className="pl-input" value={nome} onChange={e => setNome(e.target.value)} />
@@ -1652,46 +1697,97 @@ function ProfiloTab({ me, uid, avviso }) {
         <div style={{ marginTop: 14, display: "flex", gap: 8 }}><button className="pl-btn" onClick={salva}><Icon name="check" size={14} />Salva</button></div>
       </div>
       <div className="pl-box">
-        <h4><Icon name="mail" size={15} />Password</h4>
-        <p className="pl-hint">Ricevi un'email con il link per impostarne una nuova.</p>
-        <button className="pl-btn ghost sm" style={{ marginTop: 10 }} onClick={resetPw}>Cambia password</button>
+        <h4><Icon name="settings" size={15} />Cambia password</h4>
+        <label className="pl-lbl">Password attuale</label>
+        <input className="pl-input" type="password" autoComplete="current-password" value={pwVecchia} onChange={e => setPwVecchia(e.target.value)} />
+        <label className="pl-lbl">Nuova password (almeno 6 caratteri)</label>
+        <input className="pl-input" type="password" autoComplete="new-password" value={pwNuova} onChange={e => setPwNuova(e.target.value)} />
+        <button className="pl-btn ghost sm" style={{ marginTop: 10 }} disabled={pwBusy || !pwVecchia || !pwNuova} onClick={cambiaPw}>{pwBusy ? "Attendi…" : "Cambia password"}</button>
       </div>
       {!DEMO && <button className="pl-btn ghost block" onClick={() => auth.signOut()}><Icon name="logout" size={15} />Esci</button>}
     </>
   );
 }
 
-function UtentiTab({ utenti, uid, me, avviso }) {
+function CredenzialiBox({ c, onClose, avviso }) {
+  const testo = credenzialiTesto(c.nome, c.user, c.pw);
+  const copia = async () => { try { await navigator.clipboard.writeText(testo); avviso("Copiato: incollalo dove vuoi"); } catch (e) { avviso("Non riesco a copiare: seleziona il testo a mano", "error"); } };
+  return (
+    <div className="pl-box" style={{ borderColor: "var(--ok)", background: "var(--ok-soft)" }}>
+      <h4 style={{ color: "var(--ok)" }}><Icon name="check" size={15} />{c.titolo}</h4>
+      <p className="pl-hint">Manda queste credenziali a {c.nome.split(" ")[0]}. La password non verrà più mostrata.</p>
+      <div className="pl-cred">
+        <div><span>Nome utente</span><b>{c.user}</b></div>
+        <div><span>Password</span><b>{c.pw}</b></div>
+      </div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+        <a className="pl-btn" href={"https://wa.me/?text=" + encodeURIComponent(testo)} target="_blank" rel="noopener">Invia su WhatsApp</a>
+        <button className="pl-btn ghost" onClick={copia}><Icon name="copy" size={14} />Copia</button>
+        <button className="pl-btn ghost" onClick={onClose}>Fatto</button>
+      </div>
+    </div>
+  );
+}
+
+function UtentiTab({ utenti, uid, me, avviso, attivita, promemoria }) {
   const [form, setForm] = useState(null);
+  const [nuovaPw, setNuovaPw] = useState(null); // { u, pw }
+  const [creato, setCreato] = useState(null);
   const [busy, setBusy] = useState(false);
-  const ordinati = [...utenti].sort((a, b) => (a.attivo === false) - (b.attivo === false) || String(a.nome).localeCompare(String(b.nome), "it"));
-  const admins = utenti.filter(u => u.ruolo === "admin" && u.attivo !== false);
+  const visibili = utenti.filter(u => !u.sostituitoDa);
+  const ordinati = [...visibili].sort((a, b) => (a.attivo === false) - (b.attivo === false) || String(a.nome).localeCompare(String(b.nome), "it"));
+  const admins = visibili.filter(u => u.ruolo === "admin" && u.attivo !== false);
+  const errore = (e) => avviso(ERR_AUTH[e.code] || ("Errore: " + (e.code || e.message)), "error");
 
   const crea = async () => {
-    const nome = (form.nome || "").trim(), email = (form.email || "").trim().toLowerCase();
-    if (!nome || !/^\S+@\S+\.\S+$/.test(email)) { avviso("Servono nome ed email valida", "error"); return; }
-    if (utenti.some(u => (u.email || "").toLowerCase() === email)) { avviso("Esiste già un utente con questa email", "error"); return; }
+    const nome = (form.nome || "").trim(), user = normUser(form.user || ""), pw = form.pw || "";
+    if (!nome) { avviso("Scrivi nome e cognome", "error"); return; }
+    if (user.length < 3) { avviso("Il nome utente deve avere almeno 3 caratteri (lettere, numeri, punto)", "error"); return; }
+    if (pw.length < 6) { avviso("La password deve avere almeno 6 caratteri", "error"); return; }
+    if (visibili.some(u => u.username === user)) { avviso("Questo nome utente esiste già", "error"); return; }
     setBusy(true);
     try {
-      const dati = { nome, email, incarico: (form.incarico || "").trim(), ruolo: form.ruolo || "membro", colore: form.colore || PALETTE[utenti.length % PALETTE.length], attivo: true, creatoIl: ora(), creatoDa: me.nome };
-      if (DEMO) { await store.add("utenti", dati); avviso(`${nome} aggiunto (in prova non parte l'email)`); }
+      if (!DEMO && await store.getDoc("accessi", user)) { avviso("Questo nome utente esiste già", "error"); return; }
+      const email = `${user}@${USER_DOMAIN}`;
+      const dati = { nome, username: user, email, incarico: (form.incarico || "").trim(), ruolo: form.ruolo || "membro", colore: form.colore || PALETTE[utenti.length % PALETTE.length], attivo: true, creatoIl: ora(), creatoDa: me.nome };
+      if (DEMO) await store.add("utenti", dati);
       else {
-        // un'app Firebase secondaria crea l'account senza far uscire l'amministratore
-        const sec = firebase.apps.find(a => a.name === "secondaria") || firebase.initializeApp(firebaseConfig, "secondaria");
-        const tmp = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2, 6).toUpperCase() + "!7";
-        const cred = await sec.auth().createUserWithEmailAndPassword(email, tmp);
-        await store.set("utenti", cred.user.uid, dati);
-        await sec.auth().signOut();
-        await auth.sendPasswordResetEmail(email);
-        avviso(`${nome} aggiunto: riceverà un'email per scegliere la password`);
+        const nuovoId = await creaAccount(email, pw);
+        await store.set("utenti", nuovoId, dati);
+        await store.set("accessi", user, { email, uid: nuovoId });
       }
-      setForm(null);
-    } catch (e) {
-      const m = { "auth/email-already-in-use": "Questa email ha già un account Firebase: se è stata disattivata, riattivala dall'elenco.", "auth/invalid-email": "Email non valida." };
-      avviso(m[e.code] || ("Errore: " + (e.code || e.message)), "error");
-    } finally { setBusy(false); }
+      setCreato({ titolo: `${nome} aggiunto`, nome, user, pw }); setForm(null);
+    } catch (e) { errore(e); } finally { setBusy(false); }
   };
-  const upd = (u, p) => store.update("utenti", u.id, p).catch(e => avviso("Errore: " + (e.code || e.message), "error"));
+
+  // Firebase non permette di cambiare dall'app la password di un altro:
+  // creo un nuovo accesso con lo stesso nome utente e sposto su di lui attività e promemoria.
+  const reimposta = async () => {
+    const { u, pw } = nuovaPw;
+    if (pw.length < 6) { avviso("La password deve avere almeno 6 caratteri", "error"); return; }
+    setBusy(true);
+    try {
+      let user = u.username;
+      if (DEMO) { setCreato({ titolo: "Nuova password pronta", nome: u.nome, user: user || u.email, pw }); setNuovaPw(null); return; }
+      if (!user) {
+        if (!isInterna(u.email)) { await auth.sendPasswordResetEmail(u.email); avviso(`Inviata a ${u.email} l'email per scegliere una nuova password`); setNuovaPw(null); return; }
+        user = u.email.split("@")[0];
+      }
+      const email = `${user}.${Date.now().toString(36)}@${USER_DOMAIN}`;
+      const nuovoId = await creaAccount(email, pw);
+      const { id, ...resto } = u;
+      await store.set("utenti", nuovoId, { ...resto, username: user, email, attivo: true, sostituisce: u.id, aggiornatoIl: ora() });
+      await store.set("accessi", user, { email, uid: nuovoId });
+      await store.update("utenti", u.id, { attivo: false, sostituitoDa: nuovoId });
+      const lavori = [];
+      attivita.filter(a => (a.responsabili || []).includes(u.id)).forEach(a => lavori.push(store.update("attivita", a.id, { responsabili: a.responsabili.map(x => x === u.id ? nuovoId : x) })));
+      (promemoria || []).filter(p => p.assegnatoA === u.id || p.creatoDa === u.id).forEach(p => lavori.push(store.update("promemoria", p.id, { assegnatoA: p.assegnatoA === u.id ? nuovoId : p.assegnatoA, creatoDa: p.creatoDa === u.id ? nuovoId : p.creatoDa })));
+      await Promise.all(lavori);
+      setCreato({ titolo: "Nuova password pronta", nome: u.nome, user, pw }); setNuovaPw(null);
+    } catch (e) { errore(e); } finally { setBusy(false); }
+  };
+
+  const upd = (u, p) => store.update("utenti", u.id, p).catch(errore);
   const cambiaRuolo = (u, r) => {
     if (u.ruolo === "admin" && r !== "admin" && admins.length <= 1) { avviso("Serve almeno un amministratore", "error"); return; }
     upd(u, { ruolo: r });
@@ -1701,31 +1797,52 @@ function UtentiTab({ utenti, uid, me, avviso }) {
     if (u.attivo !== false && !confirm(`Disattivare ${u.nome}? Non potrà più entrare; le attività assegnate restano.`)) return;
     upd(u, { attivo: u.attivo === false });
   };
-  const reinvia = async (u) => {
-    if (DEMO) { avviso("In modalità prova non si inviano email"); return; }
-    try { await auth.sendPasswordResetEmail(u.email); avviso(`Email inviata a ${u.email}`); } catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
-  };
+  const cambiaNome = (n) => setForm(f => ({ ...f, nome: n, user: f.userToccato ? f.user : suggerisciUser(n) }));
   return (
     <>
-      <p className="pl-hint" style={{ marginBottom: 12 }}>Solo gli utenti di questo elenco possono entrare e possono essere scelti come responsabili. Chi aggiungi riceve un'email per impostare la propria password.</p>
+      <p className="pl-hint" style={{ marginBottom: 12 }}>Solo gli utenti di questo elenco possono entrare e possono essere scelti come responsabili. Sei tu a decidere nome utente e password di ciascuno.</p>
+      {creato && <CredenzialiBox c={creato} onClose={() => setCreato(null)} avviso={avviso} />}
       <div className="pl-box">
         {ordinati.map(u => (
-          <div key={u.id} className={"pl-urow" + (u.attivo === false ? " off" : "")}>
-            <Avatar u={u} size={32} />
-            <div className="nm"><b>{u.nome}{u.id === uid ? " (tu)" : ""}</b><span>{u.email}{u.incarico ? " · " + u.incarico : ""}</span></div>
-            <select className="pl-select" style={{ width: 112, padding: "5px 6px", fontSize: 12 }} value={u.ruolo || "membro"} disabled={u.id === uid} onChange={e => cambiaRuolo(u, e.target.value)}>
-              <option value="membro">Membro</option><option value="admin">Admin</option>
-            </select>
-            {u.id !== uid && <button className="pl-icon" title="Reinvia email per la password" onClick={() => reinvia(u)}><Icon name="mail" size={14} /></button>}
-            {u.id !== uid && <button className={"pl-icon" + (u.attivo === false ? "" : " danger")} title={u.attivo === false ? "Riattiva" : "Disattiva"} onClick={() => disattiva(u)}><Icon name={u.attivo === false ? "check" : "x"} size={14} /></button>}
-          </div>
+          <React.Fragment key={u.id}>
+            <div className={"pl-urow" + (u.attivo === false ? " off" : "")}>
+              <Avatar u={u} size={32} />
+              <div className="nm"><b>{u.nome}{u.id === uid ? " (tu)" : ""}</b><span>{mostraAccesso(u)}{u.incarico ? " · " + u.incarico : ""}</span></div>
+              <select className="pl-select" style={{ width: 100, padding: "5px 6px", fontSize: 12 }} value={u.ruolo || "membro"} disabled={u.id === uid} onChange={e => cambiaRuolo(u, e.target.value)}>
+                <option value="membro">Membro</option><option value="admin">Admin</option>
+              </select>
+              {u.id !== uid && u.attivo !== false && <button className="pl-icon" title="Nuova password" onClick={() => setNuovaPw(nuovaPw && nuovaPw.u.id === u.id ? null : { u, pw: generaPassword() })}><Icon name="settings" size={14} /></button>}
+              {u.id !== uid && <button className={"pl-icon" + (u.attivo === false ? "" : " danger")} title={u.attivo === false ? "Riattiva" : "Disattiva"} onClick={() => disattiva(u)}><Icon name={u.attivo === false ? "check" : "x"} size={14} /></button>}
+            </div>
+            {nuovaPw && nuovaPw.u.id === u.id && (
+              <div className="pl-inline">
+                <label className="pl-lbl" style={{ marginTop: 4 }}>Nuova password per {u.nome.split(" ")[0]}</label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input className="pl-input" value={nuovaPw.pw} onChange={e => setNuovaPw({ ...nuovaPw, pw: e.target.value })} autoCapitalize="none" autoCorrect="off" spellCheck={false} />
+                  <button className="pl-btn ghost" title="Genera" onClick={() => setNuovaPw({ ...nuovaPw, pw: generaPassword() })}>↻</button>
+                </div>
+                <div style={{ display: "flex", gap: 8, marginTop: 8, justifyContent: "flex-end" }}>
+                  <button className="pl-btn ghost sm" onClick={() => setNuovaPw(null)}>Annulla</button>
+                  <button className="pl-btn sm" disabled={busy} onClick={reimposta}>{busy ? "Attendi…" : "Imposta password"}</button>
+                </div>
+              </div>
+            )}
+          </React.Fragment>
         ))}
       </div>
       {form ? (
         <div className="pl-box">
           <h4><Icon name="user" size={15} />Nuovo utente</h4>
-          <label className="pl-lbl">Nome e cognome</label><input className="pl-input" autoFocus value={form.nome || ""} onChange={e => setForm({ ...form, nome: e.target.value })} />
-          <label className="pl-lbl">Email</label><input className="pl-input" type="email" value={form.email || ""} onChange={e => setForm({ ...form, email: e.target.value })} />
+          <label className="pl-lbl">Nome e cognome</label><input className="pl-input" autoFocus value={form.nome || ""} onChange={e => cambiaNome(e.target.value)} />
+          <div className="pl-row2">
+            <div><label className="pl-lbl">Nome utente</label><input className="pl-input" value={form.user || ""} placeholder="es. mario.rossi" autoCapitalize="none" autoCorrect="off" spellCheck={false} onChange={e => setForm({ ...form, user: e.target.value, userToccato: true })} onBlur={() => setForm(f => ({ ...f, user: normUser(f.user || "") }))} /></div>
+            <div><label className="pl-lbl">Password</label>
+              <div style={{ display: "flex", gap: 6 }}>
+                <input className="pl-input" value={form.pw || ""} autoCapitalize="none" autoCorrect="off" spellCheck={false} onChange={e => setForm({ ...form, pw: e.target.value })} />
+                <button className="pl-btn ghost" title="Genera" onClick={() => setForm({ ...form, pw: generaPassword() })}>↻</button>
+              </div>
+            </div>
+          </div>
           <label className="pl-lbl">Incarico</label><input className="pl-input" value={form.incarico || ""} placeholder="Facoltativo" onChange={e => setForm({ ...form, incarico: e.target.value })} />
           <label className="pl-lbl">Ruolo</label>
           <div className="pl-seg"><button className={form.ruolo !== "admin" ? "on" : ""} onClick={() => setForm({ ...form, ruolo: "membro" })}>Membro</button><button className={form.ruolo === "admin" ? "on" : ""} onClick={() => setForm({ ...form, ruolo: "admin" })}>Amministratore</button></div>
@@ -1735,8 +1852,8 @@ function UtentiTab({ utenti, uid, me, avviso }) {
             <button className="pl-btn" disabled={busy} onClick={crea}>{busy ? "Creo…" : "Aggiungi utente"}</button>
           </div>
         </div>
-      ) : <button className="pl-btn block" onClick={() => setForm({ ruolo: "membro", colore: PALETTE[utenti.length % PALETTE.length] })}><Icon name="plus" size={15} />Aggiungi utente</button>}
-      <p className="pl-hint" style={{ marginTop: 12 }}>Gli Amministratori gestiscono utenti e business unit. Tutti possono creare e modificare le attività.</p>
+      ) : <button className="pl-btn block" onClick={() => { setCreato(null); setForm({ ruolo: "membro", colore: PALETTE[utenti.length % PALETTE.length], pw: generaPassword() }); }}><Icon name="plus" size={15} />Aggiungi utente</button>}
+      <p className="pl-hint" style={{ marginTop: 12 }}>Gli amministratori gestiscono utenti e business unit. Tutti possono creare e modificare le attività. Se qualcuno dimentica la password, toccate ⚙️ accanto al suo nome per dargliene una nuova.</p>
     </>
   );
 }

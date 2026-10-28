@@ -30,6 +30,14 @@ service cloud.firestore {
       allow delete: if admin();
     }
 
+    // Nomi utente → account (serve per entrare con il nome utente).
+    // Si può leggere un solo nome alla volta, non l'elenco completo.
+    match /accessi/{user} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if admin();
+    }
+
     // Business unit: le vedono tutti, le gestisce l'admin
     match /bu/{id} {
       allow read: if attivo();
