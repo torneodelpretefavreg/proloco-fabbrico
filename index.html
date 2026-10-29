@@ -127,6 +127,10 @@
   .pl-swatches{display:flex;flex-wrap:wrap;gap:7px}
   .pl-sw{width:26px;height:26px;border-radius:7px;border:2px solid transparent;display:grid;place-items:center}
   .pl-sw.on{border-color:var(--ink)}
+  .pl-sw.preso{position:relative}
+  .pl-sw.preso::after{content:"";position:absolute;right:3px;bottom:3px;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+  .pl-sw-custom{position:relative;cursor:pointer;background:conic-gradient(#e11d48,#f59e0b,#16a34a,#0ea5e9,#7c3aed,#e11d48)}
+  .pl-sw-custom input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:none;padding:0}
   .pl-toast{position:fixed;bottom:22px;right:22px;background:var(--brand);color:#fff;padding:11px 16px;border-radius:8px;font-size:13px;box-shadow:0 10px 30px rgba(20,20,20,.2);z-index:300;max-width:420px}
   .pl-toast.error{background:var(--danger)}
 
@@ -296,6 +300,8 @@
   .pl-cred b{font-family:ui-monospace,Menlo,monospace;font-size:14px;word-break:break-all}
   .pl-inline{background:var(--panel-2);border:1px solid var(--rule);border-radius:8px;padding:8px 10px 10px;margin:0 0 8px}
   a.pl-btn{text-decoration:none}
+  .pl-avbtn{position:relative;border:none;background:none;padding:0;display:inline-flex;flex-shrink:0;cursor:pointer}
+  .pl-avedit{position:absolute;right:-3px;bottom:-3px;width:15px;height:15px;border-radius:50%;background:#fff;border:1px solid var(--rule-2);display:grid;place-items:center;color:var(--ink-2)}
   .pl-sub-row{display:flex;align-items:center;gap:8px;padding:4px 0}
   .pl-sub-row .t{flex:1;min-width:0;font-size:13px;word-break:break-word}
   .pl-sub-row.done .t{text-decoration:line-through;color:var(--ink-3)}
@@ -372,6 +378,8 @@
     .pp-item{padding:11px 14px}
     .pr-row{padding:12px}
     .pq-board{grid-template-columns:1fr;gap:10px}
+    .pl-swatches{gap:8px}
+    .pl-sw{width:34px;height:34px;border-radius:9px}
     .pq-col{min-height:0}
     .pq-move button{width:32px;height:32px;font-size:12px}
     .pg-bar-top{gap:8px}
@@ -440,7 +448,13 @@ const { useState, useEffect, useRef, useMemo, useCallback } = React;
 /* ---------- utilità ---------- */
 const MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
 const GIORNI = ["Lun","Mar","Mer","Gio","Ven","Sab","Dom"];
-const PALETTE = ["#1f6fb0","#165689","#0e7490","#2d5e3e","#4d7c0f","#b8954b","#c2410c","#b54343","#be185d","#7c3aed","#3b4a5a","#78716c"];
+const PALETTE = [
+  "#1f6fb0", "#165689", "#0369a1", "#0e7490", "#0f766e", "#047857", "#2d5e3e", "#4d7c0f",
+  "#65a30d", "#a16207", "#b8954b", "#c2410c", "#ea580c", "#b54343", "#be123c", "#be185d",
+  "#c026d3", "#9333ea", "#7c3aed", "#4f46e5", "#3b4a5a", "#475569", "#78716c", "#57534e",
+];
+const usatiDa = (lista, escludi) => { const m = {}; (lista || []).forEach(x => { if (x.colore && x.id !== escludi && x.attivo !== false && !x.sostituitoDa) m[String(x.colore).toLowerCase()] = x.nome; }); return m; };
+const coloreLibero = (usati) => PALETTE.find(c => !usati.includes(c)) || PALETTE[usati.length % PALETTE.length];
 const pad = (n) => String(n).padStart(2, "0");
 const toKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const fromKey = (k) => { const [y, m, d] = String(k || "").split("-").map(Number); return new Date(y || 2000, (m || 1) - 1, d || 1); };
@@ -644,8 +658,27 @@ function Avatars({ ids, utMap, size = 22, max = 3 }) {
   if (!l.length) return null;
   return <span className="pl-avs">{l.slice(0, max).map(u => <Avatar key={u.id} u={u} size={size} />)}{l.length > max && <span className="pl-av more" style={{ width: size, height: size, fontSize: Math.round(size * 0.38) }}>+{l.length - max}</span>}</span>;
 }
-function Swatches({ value, onPick }) {
-  return <div className="pl-swatches">{PALETTE.map(c => <button type="button" key={c} className={"pl-sw" + (value === c ? " on" : "")} style={{ background: c }} onClick={() => onPick(c)}>{value === c && <Icon name="check" size={13} style={{ color: "#fff" }} />}</button>)}</div>;
+// usati: { "#colore": "Nome di chi lo usa" } per segnare i colori già presi
+function Swatches({ value, onPick, usati }) {
+  const u = usati || {};
+  const v = String(value || "").toLowerCase();
+  const personalizzato = v && !PALETTE.includes(v);
+  return (
+    <div>
+      <div className="pl-swatches">
+        {PALETTE.map(c => (
+          <button type="button" key={c} title={u[c] ? `Già usato da ${u[c]}` : c} className={"pl-sw" + (v === c ? " on" : "") + (u[c] && v !== c ? " preso" : "")} style={{ background: c }} onClick={() => onPick(c)}>
+            {v === c && <Icon name="check" size={13} style={{ color: "#fff" }} />}
+          </button>
+        ))}
+        <label className={"pl-sw pl-sw-custom" + (personalizzato ? " on" : "")} title="Scegli un colore qualsiasi" style={personalizzato ? { background: v } : null}>
+          {personalizzato ? <Icon name="check" size={13} style={{ color: "#fff" }} /> : <Icon name="plus" size={13} style={{ color: "#fff" }} />}
+          <input type="color" value={v && v.length === 7 ? v : "#1f6fb0"} onChange={e => onPick(e.target.value.toLowerCase())} />
+        </label>
+      </div>
+      {Object.keys(u).length > 0 && <div className="pl-hint" style={{ fontSize: 11.5, marginTop: 6 }}>I colori col puntino sono già usati da qualcuno · il <b>+</b> apre tutti i colori.</div>}
+    </div>
+  );
 }
 function Toggle({ on, onChange, children }) {
   return <div className={"pl-toggle" + (on ? " on" : "")} onClick={() => onChange(!on)}><div className="sw" /><span style={{ fontSize: 13.5 }}>{children}</span></div>;
@@ -1653,7 +1686,7 @@ function ManageDrawer({ tab, setTab, onClose, me, uid, isAdmin, utenti, bus, att
           <button className="pl-icon" onClick={onClose}><Icon name="x" size={16} /></button>
         </div>
         <div className="pl-dtabs">{tabs.map(([k, l]) => <button key={k} className={tab === k ? "on" : ""} onClick={() => setTab(k)}>{l}</button>)}</div>
-        {tab === "profilo" && <ProfiloTab me={me} uid={uid} avviso={avviso} />}
+        {tab === "profilo" && <ProfiloTab me={me} uid={uid} avviso={avviso} utenti={utenti} />}
         {tab === "utenti" && isAdmin && <UtentiTab utenti={utenti} uid={uid} me={me} avviso={avviso} attivita={attivita} promemoria={promemoria} />}
         {tab === "bu" && <BuTab bus={bus} attivita={attivita} isAdmin={isAdmin} avviso={avviso} />}
         {tab === "notifiche" && <NotifichePanel uid={uid} isAdmin={isAdmin} avviso={avviso} />}
@@ -1662,7 +1695,7 @@ function ManageDrawer({ tab, setTab, onClose, me, uid, isAdmin, utenti, bus, att
   );
 }
 
-function ProfiloTab({ me, uid, avviso }) {
+function ProfiloTab({ me, uid, avviso, utenti }) {
   const [nome, setNome] = useState(me.nome || ""), [incarico, setIncarico] = useState(me.incarico || ""), [colore, setColore] = useState(me.colore || PALETTE[0]);
   const salva = async () => {
     try { await store.update("utenti", uid, { nome: nome.trim() || me.nome, incarico: incarico.trim(), colore }); avviso("Profilo aggiornato"); }
@@ -1693,7 +1726,7 @@ function ProfiloTab({ me, uid, avviso }) {
         <label className="pl-lbl">Incarico nella Pro Loco</label>
         <input className="pl-input" value={incarico} placeholder="Es. Tesoriere, Consigliere" onChange={e => setIncarico(e.target.value)} />
         <label className="pl-lbl">Colore</label>
-        <Swatches value={colore} onPick={setColore} />
+        <Swatches value={colore} onPick={setColore} usati={usatiDa(utenti, uid)} />
         <div style={{ marginTop: 14, display: "flex", gap: 8 }}><button className="pl-btn" onClick={salva}><Icon name="check" size={14} />Salva</button></div>
       </div>
       <div className="pl-box">
@@ -1732,6 +1765,13 @@ function CredenzialiBox({ c, onClose, avviso }) {
 function UtentiTab({ utenti, uid, me, avviso, attivita, promemoria }) {
   const [form, setForm] = useState(null);
   const [nuovaPw, setNuovaPw] = useState(null); // { u, pw }
+  const [modifica, setModifica] = useState(null); // { id, nome, incarico, colore }
+  const salvaModifica = async () => {
+    const nome = (modifica.nome || "").trim();
+    if (!nome) { avviso("Il nome non può essere vuoto", "error"); return; }
+    try { await store.update("utenti", modifica.id, { nome, incarico: (modifica.incarico || "").trim(), colore: modifica.colore }); setModifica(null); avviso("Salvato"); }
+    catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
   const [creato, setCreato] = useState(null);
   const [busy, setBusy] = useState(false);
   const visibili = utenti.filter(u => !u.sostituitoDa);
@@ -1749,7 +1789,7 @@ function UtentiTab({ utenti, uid, me, avviso, attivita, promemoria }) {
     try {
       if (!DEMO && await store.getDoc("accessi", user)) { avviso("Questo nome utente esiste già", "error"); return; }
       const email = `${user}@${USER_DOMAIN}`;
-      const dati = { nome, username: user, email, incarico: (form.incarico || "").trim(), ruolo: form.ruolo || "membro", colore: form.colore || PALETTE[utenti.length % PALETTE.length], attivo: true, creatoIl: ora(), creatoDa: me.nome };
+      const dati = { nome, username: user, email, incarico: (form.incarico || "").trim(), ruolo: form.ruolo || "membro", colore: form.colore || coloreLibero(Object.keys(usatiDa(utenti))), attivo: true, creatoIl: ora(), creatoDa: me.nome };
       if (DEMO) await store.add("utenti", dati);
       else {
         const nuovoId = await creaAccount(email, pw);
@@ -1806,14 +1846,30 @@ function UtentiTab({ utenti, uid, me, avviso, attivita, promemoria }) {
         {ordinati.map(u => (
           <React.Fragment key={u.id}>
             <div className={"pl-urow" + (u.attivo === false ? " off" : "")}>
-              <Avatar u={u} size={32} />
+              <button className="pl-avbtn" title="Modifica nome, incarico e colore" onClick={() => { setNuovaPw(null); setModifica(modifica && modifica.id === u.id ? null : { id: u.id, nome: u.nome, incarico: u.incarico || "", colore: u.colore || PALETTE[0] }); }}>
+                <Avatar u={modifica && modifica.id === u.id ? { ...u, nome: modifica.nome || u.nome, colore: modifica.colore } : u} size={32} /><span className="pl-avedit"><Icon name="pencil" size={9} /></span>
+              </button>
               <div className="nm"><b>{u.nome}{u.id === uid ? " (tu)" : ""}</b><span>{mostraAccesso(u)}{u.incarico ? " · " + u.incarico : ""}</span></div>
               <select className="pl-select" style={{ width: 100, padding: "5px 6px", fontSize: 12 }} value={u.ruolo || "membro"} disabled={u.id === uid} onChange={e => cambiaRuolo(u, e.target.value)}>
                 <option value="membro">Membro</option><option value="admin">Admin</option>
               </select>
-              {u.id !== uid && u.attivo !== false && <button className="pl-icon" title="Nuova password" onClick={() => setNuovaPw(nuovaPw && nuovaPw.u.id === u.id ? null : { u, pw: generaPassword() })}><Icon name="settings" size={14} /></button>}
+              {u.id !== uid && u.attivo !== false && <button className="pl-icon" title="Nuova password" onClick={() => setModifica(null) || setNuovaPw(nuovaPw && nuovaPw.u.id === u.id ? null : { u, pw: generaPassword() })}><Icon name="settings" size={14} /></button>}
               {u.id !== uid && <button className={"pl-icon" + (u.attivo === false ? "" : " danger")} title={u.attivo === false ? "Riattiva" : "Disattiva"} onClick={() => disattiva(u)}><Icon name={u.attivo === false ? "check" : "x"} size={14} /></button>}
             </div>
+            {modifica && modifica.id === u.id && (
+              <div className="pl-inline">
+                <div className="pl-row2">
+                  <div><label className="pl-lbl" style={{ marginTop: 4 }}>Nome e cognome</label><input className="pl-input" value={modifica.nome} onChange={e => setModifica({ ...modifica, nome: e.target.value })} /></div>
+                  <div><label className="pl-lbl" style={{ marginTop: 4 }}>Incarico</label><input className="pl-input" value={modifica.incarico} placeholder="Facoltativo" onChange={e => setModifica({ ...modifica, incarico: e.target.value })} /></div>
+                </div>
+                <label className="pl-lbl">Colore</label>
+                <Swatches value={modifica.colore} onPick={c => setModifica({ ...modifica, colore: c })} usati={usatiDa(utenti, u.id)} />
+                <div style={{ display: "flex", gap: 8, marginTop: 10, justifyContent: "flex-end" }}>
+                  <button className="pl-btn ghost sm" onClick={() => setModifica(null)}>Annulla</button>
+                  <button className="pl-btn sm" onClick={salvaModifica}><Icon name="check" size={13} />Salva</button>
+                </div>
+              </div>
+            )}
             {nuovaPw && nuovaPw.u.id === u.id && (
               <div className="pl-inline">
                 <label className="pl-lbl" style={{ marginTop: 4 }}>Nuova password per {u.nome.split(" ")[0]}</label>
@@ -1846,14 +1902,14 @@ function UtentiTab({ utenti, uid, me, avviso, attivita, promemoria }) {
           <label className="pl-lbl">Incarico</label><input className="pl-input" value={form.incarico || ""} placeholder="Facoltativo" onChange={e => setForm({ ...form, incarico: e.target.value })} />
           <label className="pl-lbl">Ruolo</label>
           <div className="pl-seg"><button className={form.ruolo !== "admin" ? "on" : ""} onClick={() => setForm({ ...form, ruolo: "membro" })}>Membro</button><button className={form.ruolo === "admin" ? "on" : ""} onClick={() => setForm({ ...form, ruolo: "admin" })}>Amministratore</button></div>
-          <label className="pl-lbl">Colore</label><Swatches value={form.colore} onPick={c => setForm({ ...form, colore: c })} />
+          <label className="pl-lbl">Colore</label><Swatches value={form.colore} onPick={c => setForm({ ...form, colore: c })} usati={usatiDa(utenti)} />
           <div style={{ display: "flex", gap: 8, marginTop: 14, justifyContent: "flex-end" }}>
             <button className="pl-btn ghost" onClick={() => setForm(null)}>Annulla</button>
             <button className="pl-btn" disabled={busy} onClick={crea}>{busy ? "Creo…" : "Aggiungi utente"}</button>
           </div>
         </div>
-      ) : <button className="pl-btn block" onClick={() => { setCreato(null); setForm({ ruolo: "membro", colore: PALETTE[utenti.length % PALETTE.length], pw: generaPassword() }); }}><Icon name="plus" size={15} />Aggiungi utente</button>}
-      <p className="pl-hint" style={{ marginTop: 12 }}>Gli amministratori gestiscono utenti e business unit. Tutti possono creare e modificare le attività. Se qualcuno dimentica la password, toccate ⚙️ accanto al suo nome per dargliene una nuova.</p>
+      ) : <button className="pl-btn block" onClick={() => { setCreato(null); setForm({ ruolo: "membro", colore: coloreLibero(Object.keys(usatiDa(utenti))), pw: generaPassword() }); }}><Icon name="plus" size={15} />Aggiungi utente</button>}
+      <p className="pl-hint" style={{ marginTop: 12 }}>Gli amministratori gestiscono utenti e business unit. Tutti possono creare e modificare le attività. Tocca il cerchietto di una persona per cambiarne nome, incarico o colore. Se qualcuno dimentica la password, tocca ⚙️ accanto al suo nome per dargliene una nuova.</p>
     </>
   );
 }
@@ -1906,14 +1962,14 @@ function BuTab({ bus, attivita, isAdmin, avviso }) {
         <div className="pl-box">
           <h4>{form.id ? "Modifica business unit" : "Nuova business unit"}</h4>
           <label className="pl-lbl">Nome</label><input className="pl-input" autoFocus value={form.nome || ""} placeholder="Es. Sagra" onChange={e => setForm({ ...form, nome: e.target.value })} onKeyDown={e => e.key === "Enter" && salva()} />
-          <label className="pl-lbl">Colore</label><Swatches value={form.colore} onPick={c => setForm({ ...form, colore: c })} />
+          <label className="pl-lbl">Colore</label><Swatches value={form.colore} onPick={c => setForm({ ...form, colore: c })} usati={usatiDa(bus, form.id)} />
           <div style={{ display: "flex", gap: 8, marginTop: 14, justifyContent: "flex-end" }}>
             <button className="pl-btn ghost" onClick={() => setForm(null)}>Annulla</button>
             <button className="pl-btn" onClick={salva}>Salva</button>
           </div>
         </div>
       ) : <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button className="pl-btn" onClick={() => setForm({ nome: "", colore: PALETTE[bus.length % PALETTE.length] })}><Icon name="plus" size={15} />Nuova business unit</button>
+            <button className="pl-btn" onClick={() => setForm({ nome: "", colore: coloreLibero(Object.keys(usatiDa(bus))) })}><Icon name="plus" size={15} />Nuova business unit</button>
             {!bus.length && <button className="pl-btn ghost" onClick={creaDefault}>Crea quelle di partenza</button>}
           </div>)}
     </>
