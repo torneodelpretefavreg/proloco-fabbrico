@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hub · Pro Loco</title>
+<title>Hub · Pro Loco Fabbrico</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -52,6 +52,7 @@
     background-image:radial-gradient(700px 460px at 50% 0%, #4dba8716, transparent 65%);
   }
   .lock-box{width:100%;max-width:400px;text-align:center}
+  .vault-lock{margin:30px auto}
   .lock-mark{
     width:64px;height:64px;margin:0 auto 22px;border-radius:20px;display:grid;place-items:center;
     font-size:1.7rem;background:var(--bg-2);border:1px solid var(--line);
@@ -350,10 +351,11 @@
 <!-- ══════════ ACCESSO ══════════ -->
 <div class="lock" id="lock">
   <div class="lock-box">
-    <div class="lock-mark">🔐</div>
+    <div class="lock-mark">🎪</div>
     <h2>Hub Pro Loco</h2>
-    <p>Inserisci la password per entrare.</p>
-    <form id="lockForm" autocomplete="off">
+    <p>Entra con lo stesso nome utente e password del planner delle attività.</p>
+    <form id="lockForm" autocomplete="on">
+      <input id="lockUser" type="text" placeholder="Nome utente o email" autocomplete="username" autocapitalize="none" spellcheck="false" style="margin-bottom:10px">
       <input id="lockPw" type="password" placeholder="Password" autocomplete="current-password">
       <div class="lock-err" id="lockErr"></div>
       <button class="btn primary" type="submit" id="lockBtn">Entra</button>
@@ -364,9 +366,9 @@
 <!-- ══════════ HUB ══════════ -->
 <div class="wrap" id="app" style="display:none">
   <header>
-    <div class="kicker">Centro di comando</div>
-    <h1>I tuoi <em>programmi</em>,<br>in un posto solo.</h1>
-    <p class="sub">Un punto di partenza per raggiungere ogni applicazione. Cerca, clicca, sei dentro.</p>
+    <div class="kicker">Pro Loco Fabbrico · <span id="who"></span></div>
+    <h1>Gli strumenti della <em>Pro Loco</em>,<br>in un posto solo.</h1>
+    <p class="sub">Planner, contabilità, festival e tutti gli account del direttivo. Cerca, clicca, sei dentro.</p>
   </header>
 
   <nav class="tabs">
@@ -376,7 +378,7 @@
     <span class="spacer"></span>
     <span class="status" id="status"><span class="dot" id="dot"></span><span id="statusText">sincronizzato</span></span>
     <button class="tab" id="btnSettings" title="Impostazioni">⚙︎</button>
-    <button class="tab" id="btnLock" title="Blocca">Blocca</button>
+    <button class="tab" id="btnLock" title="Esci">Esci</button>
   </nav>
 
   <section id="viewHub">
@@ -408,7 +410,18 @@
   </section>
 
   <section id="viewVault" style="display:none">
-    <div class="toolbar">
+    <div class="lock-box vault-lock" id="vaultLock" style="display:none">
+      <div class="lock-mark">🔑</div>
+      <h2 id="vlTitle">Archivio password</h2>
+      <p id="vlText"></p>
+      <form id="vaultForm" autocomplete="off">
+        <input id="vkPw" type="password" placeholder="Chiave dell'archivio" autocomplete="off">
+        <input id="vkPw2" type="password" placeholder="Ripeti la chiave" autocomplete="off" style="margin-top:10px;display:none">
+        <div class="lock-err" id="vkErr"></div>
+        <button class="btn primary" type="submit" id="vkBtn">Apri</button>
+      </form>
+    </div>
+    <div class="toolbar" id="vaultTools">
       <div class="search">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
         <input id="vsearch" type="search" name="hub-filtro-archivio" placeholder="Cerca un sito, un utente…"
@@ -423,7 +436,7 @@
   </section>
 
   <footer>
-    Hub Pro Loco · dati sincronizzati su Firebase · <kbd>/</kbd> per cercare
+    Hub Pro Loco Fabbrico · account del direttivo · dati su Firebase · <kbd>/</kbd> per cercare
   </footer>
 </div>
 
@@ -520,7 +533,7 @@
 <div class="modal" id="setModal">
   <div class="sheet">
     <h3>Impostazioni</h3>
-    <p class="hint">Backup, ripristino e password d'accesso.</p>
+    <p class="hint">Backup, ripristino e chiave dell'archivio password.</p>
 
     <div class="field">
       <label>Backup</label>
@@ -532,11 +545,11 @@
     </div>
 
     <div class="field">
-      <label>Cambia password d'accesso</label>
-      <input id="sOld" type="password" placeholder="Password attuale" autocomplete="off" style="margin-bottom:10px">
-      <input id="sNew" type="password" placeholder="Nuova password (almeno 6 caratteri)" autocomplete="off">
-      <button class="btn" id="btnChangePw" style="margin-top:10px">Aggiorna password</button>
-      <p class="hint" style="margin:10px 0 0">Cambia sia l'accesso all'hub sia la chiave con cui è cifrato l'archivio.</p>
+      <label>Cambia chiave dell'archivio password</label>
+      <input id="sOld" type="password" placeholder="Chiave attuale" autocomplete="off" style="margin-bottom:10px">
+      <input id="sNew" type="password" placeholder="Nuova chiave (almeno 8 caratteri)" autocomplete="off">
+      <button class="btn" id="btnChangePw" style="margin-top:10px">Aggiorna chiave</button>
+      <p class="hint" style="margin:10px 0 0">Cifra di nuovo tutte le password. La password per entrare nell'hub si cambia dal planner.</p>
     </div>
 
     <div class="field">
@@ -560,42 +573,45 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 /* ════════════════════════════════════════════════════════════════════
    CONFIGURAZIONE
    ════════════════════════════════════════════════════════════════════ */
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAzucVCOGBzPKErG2Szm9bL_mFnA8ihXqs",
-  authDomain: "hubdavide-40287.firebaseapp.com",
-  databaseURL: "https://hubdavide-40287-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "hubdavide-40287",
-  storageBucket: "hubdavide-40287.firebasestorage.app",
-  messagingSenderId: "450862351417",
-  appId: "1:450862351417:web:0540962bbfd9c2869d79e8"
+  apiKey: "AIzaSyDNDyh4671mqETRzEYyBnrjg_SvMwlRWEI",
+  authDomain: "proloco-fabbrico.firebaseapp.com",
+  projectId: "proloco-fabbrico",
+  storageBucket: "proloco-fabbrico.firebasestorage.app",
+  messagingSenderId: "842802975890",
+  appId: "1:842802975890:web:716840a5d68dc51b85024b"
 };
-const AUTH_EMAIL = "futsalfabbrico@gmail.com";
+/* Stesso progetto e stessi account del planner delle attività (../):
+   si entra con nome utente o email del direttivo. */
+const USER_DOMAIN = "utenti.proloco-fabbrico.firebaseapp.com";
 
 /* Lista di partenza: usata solo se il database è vuoto. */
 const SEED_APPS = [
-  { icon:"📁", name:"Cartella condivisa",
-    desc:"Verbali, delibere e documenti del direttivo.",
-    url:"https://drive.google.com", tags:["Documenti"], group:"Segreteria" },
-  { icon:"📅", name:"Calendario eventi",
-    desc:"Sagre, riunioni e turni dei volontari.",
-    url:"https://calendar.google.com", tags:["Eventi"], group:"Segreteria" },
-  { icon:"🎨", name:"Canva",
-    desc:"Manifesti e locandine delle manifestazioni.",
-    url:"https://www.canva.com", tags:["Grafica"], group:"Comunicazione", locked:true },
-  { icon:"📣", name:"Pagina Facebook",
-    desc:"Post e annunci della Pro Loco.",
-    url:"https://www.facebook.com", tags:["Social"], group:"Comunicazione", locked:true },
-  { icon:"🇮🇹", name:"UNPLI",
-    desc:"Unione nazionale Pro Loco: tessere, circolari, assicurazione.",
-    url:"https://www.unpli.info", tags:["Soci"], group:"Associazione" },
-  { icon:"🏛️", name:"RUNTS",
-    desc:"Registro unico del Terzo settore: depositi e aggiornamenti.",
-    url:"https://servizi.lavoro.gov.it", tags:["Adempimenti"], group:"Associazione", locked:true },
+  { icon:"🗓️", name:"Attività Pro Loco",
+    desc:"Gantt, calendario, persone e promemoria del direttivo.",
+    url:"https://torneodelpretefavreg.github.io/proloco-fabbrico/",
+    tags:["Direttivo","Firebase"], group:"Pro Loco Fabbrico", locked:true },
+  { icon:"📒", name:"Contabilità Pro Loco",
+    desc:"Prima nota, conti e bilancio dell'associazione.",
+    url:"https://torneodelpretefavreg.github.io/contproloco/",
+    tags:["Contabilità","Firebase"], group:"Pro Loco Fabbrico", locked:true },
+  { icon:"🏛️", name:"La Piazza di Fabbrico",
+    desc:"Il sito per il paese.",
+    url:"https://torneodelpretefavreg.github.io/lapiazza/",
+    tags:["Sito","Pubblico"], group:"Pro Loco Fabbrico" },
+  { icon:"🎪", name:"Festival · Prenotazioni",
+    desc:"Prenotazioni del Festival Fabbrico.",
+    url:"https://torneodelpretefavreg.github.io/festival/",
+    tags:["Eventi"], group:"Festival Fabbrico", locked:true },
+  { icon:"💶", name:"Cassa Festival",
+    desc:"Cassa per gli stand del Festival.",
+    url:"https://torneodelpretefavreg.github.io/cassafestival/",
+    tags:["POS","Eventi"], group:"Festival Fabbrico", locked:true },
 ];
 
 const K_APPS  = "proloco_apps_v1";
@@ -678,174 +694,199 @@ function setStatus(ok, text){
 }
 
 /* ─────────── Firebase ─────────── */
-let fbReady = false;
+let fbReady = false, auth = null, me = null, vaultRec = null;
 try{
   firebase.initializeApp(FIREBASE_CONFIG);
-  db = firebase.database();
+  auth = firebase.auth();
+  db = firebase.firestore();
   fbReady = true;
 }catch(e){ fbReady = false; }
 
-/* ─────────── accesso ─────────── */
+const clean = o => JSON.parse(JSON.stringify(o));
+const normTxt = s => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const normUser = s => normTxt(s).trim().replace(/\s+/g, ".").replace(/[^a-z0-9._-]/g, "").replace(/\.{2,}/g, ".").replace(/^\.|\.$/g, "");
+
+/* ─────────── accesso (account del planner) ─────────── */
 $("lockForm").addEventListener("submit", function(e){
   e.preventDefault();
-  unlock($("lockPw").value);
+  login($("lockUser").value, $("lockPw").value);
 });
 
-async function unlock(pw){
+async function emailDaLogin(input){
+  const v = String(input || "").trim();
+  if(v.indexOf("@") !== -1) return v.toLowerCase();
+  const u = normUser(v);
+  try{ const d = await db.collection("accessi").doc(u).get(); if(d.exists && d.data().email) return d.data().email; }catch(e){}
+  return u + "@" + USER_DOMAIN;
+}
+
+async function login(chi, pw){
   const err = $("lockErr"), btn = $("lockBtn");
+  if(!fbReady){ err.textContent = "Firebase non si è caricato: controlla la connessione e ricarica."; return; }
+  if(!String(chi).trim() || !pw){ err.textContent = "Scrivi nome utente e password."; return; }
   err.textContent = ""; btn.disabled = true; btn.textContent = "Accesso…";
-
-  let signedIn = false, offline = false;
-  if(fbReady){
-    try{
-      await firebase.auth().signInWithEmailAndPassword(AUTH_EMAIL, pw);
-      signedIn = true;
-    }catch(ex){
-      const code = ex && ex.code ? ex.code : "";
-      if(code === "auth/network-request-failed" || code === "auth/internal-error"){
-        offline = true;
-      }else{
-        btn.disabled = false; btn.textContent = "Entra";
-        err.textContent = "Password non valida.";
-        return false;
-      }
-    }
-  }else{
-    offline = true;
+  try{
+    await auth.signInWithEmailAndPassword(await emailDaLogin(chi), pw);
+  }catch(ex){
+    btn.disabled = false; btn.textContent = "Entra";
+    const code = ex && ex.code ? ex.code : "";
+    err.textContent = code === "auth/network-request-failed" ? "Connessione assente: riprova quando sei online."
+                    : code === "auth/too-many-requests" ? "Troppi tentativi: aspetta qualche minuto."
+                    : "Nome utente o password non validi.";
   }
+}
 
-  if(offline){
-    // niente rete: verifico la password contro l'impronta salvata da un accesso precedente
-    const auth = readJSON(K_AUTH, null);
-    let ok = false;
-    if(auth && SUB){ try{ ok = (await hashPw(pw, b64d(auth.salt))) === auth.hash; }catch(e){ ok = false; } }
-    else if(auth){ ok = pw === auth.plain; }
-    if(!ok){
-      btn.disabled = false; btn.textContent = "Entra";
-      err.textContent = "Connessione assente e nessun accesso salvato su questo dispositivo. Riprova online.";
-      return false;
-    }
+function showLock(){
+  $("app").style.display = "none";
+  $("lock").style.display = "";
+  $("lockBtn").disabled = false; $("lockBtn").textContent = "Entra";
+  $("lockPw").value = "";
+  setTimeout(function(){ ($("lockUser").value ? $("lockPw") : $("lockUser")).focus(); }, 0);
+}
+
+async function enter(user){
+  let prof = null;
+  try{ const d = await db.collection("utenti").doc(user.uid).get(); prof = d.exists ? d.data() : null; }catch(e){}
+  if(!prof || prof.attivo === false){
+    await auth.signOut();
+    showLock();
+    $("lockErr").textContent = prof ? "Questo account è stato disattivato." : "Questo account non fa parte del direttivo della Pro Loco.";
+    return;
   }
-
-  masterPw = pw;
-  sessionStorage.setItem(S_PW, pw);
-  await rememberPw(pw);
+  me = { uid:user.uid, nome: prof.nome || user.email, admin: prof.ruolo === "admin" };
+  $("who").textContent = me.nome;
 
   // dati locali come primo riempimento (istantaneo, poi arriva il remoto)
   const localApps = readJSON(K_APPS, null);
-  apps = localApps ? (localApps.list || (Array.isArray(localApps) ? localApps : [])) : [];
-  try{ vault = await openVault(masterPw, readJSON(K_VAULT, null)); }catch(e){ vault = []; }
+  apps = localApps ? (localApps.list || []) : [];
+  vaultRec = readJSON(K_VAULT, null);
+  masterPw = sessionStorage.getItem(S_PW) || "";
+  vault = [];
+  if(masterPw){
+    try{ vault = await openVault(masterPw, vaultRec); }
+    catch(e){ masterPw = ""; sessionStorage.removeItem(S_PW); }
+  }
 
   $("lock").style.display = "none";
   $("app").style.display = "";
   $("search").value = ""; $("vsearch").value = ""; $("asearch").value = "";
   renderApps(); renderVault(); renderCryptoNote();
-  // Chrome può riempire le caselle di ricerca subito dopo il caricamento: le riazzero
   setTimeout(function(){
     if($("search").value || $("vsearch").value || $("asearch").value){
       $("search").value = ""; $("vsearch").value = ""; $("asearch").value = "";
       renderApps(); renderVault();
     }
   }, 700);
-
-  if(signedIn){ setStatus(true, "sincronizzato"); startSync(); }
-  else{ setStatus(false, "offline"); if(!apps.length){ apps = SEED_APPS.map(seed); renderApps(); } }
-
-  btn.disabled = false; btn.textContent = "Entra";
-  return true;
+  setStatus(false, "collegamento…");
+  startSync();
 }
 
 function seed(a){ return Object.assign({}, a, {id:uid(), tags:(a.tags||[]).slice()}); }
 
-async function rememberPw(pw){
-  try{
-    if(SUB){
-      const salt = rand(16);
-      localStorage.setItem(K_AUTH, JSON.stringify({salt:b64e(salt), hash: await hashPw(pw, salt)}));
-    }else{
-      localStorage.setItem(K_AUTH, JSON.stringify({plain:pw}));
-    }
-  }catch(e){}
-}
-
-$("btnLock").addEventListener("click", function(){
+$("btnLock").addEventListener("click", async function(){
   sessionStorage.removeItem(S_PW);
-  if(fbReady) firebase.auth().signOut();
+  if(fbReady) await auth.signOut();
   location.reload();
 });
 
-/* ─────────── sincronizzazione ─────────── */
-function startSync(){
-  ref = db.ref("proloco");
+/* ─────────── archivio password: chiave condivisa del direttivo ─────────── */
+function vaultIsNew(){ return !vaultRec || !vaultRec.data; }
 
-  ref.child("apps").on("value", async function(snap){
-    const v = snap.val();
+$("vaultForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+  const k = $("vkPw").value, err = $("vkErr");
+  err.textContent = "";
+  if(vaultIsNew()){
+    if(k.length < 8){ err.textContent = "La chiave deve avere almeno 8 caratteri."; return; }
+    if(k !== $("vkPw2").value){ err.textContent = "Le due chiavi non coincidono."; return; }
+    masterPw = k; vault = [];
+    const res = await saveVault();
+    if(!res.ok){ masterPw = ""; err.textContent = res.msg; return; }
+    toast("Archivio creato");
+  }else{
+    try{ vault = await openVault(k, vaultRec); masterPw = k; }
+    catch(ex){ err.textContent = "Chiave sbagliata."; return; }
+  }
+  sessionStorage.setItem(S_PW, masterPw);
+  $("vkPw").value = ""; $("vkPw2").value = "";
+  renderVault();
+});
+
+/* ─────────── sincronizzazione (Firestore: hub/apps, hub/vault) ─────────── */
+function startSync(){
+  ref = db.collection("hub");
+
+  ref.doc("apps").onSnapshot({includeMetadataChanges:true}, function(snap){
+    const cached = snap.metadata.fromCache;
+    setStatus(!cached, cached ? "offline" : "sincronizzato");
+    const v = snap.exists ? snap.data() : null;
     const localRec = readJSON(K_APPS, null);
 
     if(v && v.list){
-      // se qui ho modifiche più recenti, le ripubblico invece di perderle
       if(localRec && localRec.ts && v.ts && localRec.ts > v.ts && localRec.list){
-        ref.child("apps").set(localRec).catch(function(){});
+        ref.doc("apps").set(clean(localRec)).catch(function(){});
         appsSnapSeen = true;
         return;
       }
       apps = v.list;
       localStorage.setItem(K_APPS, JSON.stringify({list:apps, ts:v.ts || Date.now()}));
       renderApps();
-    }else if(!appsSnapSeen){
+      if($("viewArchive").style.display !== "none") renderArchive();
+    }else if(!appsSnapSeen && !cached){
       apps = apps.length ? apps : SEED_APPS.map(seed);
       saveApps();
       renderApps();
     }
-    appsSnapSeen = true;
-  }, function(){ setStatus(false, "offline"); });
+    if(!cached) appsSnapSeen = true;
+  }, function(){
+    setStatus(false, "accesso negato");
+    toast("Il database ha rifiutato la lettura: vanno aggiornate le regole Firestore (vedi README).");
+  });
 
-  ref.child("vault").on("value", async function(snap){
-    const rec = snap.val();
+  ref.doc("vault").onSnapshot(async function(snap){
+    if(snap.metadata.fromCache && !snap.exists) return;
+    const rec = snap.exists ? snap.data() : null;
     const localRec = readJSON(K_VAULT, null);
-
-    // il database è vuoto ma qui ho delle voci: le carico invece di svuotare
     if(!rec){
-      if(localRec) ref.child("vault").set(localRec).catch(function(){});
+      if(localRec && localRec.data) ref.doc("vault").set(clean(localRec)).catch(function(){});
+      renderVault();
       return;
     }
-    // copia locale più recente (modifiche fatte senza rete): vince la mia
     if(localRec && localRec.ts && rec.ts && localRec.ts > rec.ts){
-      ref.child("vault").set(localRec).catch(function(){});
+      ref.doc("vault").set(clean(localRec)).catch(function(){});
       return;
     }
-
+    vaultRec = rec;
     localStorage.setItem(K_VAULT, JSON.stringify(rec));
+    if(!masterPw){ renderVault(); return; }
     try{
       vault = await openVault(masterPw, rec);
       renderVault();
     }catch(e){
-      toast("L'archivio è cifrato con un'altra password");
+      masterPw = ""; vault = []; sessionStorage.removeItem(S_PW);
+      renderVault();
+      toast("La chiave dell'archivio è cambiata: inserisci quella nuova");
     }
   }, function(err){
     toast("Archivio non leggibile dal database: " + (err && err.message ? err.message : "errore"));
-  });
-
-  db.ref(".info/connected").on("value", function(s){
-    setStatus(!!s.val(), s.val() ? "sincronizzato" : "offline");
   });
 }
 
 function saveApps(){
   const rec = {list:apps, ts:Date.now()};
   localStorage.setItem(K_APPS, JSON.stringify(rec));
-  // niente guardia su "online": l'SDK accoda la scrittura e la invia alla riconnessione
-  if(ref) ref.child("apps").set(rec).catch(function(err){
+  if(ref) ref.doc("apps").set(clean(rec)).catch(function(err){
     toast("Programmi non salvati sul database: " + (err && err.message ? err.message : "errore"));
   });
 }
 async function saveVault(){
-  if(!masterPw) return {ok:false, msg:"Sessione scaduta: rientra con la password"};
+  if(!masterPw) return {ok:false, msg:"Apri prima l'archivio con la sua chiave"};
   const rec = await sealVault(masterPw, vault);
+  vaultRec = rec;
   localStorage.setItem(K_VAULT, JSON.stringify(rec));
   if(ref){
     try{
-      await ref.child("vault").set(rec);
+      await ref.doc("vault").set(clean(rec));
     }catch(err){
       return {ok:false, msg:"Salvata solo su questo dispositivo — il database ha risposto: " +
                             (err && err.message ? err.message : "errore")};
@@ -1124,6 +1165,21 @@ $("btnDelApp").addEventListener("click", function(){
 /* ─────────── password ─────────── */
 function renderVault(){
   const box = $("vaultList");
+  const locked = !masterPw;
+  $("vaultLock").style.display = locked ? "" : "none";
+  $("vaultTools").style.display = locked ? "none" : "";
+  box.style.display = locked ? "none" : "";
+  $("cryptoNote").style.display = locked ? "none" : "";
+  if(locked){
+    const nuovo = vaultIsNew();
+    $("vlTitle").textContent = nuovo ? "Crea l'archivio password" : "Archivio password";
+    $("vlText").textContent = nuovo
+      ? "Scegli la chiave che cifra le password del direttivo. Non viene salvata da nessuna parte: comunicala a voce a chi deve usarla. Se si perde, le password non si recuperano."
+      : "Inserisci la chiave dell'archivio per vedere le password della Pro Loco.";
+    $("vkPw2").style.display = nuovo ? "" : "none";
+    $("vkBtn").textContent = nuovo ? "Crea archivio" : "Apri";
+    return;
+  }
   const q = $("vsearch").value.trim().toLowerCase();
   const list = vault.filter(function(e){
     const a = appById(e.appId);
@@ -1286,7 +1342,7 @@ $("btnGen").addEventListener("click", function(){
 
 function renderCryptoNote(){
   $("cryptoNote").innerHTML = SUB
-    ? "Ogni voce è cifrata (AES-256) nel browser con la tua password prima di raggiungere il database: su Firebase arrivano stringhe illeggibili, e la password non lascia mai questo dispositivo. Anche così, tutto gira lato browser: le credenziali davvero critiche (banca, SPID) tienile fuori da qui."
+    ? "Ogni voce è cifrata (AES-256) nel browser con la chiave dell'archivio prima di raggiungere il database: su Firebase arrivano stringhe illeggibili, e la chiave non lascia mai questo dispositivo. Anche così, tutto gira lato browser: le credenziali davvero critiche (banca, SPID) tienile fuori da qui."
     : "Attenzione: aperto così il browser non espone la cifratura forte, quindi le voci sono solo offuscate. Apri l'hub via <strong>https</strong> per avere la cifratura AES-256.";
 }
 
@@ -1320,7 +1376,8 @@ $("fileImport").addEventListener("change", async function(ev){
     saveApps();
     if(data.vault){
       localStorage.setItem(K_VAULT, JSON.stringify(data.vault));
-      if(ref) await ref.child("vault").set(data.vault);
+      vaultRec = data.vault;
+      if(ref) await ref.doc("vault").set(clean(data.vault));
       try{ vault = await openVault(masterPw, data.vault); }
       catch(e){ toast("Archivio importato: è cifrato con un'altra password"); }
     }
@@ -1333,36 +1390,32 @@ $("fileImport").addEventListener("change", async function(ev){
 
 $("btnChangePw").addEventListener("click", async function(){
   const oldPw = $("sOld").value, newPw = $("sNew").value;
-  if(oldPw !== masterPw){ toast("La password attuale non è corretta"); return; }
-  if(newPw.length < 6){ toast("La nuova password deve avere almeno 6 caratteri"); return; }
-  if(!online){ toast("Serve la connessione per cambiare password"); return; }
-  try{
-    await firebase.auth().currentUser.updatePassword(newPw);
-  }catch(ex){
-    toast("Firebase ha rifiutato il cambio: rientra e riprova");
-    return;
-  }
+  if(!masterPw){ toast("Apri prima l'archivio password con la chiave attuale"); return; }
+  if(oldPw !== masterPw){ toast("La chiave attuale non è corretta"); return; }
+  if(newPw.length < 8){ toast("La nuova chiave deve avere almeno 8 caratteri"); return; }
+  if(!online){ toast("Serve la connessione per cambiare la chiave"); return; }
+  const prev = masterPw;
   masterPw = newPw;
+  const res = await saveVault();     // ricifra l'archivio con la nuova chiave
+  if(!res.ok){ masterPw = prev; toast(res.msg); return; }
   sessionStorage.setItem(S_PW, newPw);
-  await rememberPw(newPw);
-  await saveVault();               // ricifra l'archivio con la nuova chiave
   $("sOld").value = ""; $("sNew").value = "";
-  closeModals(); toast("Password aggiornata");
+  closeModals(); toast("Chiave aggiornata: comunicala al direttivo");
 });
 
 $("btnDiag").addEventListener("click", async function(){
   const out = $("diagOut");
-  const user = fbReady && firebase.auth().currentUser;
+  const user = fbReady && auth.currentUser;
   const lines = [];
   lines.push("SDK Firebase: " + (fbReady ? "caricato" : "NON caricato"));
   lines.push("Autenticato: " + (user ? user.email : "no"));
   lines.push("Cifratura forte: " + (SUB ? "sì" : "no (serve https)"));
   lines.push("Stato rete: " + (online ? "connesso" : "offline"));
-  lines.push("Voci in archivio: " + vault.length);
+  lines.push("Archivio password: " + (masterPw ? vault.length + " voci" : "chiuso"));
   out.innerHTML = lines.join("<br>") + "<br>Scrittura di prova…";
   if(!ref){ out.innerHTML = lines.join("<br>") + "<br><b>Nessun collegamento al database.</b>"; return; }
   try{
-    await ref.child("diagnostica").set({ts:Date.now()});
+    await ref.doc("diagnostica").set({ts:Date.now()});
     out.innerHTML = lines.join("<br>") + "<br><b>Scrittura riuscita.</b>";
   }catch(err){
     out.innerHTML = lines.join("<br>") + "<br><b>Scrittura RIFIUTATA:</b> " +
@@ -1406,16 +1459,15 @@ document.addEventListener("keydown", function(e){
 });
 
 /* ─────────── avvio ─────────── */
-(async function(){
-  const saved = sessionStorage.getItem(S_PW);
-  if(saved){
-    const ok = await unlock(saved);
-    if(ok) return;
-    sessionStorage.removeItem(S_PW);
-    $("lockErr").textContent = "";
-  }
-  $("lockPw").focus();
-})();
+if(fbReady){
+  auth.onAuthStateChanged(function(u){
+    if(u){ if(!me) enter(u); }
+    else { me = null; showLock(); }
+  });
+}else{
+  showLock();
+  $("lockErr").textContent = "Firebase non si è caricato: controlla la connessione e ricarica.";
+}
 </script>
 </body>
 </html>

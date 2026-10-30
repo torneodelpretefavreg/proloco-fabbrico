@@ -51,3 +51,11 @@ Su iPhone servono iOS 16.4+ e l'app aggiunta alla schermata Home.
 - `attivita/{id}`: titolo, buId, responsabili[], inizio, fine, ora, milestone, luogo, stato (`da_fare`/`in_corso`/`fatto`), priorità, avanzamento, sottoattivita[], note, notifica, creatoDa, modificatoDa…
 - `promemoria/{id}`: testo, scadenza, assegnatoA, done
 - `pushTokens/{token}`, `pushSettings/{uid}`, `config/push`: notifiche
+
+## Hub (`/hub`)
+
+Pagina di partenza con tutti i programmi della Pro Loco e un archivio di password condivise: `torneodelpretefavreg.github.io/proloco-fabbrico/hub/`.
+
+- Si entra con gli **stessi account del planner** (nome utente o email + password). Gli utenti disattivati non entrano.
+- Le password dell'archivio sono cifrate nel browser (AES-256) con una **chiave dell'archivio** separata, scelta alla prima apertura: non viene salvata da nessuna parte, va comunicata a voce.
+- Dati in Firestore: `hub/apps` (elenco programmi) e `hub/vault` (archivio cifrato). Serve la regola `match /hub/{id}` presente in `firestore.rules`: ripubblica le regole dopo l'aggiornamento.

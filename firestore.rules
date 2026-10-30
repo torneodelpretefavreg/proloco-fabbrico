@@ -64,6 +64,11 @@ service cloud.firestore {
       allow read, write: if signedIn() && request.auth.uid == userId;
     }
 
+    // Hub (cartella /hub): elenco programmi e archivio password cifrato
+    match /hub/{id} {
+      allow read, write: if attivo();
+    }
+
     // Configurazione generale (chiave web push ecc.)
     match /config/{id} {
       allow read: if attivo();
