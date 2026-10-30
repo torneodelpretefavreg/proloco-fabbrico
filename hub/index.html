@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hub · Pro Loco</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14110e;
+    --bg-2:#1c1813;
+    --card:#211c16;
+    --card-hover:#2a241c;
+    --line:#352e24;
+    --text:#f3ece1;
+    --muted:#a4988440;
+    --muted-text:#9a8d77;
+    --accent:#4dba87;
+    --accent-soft:#4dba8722;
+    --danger:#d9705c;
+    --ok:#7fb069;
+    --radius:18px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Manrope',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(900px 500px at 85% -10%, #4dba8714, transparent 60%),
+      radial-gradient(700px 500px at -10% 110%, #4dba870d, transparent 55%);
+    background-attachment:fixed;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;z-index:0;
+    background-image:radial-gradient(var(--muted) .5px, transparent .5px);
+    background-size:22px 22px;
+    mask-image:radial-gradient(ellipse at 50% 0%, #000 30%, transparent 80%);
+    -webkit-mask-image:radial-gradient(ellipse at 50% 0%, #000 30%, transparent 80%);
+  }
+  .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:64px 28px 96px}
+
+  /* ─────────── accesso ─────────── */
+  .lock{
+    position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:28px;
+    background:var(--bg);
+    background-image:radial-gradient(700px 460px at 50% 0%, #4dba8716, transparent 65%);
+  }
+  .lock-box{width:100%;max-width:400px;text-align:center}
+  .lock-mark{
+    width:64px;height:64px;margin:0 auto 22px;border-radius:20px;display:grid;place-items:center;
+    font-size:1.7rem;background:var(--bg-2);border:1px solid var(--line);
+  }
+  .lock h2{font-family:'Fraunces',serif;font-weight:500;font-size:1.9rem;letter-spacing:-.01em}
+  .lock p{color:var(--muted-text);font-size:.94rem;margin-top:10px}
+  .lock form{margin-top:26px;display:flex;flex-direction:column;gap:12px}
+  .lock-err{color:var(--danger);font-size:.86rem;min-height:1.1em;line-height:1.4}
+
+  input,textarea,select{
+    width:100%;background:var(--bg-2);border:1px solid var(--line);
+    color:var(--text);font-family:inherit;font-size:.98rem;
+    padding:13px 15px;border-radius:13px;outline:none;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+  input::placeholder,textarea::placeholder{color:var(--muted-text)}
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus{
+    -webkit-text-fill-color:var(--text);
+    -webkit-box-shadow:0 0 0 1000px var(--bg-2) inset;
+    caret-color:var(--text);
+    transition:background-color 9999s ease-in-out 0s;
+  }
+  input[type=search]::-webkit-search-cancel-button{cursor:pointer}
+  textarea{resize:vertical;min-height:74px;line-height:1.5}
+  label{display:block;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;
+        color:var(--muted-text);font-weight:600;margin-bottom:7px}
+
+  .btn{
+    font-family:inherit;font-size:.92rem;font-weight:600;cursor:pointer;
+    padding:12px 18px;border-radius:13px;border:1px solid var(--line);
+    background:var(--bg-2);color:var(--text);
+    transition:border-color .2s, background .2s, transform .15s;
+  }
+  .btn:hover{border-color:#5a4e3c;background:var(--card-hover)}
+  .btn:active{transform:scale(.98)}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#20180a}
+  .btn.primary:hover{background:#f0b258;border-color:#f0b258}
+  .btn.ghost{background:transparent}
+  .btn.danger{color:var(--danger)}
+  .btn.sm{padding:8px 13px;font-size:.84rem;border-radius:10px}
+
+  /* ─────────── testata ─────────── */
+  header{margin-bottom:30px}
+  .kicker{
+    font-size:12px;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--accent);font-weight:600;margin-bottom:14px;
+    opacity:0;animation:rise .7s .05s forwards;
+  }
+  h1{
+    font-family:'Fraunces',serif;font-weight:500;
+    font-size:clamp(2.6rem,6vw,4.4rem);line-height:1;letter-spacing:-.02em;
+    opacity:0;animation:rise .7s .12s forwards;
+  }
+  h1 em{font-style:italic;color:var(--accent)}
+  .sub{
+    margin-top:16px;color:var(--muted-text);font-size:1.02rem;max-width:46ch;
+    opacity:0;animation:rise .7s .2s forwards;
+  }
+
+  .tabs{
+    display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:30px 0 4px;
+    opacity:0;animation:rise .7s .26s forwards;
+  }
+  .tab{
+    font-family:inherit;font-size:.92rem;font-weight:600;cursor:pointer;
+    padding:10px 16px;border-radius:12px;border:1px solid transparent;
+    background:transparent;color:var(--muted-text);transition:all .2s;
+  }
+  .tab:hover{color:var(--text)}
+  .tab.on{background:var(--card);border-color:var(--line);color:var(--text)}
+  .tabs .spacer{flex:1}
+  .tab-count{
+    display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;margin-left:6px;
+    border-radius:999px;font-size:.72rem;font-weight:700;background:var(--bg-2);
+    border:1px solid var(--line);color:var(--muted-text);vertical-align:1px;
+  }
+  .tab-count:empty{display:none}
+  .tab.on .tab-count{color:var(--accent);border-color:#5a4e3c}
+  .status{
+    font-size:.78rem;color:var(--muted-text);display:flex;align-items:center;gap:7px;
+    white-space:nowrap;
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+  .dot.off{background:var(--danger)}
+
+  .toolbar{
+    margin:26px 0 6px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;
+    opacity:0;animation:rise .7s .3s forwards;
+  }
+  .search{position:relative;flex:1;min-width:220px}
+  .search svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);opacity:.5}
+  .search input{padding-left:46px;border-radius:14px;padding-top:14px;padding-bottom:14px}
+  .count{font-size:.85rem;color:var(--muted-text);white-space:nowrap}
+
+  .group-title{
+    font-family:'Fraunces',serif;font-size:1.05rem;color:var(--muted-text);
+    letter-spacing:.04em;margin:34px 0 16px;display:flex;align-items:center;gap:14px;
+  }
+  .group-title::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+
+  .card{
+    position:relative;display:flex;flex-direction:column;gap:10px;
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:22px;color:inherit;overflow:hidden;min-height:172px;
+    transition:transform .25s cubic-bezier(.2,.8,.2,1), border-color .25s, background .25s;
+    opacity:0;transform:translateY(14px);animation:rise .6s forwards;
+  }
+  /* il link copre tutta la card: i pulsanti stanno sopra, fuori dall'anchor */
+  .card-hit{position:absolute;inset:0;z-index:2;border-radius:var(--radius);text-decoration:none}
+  .card.todo .card-hit{cursor:default}
+  .card::after{
+    content:"";position:absolute;inset:0;border-radius:var(--radius);
+    background:radial-gradient(420px circle at var(--mx,50%) var(--my,0%), var(--accent-soft), transparent 60%);
+    opacity:0;transition:opacity .3s;pointer-events:none;
+  }
+  .card:hover{transform:translateY(-4px);border-color:#5a4e3c;background:var(--card-hover)}
+  .card:hover::after{opacity:1}
+  .card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:2px}
+  .card-top-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .lock-pill{
+    display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+    font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;font-weight:600;
+    color:var(--muted-text);border:1px solid var(--line);border-radius:999px;
+    padding:4px 10px;background:var(--bg-2);transition:opacity .2s;
+  }
+  .card:hover .lock-pill{opacity:0}
+  .icon{
+    width:46px;height:46px;border-radius:13px;display:grid;place-items:center;
+    font-size:1.5rem;background:var(--bg-2);border:1px solid var(--line);flex-shrink:0;
+  }
+  .arrow{opacity:.4;transition:transform .25s, opacity .25s;flex-shrink:0}
+  .card:hover .arrow{opacity:0}
+  .card h3{
+    font-size:1.14rem;font-weight:600;letter-spacing:-.01em;line-height:1.28;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .card p{
+    color:var(--muted-text);font-size:.91rem;line-height:1.5;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:auto;padding-top:14px;position:relative;z-index:3;pointer-events:none}
+  .tag{
+    font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;font-weight:600;
+    color:var(--accent);background:var(--accent-soft);padding:4px 9px;border-radius:7px;
+  }
+  .card.todo{opacity:.62}
+  .card.todo .icon{filter:grayscale(1)}
+  .card.todo .arrow{display:none}
+  .tag.warn{color:#e8a33d;background:transparent;border:1px dashed #5a4e3c}
+
+  .card-actions{
+    position:absolute;top:14px;right:14px;display:flex;gap:6px;z-index:3;
+    opacity:0;transition:opacity .2s;
+  }
+  .card:hover .card-actions,.card:focus-within .card-actions{opacity:1}
+  .mini{
+    width:30px;height:30px;border-radius:9px;display:grid;place-items:center;cursor:pointer;
+    background:var(--bg-2);border:1px solid var(--line);color:var(--muted-text);
+    font-size:.82rem;transition:all .18s;
+  }
+  .mini:hover{color:var(--text);border-color:#5a4e3c}
+  .mini.del:hover{color:var(--danger);border-color:var(--danger)}
+  .mini.arch:hover,.mini.restore:hover{color:var(--accent);border-color:var(--accent)}
+
+  /* ─────────── archivio ─────────── */
+  .card.archived{background:transparent;border-style:dashed}
+  .card.archived .icon{filter:grayscale(1) opacity(.7)}
+  .card.archived h3{color:var(--muted-text)}
+  .card.archived:hover{background:var(--card)}
+  .card.archived:hover .icon{filter:none}
+  .card.archived:hover h3{color:var(--text)}
+  .arch-date{
+    font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;font-weight:600;
+    color:var(--muted-text);border:1px solid var(--line);padding:4px 9px;border-radius:7px;
+  }
+  .restore-btn{
+    position:relative;z-index:3;align-self:flex-start;margin-top:4px;
+  }
+
+  .card.add{
+    align-items:center;justify-content:center;text-align:center;gap:8px;
+    border-style:dashed;background:transparent;color:var(--muted-text);
+    min-height:170px;cursor:pointer;
+  }
+  .card.add:hover{color:var(--text);background:var(--card)}
+  .card.add .plus{font-size:1.7rem;line-height:1}
+
+  /* ─────────── password ─────────── */
+  .vault-list{display:flex;flex-direction:column;gap:12px;margin-top:6px}
+  .vrow{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;
+    opacity:0;transform:translateY(10px);animation:rise .5s forwards;
+    transition:border-color .2s;
+  }
+  .vrow:hover{border-color:#5a4e3c}
+  .vmain{flex:1;min-width:200px}
+  .vmain h4{font-size:1.05rem;font-weight:600;display:flex;align-items:center;gap:8px}
+  .vmain h4 a{color:var(--accent);text-decoration:none;font-size:.8rem;font-weight:600}
+  .vlink{
+    display:inline-flex;align-items:center;gap:6px;margin-top:8px;
+    font-size:.74rem;letter-spacing:.04em;text-transform:uppercase;font-weight:600;
+    color:var(--accent);background:var(--accent-soft);padding:4px 10px;border-radius:7px;
+  }
+  .vmeta{color:var(--muted-text);font-size:.88rem;margin-top:5px;word-break:break-all}
+  .vnote{color:var(--muted-text);font-size:.84rem;margin-top:8px;line-height:1.5;white-space:pre-wrap}
+  .secret{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92rem;
+    background:var(--bg-2);border:1px solid var(--line);border-radius:10px;
+    padding:8px 12px;letter-spacing:.04em;min-width:150px;word-break:break-all;
+  }
+  .vactions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+
+  .empty{text-align:center;color:var(--muted-text);padding:56px 20px;font-size:1rem}
+  .empty strong{display:block;color:var(--text);font-family:'Fraunces',serif;
+                font-size:1.25rem;font-weight:500;margin-bottom:8px}
+
+  .notice{
+    margin-top:22px;border:1px solid var(--line);border-radius:14px;
+    padding:14px 18px;color:var(--muted-text);font-size:.86rem;line-height:1.55;
+    background:var(--bg-2);
+  }
+
+  /* ─────────── finestre ─────────── */
+  .modal{
+    position:fixed;inset:0;z-index:60;display:none;place-items:center;padding:24px;
+    background:#0b0907cc;backdrop-filter:blur(4px);
+  }
+  .modal.on{display:grid}
+  .sheet{
+    width:100%;max-width:520px;max-height:88vh;overflow:auto;
+    background:var(--card);border:1px solid var(--line);border-radius:22px;padding:28px;
+    animation:pop .28s cubic-bezier(.2,.8,.2,1);
+  }
+  .sheet h3{font-family:'Fraunces',serif;font-weight:500;font-size:1.5rem;margin-bottom:4px}
+  .sheet .hint{color:var(--muted-text);font-size:.88rem;margin-bottom:20px}
+  .field{margin-bottom:16px}
+  .field.row{display:flex;gap:12px}
+  .field.row>div{flex:1}
+  .check{display:flex;align-items:center;gap:10px;color:var(--muted-text);font-size:.92rem;cursor:pointer}
+  .check input{width:auto;padding:0}
+  .sheet-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap}
+  .sheet-actions .left{margin-right:auto}
+  .with-btn{display:flex;gap:8px}
+  .with-btn input{flex:1}
+
+  .emoji-grid{
+    display:flex;flex-wrap:wrap;gap:6px;
+    border:1px solid var(--line);border-radius:13px;padding:10px;background:var(--bg-2);
+  }
+  .emoji-grid button{
+    width:36px;height:36px;font-size:1.15rem;line-height:1;cursor:pointer;
+    background:transparent;border:1px solid transparent;border-radius:9px;
+    transition:background .15s, border-color .15s, transform .15s;
+  }
+  .emoji-grid button:hover{background:var(--card-hover);border-color:var(--line)}
+  .emoji-grid button.on{border-color:var(--accent);background:var(--accent-soft)}
+  .emoji-grid button:active{transform:scale(.9)}
+
+  .toast{
+    position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);
+    background:var(--card);border:1px solid var(--line);border-radius:13px;
+    padding:12px 20px;font-size:.9rem;z-index:70;opacity:0;pointer-events:none;
+    transition:opacity .25s, transform .25s;max-width:90vw;text-align:center;
+  }
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  footer{
+    margin-top:60px;text-align:center;color:var(--muted-text);font-size:.82rem;
+    border-top:1px solid var(--line);padding-top:26px;
+  }
+  footer kbd{
+    font-family:'Manrope';font-size:.72rem;background:var(--bg-2);border:1px solid var(--line);
+    border-bottom-width:2px;border-radius:6px;padding:2px 7px;color:var(--text);
+  }
+
+  @keyframes rise{to{opacity:1;transform:none}}
+  @keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+  @media (max-width:520px){
+    .wrap{padding:44px 20px 70px}
+    .grid{grid-template-columns:1fr}
+    .field.row{flex-direction:column;gap:16px}
+    .card-actions{opacity:1}
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ ACCESSO ══════════ -->
+<div class="lock" id="lock">
+  <div class="lock-box">
+    <div class="lock-mark">🔐</div>
+    <h2>Hub Pro Loco</h2>
+    <p>Inserisci la password per entrare.</p>
+    <form id="lockForm" autocomplete="off">
+      <input id="lockPw" type="password" placeholder="Password" autocomplete="current-password">
+      <div class="lock-err" id="lockErr"></div>
+      <button class="btn primary" type="submit" id="lockBtn">Entra</button>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════ HUB ══════════ -->
+<div class="wrap" id="app" style="display:none">
+  <header>
+    <div class="kicker">Centro di comando</div>
+    <h1>I tuoi <em>programmi</em>,<br>in un posto solo.</h1>
+    <p class="sub">Un punto di partenza per raggiungere ogni applicazione. Cerca, clicca, sei dentro.</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab on" data-view="hub">Programmi</button>
+    <button class="tab" data-view="archive">Archivio<span class="tab-count" id="archCount"></span></button>
+    <button class="tab" data-view="vault">Password</button>
+    <span class="spacer"></span>
+    <span class="status" id="status"><span class="dot" id="dot"></span><span id="statusText">sincronizzato</span></span>
+    <button class="tab" id="btnSettings" title="Impostazioni">⚙︎</button>
+    <button class="tab" id="btnLock" title="Blocca">Blocca</button>
+  </nav>
+
+  <section id="viewHub">
+    <div class="toolbar">
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="search" type="search" name="hub-filtro-programmi" placeholder="Cerca un programma…  (premi  /  )"
+               autocomplete="off" autocorrect="off" spellcheck="false"
+               data-lpignore="true" data-1p-ignore data-form-type="other">
+      </div>
+      <div class="count" id="count"></div>
+      <button class="btn primary" id="btnAddApp">+ Aggiungi programma</button>
+    </div>
+    <div id="board"></div>
+  </section>
+
+  <section id="viewArchive" style="display:none">
+    <div class="toolbar">
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="asearch" type="search" name="hub-filtro-archiviati" placeholder="Cerca tra gli archiviati…"
+               autocomplete="off" autocorrect="off" spellcheck="false"
+               data-lpignore="true" data-1p-ignore data-form-type="other">
+      </div>
+      <div class="count" id="acount"></div>
+    </div>
+    <div id="archBoard"></div>
+    <div class="notice">I programmi archiviati spariscono dalla pagina principale ma non vengono cancellati: restano apribili da qui, le password collegate restano al loro posto e con <strong>Ripristina</strong> tornano nel loro gruppo.</div>
+  </section>
+
+  <section id="viewVault" style="display:none">
+    <div class="toolbar">
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="vsearch" type="search" name="hub-filtro-archivio" placeholder="Cerca un sito, un utente…"
+               autocomplete="off" autocorrect="off" spellcheck="false"
+               data-lpignore="true" data-1p-ignore data-form-type="other">
+      </div>
+      <div class="count" id="vcount"></div>
+      <button class="btn primary" id="btnAddEntry">+ Aggiungi password</button>
+    </div>
+    <div class="vault-list" id="vaultList"></div>
+    <div class="notice" id="cryptoNote"></div>
+  </section>
+
+  <footer>
+    Hub Pro Loco · dati sincronizzati su Firebase · <kbd>/</kbd> per cercare
+  </footer>
+</div>
+
+<!-- ══════════ FINESTRA PROGRAMMA ══════════ -->
+<div class="modal" id="appModal">
+  <div class="sheet">
+    <h3 id="appModalTitle">Nuovo programma</h3>
+    <p class="hint">Compila i campi: la card compare subito nell'hub, su tutti i tuoi dispositivi.</p>
+    <div class="field row">
+      <div style="max-width:110px">
+        <label>Icona</label>
+        <input id="fIcon" placeholder="🚀" autocomplete="off">
+      </div>
+      <div>
+        <label>Nome</label>
+        <input id="fName" placeholder="Nome del programma">
+      </div>
+    </div>
+    <div class="field">
+      <div class="emoji-grid" id="emojiGrid"></div>
+    </div>
+    <div class="field">
+      <label>Descrizione</label>
+      <input id="fDesc" placeholder="Cosa fa, in una riga.">
+    </div>
+    <div class="field">
+      <label>Indirizzo</label>
+      <input id="fUrl" placeholder="https://… (lascia vuoto se non ce l'hai ancora)">
+    </div>
+    <div class="field row">
+      <div>
+        <label>Etichette</label>
+        <input id="fTags" placeholder="Gestione, Firebase">
+      </div>
+      <div>
+        <label>Gruppo</label>
+        <input id="fGroup" list="groupList" placeholder="Segreteria">
+        <datalist id="groupList"></datalist>
+      </div>
+    </div>
+    <label class="check"><input type="checkbox" id="fLocked"> Richiede un codice d'accesso</label>
+    <div class="sheet-actions">
+      <button class="btn ghost danger left" id="btnDelApp" style="display:none">Elimina</button>
+      <button class="btn ghost" id="btnArchApp" style="display:none">Archivia</button>
+      <button class="btn ghost" data-close>Annulla</button>
+      <button class="btn primary" id="btnSaveApp">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ FINESTRA PASSWORD ══════════ -->
+<div class="modal" id="entryModal">
+  <div class="sheet">
+    <h3 id="entryModalTitle">Nuova password</h3>
+    <p class="hint">Cifrata prima di partire: sul database arriva illeggibile.</p>
+    <div class="field">
+      <label>Programma dell'hub</label>
+      <select id="eApp"></select>
+    </div>
+    <div class="field">
+      <label>Sito o servizio</label>
+      <input id="eSite" placeholder="Account Canva">
+    </div>
+    <div class="field">
+      <label>Indirizzo</label>
+      <input id="eUrl" placeholder="https://…">
+    </div>
+    <div class="field">
+      <label>Utente</label>
+      <input id="eUser" placeholder="email o nome utente" autocomplete="off"
+             name="hub-voce-utente" data-lpignore="true" data-1p-ignore data-form-type="other">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <div class="with-btn">
+        <input id="ePass" type="text" placeholder="password o codice" autocomplete="off"
+               name="hub-voce-codice" data-lpignore="true" data-1p-ignore data-form-type="other">
+        <button class="btn" id="btnGen" title="Genera">Genera</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Note</label>
+      <textarea id="eNote" placeholder="Domanda di sicurezza, codice di recupero, ecc."></textarea>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn ghost danger left" id="btnDelEntry" style="display:none">Elimina</button>
+      <button class="btn ghost" data-close>Annulla</button>
+      <button class="btn primary" id="btnSaveEntry">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ IMPOSTAZIONI ══════════ -->
+<div class="modal" id="setModal">
+  <div class="sheet">
+    <h3>Impostazioni</h3>
+    <p class="hint">Backup, ripristino e password d'accesso.</p>
+
+    <div class="field">
+      <label>Backup</label>
+      <div class="with-btn">
+        <button class="btn" id="btnExport">Esporta backup</button>
+        <button class="btn" id="btnImport">Importa backup</button>
+      </div>
+      <input type="file" id="fileImport" accept="application/json" style="display:none">
+    </div>
+
+    <div class="field">
+      <label>Cambia password d'accesso</label>
+      <input id="sOld" type="password" placeholder="Password attuale" autocomplete="off" style="margin-bottom:10px">
+      <input id="sNew" type="password" placeholder="Nuova password (almeno 6 caratteri)" autocomplete="off">
+      <button class="btn" id="btnChangePw" style="margin-top:10px">Aggiorna password</button>
+      <p class="hint" style="margin:10px 0 0">Cambia sia l'accesso all'hub sia la chiave con cui è cifrato l'archivio.</p>
+    </div>
+
+    <div class="field">
+      <label>Diagnostica</label>
+      <button class="btn" id="btnDiag">Prova la connessione al database</button>
+      <p class="hint" id="diagOut" style="margin:10px 0 0"></p>
+    </div>
+
+    <div class="field">
+      <label>Lista programmi</label>
+      <button class="btn ghost danger" id="btnReset">Ripristina la lista iniziale</button>
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn primary" data-close>Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   CONFIGURAZIONE
+   ════════════════════════════════════════════════════════════════════ */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAzucVCOGBzPKErG2Szm9bL_mFnA8ihXqs",
+  authDomain: "hubdavide-40287.firebaseapp.com",
+  databaseURL: "https://hubdavide-40287-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "hubdavide-40287",
+  storageBucket: "hubdavide-40287.firebasestorage.app",
+  messagingSenderId: "450862351417",
+  appId: "1:450862351417:web:0540962bbfd9c2869d79e8"
+};
+const AUTH_EMAIL = "futsalfabbrico@gmail.com";
+
+/* Lista di partenza: usata solo se il database è vuoto. */
+const SEED_APPS = [
+  { icon:"📁", name:"Cartella condivisa",
+    desc:"Verbali, delibere e documenti del direttivo.",
+    url:"https://drive.google.com", tags:["Documenti"], group:"Segreteria" },
+  { icon:"📅", name:"Calendario eventi",
+    desc:"Sagre, riunioni e turni dei volontari.",
+    url:"https://calendar.google.com", tags:["Eventi"], group:"Segreteria" },
+  { icon:"🎨", name:"Canva",
+    desc:"Manifesti e locandine delle manifestazioni.",
+    url:"https://www.canva.com", tags:["Grafica"], group:"Comunicazione", locked:true },
+  { icon:"📣", name:"Pagina Facebook",
+    desc:"Post e annunci della Pro Loco.",
+    url:"https://www.facebook.com", tags:["Social"], group:"Comunicazione", locked:true },
+  { icon:"🇮🇹", name:"UNPLI",
+    desc:"Unione nazionale Pro Loco: tessere, circolari, assicurazione.",
+    url:"https://www.unpli.info", tags:["Soci"], group:"Associazione" },
+  { icon:"🏛️", name:"RUNTS",
+    desc:"Registro unico del Terzo settore: depositi e aggiornamenti.",
+    url:"https://servizi.lavoro.gov.it", tags:["Adempimenti"], group:"Associazione", locked:true },
+];
+
+const K_APPS  = "proloco_apps_v1";
+const K_VAULT = "proloco_vault_v1";
+const K_AUTH  = "proloco_auth_v1";
+const S_PW    = "proloco_session_pw";
+
+/* ─────────── cifratura ─────────── */
+const ENC = new TextEncoder(), DEC = new TextDecoder();
+const SUB = (window.crypto && window.crypto.subtle) ? window.crypto.subtle : null;
+const ITER = 150000;
+
+const b64e = buf => btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
+const b64d = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
+const rand = n => crypto.getRandomValues(new Uint8Array(n));
+
+async function deriveKey(pw, salt){
+  const base = await SUB.importKey("raw", ENC.encode(pw), "PBKDF2", false, ["deriveKey"]);
+  return SUB.deriveKey({name:"PBKDF2", salt, iterations:ITER, hash:"SHA-256"},
+                       base, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+}
+async function hashPw(pw, salt){
+  const base = await SUB.importKey("raw", ENC.encode(pw), "PBKDF2", false, ["deriveBits"]);
+  return b64e(await SUB.deriveBits({name:"PBKDF2", salt, iterations:ITER, hash:"SHA-256"}, base, 256));
+}
+function xorEnc(pw, text){
+  const t = ENC.encode(text), k = ENC.encode(pw), o = new Uint8Array(t.length);
+  for(let i=0;i<t.length;i++) o[i] = t[i] ^ k[i % k.length];
+  return b64e(o);
+}
+function xorDec(pw, str){
+  const d = b64d(str), k = ENC.encode(pw), o = new Uint8Array(d.length);
+  for(let i=0;i<d.length;i++) o[i] = d[i] ^ k[i % k.length];
+  return DEC.decode(o);
+}
+async function sealVault(pw, obj){
+  const json = JSON.stringify(obj);
+  if(SUB){
+    const salt = rand(16), iv = rand(12);
+    const key = await deriveKey(pw, salt);
+    const ct = await SUB.encrypt({name:"AES-GCM", iv}, key, ENC.encode(json));
+    return {v:"aes", salt:b64e(salt), iv:b64e(iv), data:b64e(ct), ts:Date.now()};
+  }
+  return {v:"xor", data: xorEnc(pw, json), ts:Date.now()};
+}
+async function openVault(pw, rec){
+  if(!rec || !rec.data) return [];
+  if(rec.v === "aes"){
+    if(!SUB) throw new Error("crypto non disponibile");
+    const key = await deriveKey(pw, b64d(rec.salt));
+    const pt = await SUB.decrypt({name:"AES-GCM", iv:b64d(rec.iv)}, key, b64d(rec.data));
+    return JSON.parse(DEC.decode(pt));
+  }
+  return JSON.parse(xorDec(pw, rec.data));
+}
+
+/* ─────────── stato ─────────── */
+let masterPw = "";
+let apps = [];
+let vault = [];
+let online = false;
+let db = null, ref = null;
+let appsSnapSeen = false;
+
+const $  = id => document.getElementById(id);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("on"), 2600);
+}
+const readJSON = (k, fb) => { try{ const v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; }catch(e){ return fb; } };
+
+function setStatus(ok, text){
+  online = ok;
+  $("dot").className = "dot" + (ok ? "" : " off");
+  $("statusText").textContent = text;
+}
+
+/* ─────────── Firebase ─────────── */
+let fbReady = false;
+try{
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.database();
+  fbReady = true;
+}catch(e){ fbReady = false; }
+
+/* ─────────── accesso ─────────── */
+$("lockForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  unlock($("lockPw").value);
+});
+
+async function unlock(pw){
+  const err = $("lockErr"), btn = $("lockBtn");
+  err.textContent = ""; btn.disabled = true; btn.textContent = "Accesso…";
+
+  let signedIn = false, offline = false;
+  if(fbReady){
+    try{
+      await firebase.auth().signInWithEmailAndPassword(AUTH_EMAIL, pw);
+      signedIn = true;
+    }catch(ex){
+      const code = ex && ex.code ? ex.code : "";
+      if(code === "auth/network-request-failed" || code === "auth/internal-error"){
+        offline = true;
+      }else{
+        btn.disabled = false; btn.textContent = "Entra";
+        err.textContent = "Password non valida.";
+        return false;
+      }
+    }
+  }else{
+    offline = true;
+  }
+
+  if(offline){
+    // niente rete: verifico la password contro l'impronta salvata da un accesso precedente
+    const auth = readJSON(K_AUTH, null);
+    let ok = false;
+    if(auth && SUB){ try{ ok = (await hashPw(pw, b64d(auth.salt))) === auth.hash; }catch(e){ ok = false; } }
+    else if(auth){ ok = pw === auth.plain; }
+    if(!ok){
+      btn.disabled = false; btn.textContent = "Entra";
+      err.textContent = "Connessione assente e nessun accesso salvato su questo dispositivo. Riprova online.";
+      return false;
+    }
+  }
+
+  masterPw = pw;
+  sessionStorage.setItem(S_PW, pw);
+  await rememberPw(pw);
+
+  // dati locali come primo riempimento (istantaneo, poi arriva il remoto)
+  const localApps = readJSON(K_APPS, null);
+  apps = localApps ? (localApps.list || (Array.isArray(localApps) ? localApps : [])) : [];
+  try{ vault = await openVault(masterPw, readJSON(K_VAULT, null)); }catch(e){ vault = []; }
+
+  $("lock").style.display = "none";
+  $("app").style.display = "";
+  $("search").value = ""; $("vsearch").value = ""; $("asearch").value = "";
+  renderApps(); renderVault(); renderCryptoNote();
+  // Chrome può riempire le caselle di ricerca subito dopo il caricamento: le riazzero
+  setTimeout(function(){
+    if($("search").value || $("vsearch").value || $("asearch").value){
+      $("search").value = ""; $("vsearch").value = ""; $("asearch").value = "";
+      renderApps(); renderVault();
+    }
+  }, 700);
+
+  if(signedIn){ setStatus(true, "sincronizzato"); startSync(); }
+  else{ setStatus(false, "offline"); if(!apps.length){ apps = SEED_APPS.map(seed); renderApps(); } }
+
+  btn.disabled = false; btn.textContent = "Entra";
+  return true;
+}
+
+function seed(a){ return Object.assign({}, a, {id:uid(), tags:(a.tags||[]).slice()}); }
+
+async function rememberPw(pw){
+  try{
+    if(SUB){
+      const salt = rand(16);
+      localStorage.setItem(K_AUTH, JSON.stringify({salt:b64e(salt), hash: await hashPw(pw, salt)}));
+    }else{
+      localStorage.setItem(K_AUTH, JSON.stringify({plain:pw}));
+    }
+  }catch(e){}
+}
+
+$("btnLock").addEventListener("click", function(){
+  sessionStorage.removeItem(S_PW);
+  if(fbReady) firebase.auth().signOut();
+  location.reload();
+});
+
+/* ─────────── sincronizzazione ─────────── */
+function startSync(){
+  ref = db.ref("proloco");
+
+  ref.child("apps").on("value", async function(snap){
+    const v = snap.val();
+    const localRec = readJSON(K_APPS, null);
+
+    if(v && v.list){
+      // se qui ho modifiche più recenti, le ripubblico invece di perderle
+      if(localRec && localRec.ts && v.ts && localRec.ts > v.ts && localRec.list){
+        ref.child("apps").set(localRec).catch(function(){});
+        appsSnapSeen = true;
+        return;
+      }
+      apps = v.list;
+      localStorage.setItem(K_APPS, JSON.stringify({list:apps, ts:v.ts || Date.now()}));
+      renderApps();
+    }else if(!appsSnapSeen){
+      apps = apps.length ? apps : SEED_APPS.map(seed);
+      saveApps();
+      renderApps();
+    }
+    appsSnapSeen = true;
+  }, function(){ setStatus(false, "offline"); });
+
+  ref.child("vault").on("value", async function(snap){
+    const rec = snap.val();
+    const localRec = readJSON(K_VAULT, null);
+
+    // il database è vuoto ma qui ho delle voci: le carico invece di svuotare
+    if(!rec){
+      if(localRec) ref.child("vault").set(localRec).catch(function(){});
+      return;
+    }
+    // copia locale più recente (modifiche fatte senza rete): vince la mia
+    if(localRec && localRec.ts && rec.ts && localRec.ts > rec.ts){
+      ref.child("vault").set(localRec).catch(function(){});
+      return;
+    }
+
+    localStorage.setItem(K_VAULT, JSON.stringify(rec));
+    try{
+      vault = await openVault(masterPw, rec);
+      renderVault();
+    }catch(e){
+      toast("L'archivio è cifrato con un'altra password");
+    }
+  }, function(err){
+    toast("Archivio non leggibile dal database: " + (err && err.message ? err.message : "errore"));
+  });
+
+  db.ref(".info/connected").on("value", function(s){
+    setStatus(!!s.val(), s.val() ? "sincronizzato" : "offline");
+  });
+}
+
+function saveApps(){
+  const rec = {list:apps, ts:Date.now()};
+  localStorage.setItem(K_APPS, JSON.stringify(rec));
+  // niente guardia su "online": l'SDK accoda la scrittura e la invia alla riconnessione
+  if(ref) ref.child("apps").set(rec).catch(function(err){
+    toast("Programmi non salvati sul database: " + (err && err.message ? err.message : "errore"));
+  });
+}
+async function saveVault(){
+  if(!masterPw) return {ok:false, msg:"Sessione scaduta: rientra con la password"};
+  const rec = await sealVault(masterPw, vault);
+  localStorage.setItem(K_VAULT, JSON.stringify(rec));
+  if(ref){
+    try{
+      await ref.child("vault").set(rec);
+    }catch(err){
+      return {ok:false, msg:"Salvata solo su questo dispositivo — il database ha risposto: " +
+                            (err && err.message ? err.message : "errore")};
+    }
+  }
+  return {ok:true};
+}
+
+/* ─────────── viste ─────────── */
+Array.prototype.forEach.call(document.querySelectorAll(".tab[data-view]"), function(t){
+  t.addEventListener("click", function(){
+    Array.prototype.forEach.call(document.querySelectorAll(".tab[data-view]"), function(x){ x.classList.remove("on"); });
+    t.classList.add("on");
+    const v = t.dataset.view;
+    if(v === "vault"){ $("vsearch").value = ""; renderVault(); }
+    if(v === "hub"){ $("search").value = ""; renderApps(); }
+    if(v === "archive"){ $("asearch").value = ""; renderArchive(); }
+    $("viewHub").style.display     = v === "hub"     ? "" : "none";
+    $("viewArchive").style.display = v === "archive" ? "" : "none";
+    $("viewVault").style.display   = v === "vault"   ? "" : "none";
+  });
+});
+
+/* ─────────── programmi ─────────── */
+function buildCard(app, i, archived){
+  const todo = !app.url || app.url === "#";
+  const el = document.createElement("div");
+  el.className = "card" + (todo ? " todo" : "") + (archived ? " archived" : "");
+  el.style.animationDelay = (0.06 + i * 0.04) + "s";
+
+  const tags = (app.tags || []).map(function(t){ return '<span class="tag">' + esc(t) + '</span>'; }).join("");
+  const warn = todo ? '<span class="tag warn">da impostare</span>' : "";
+  const lock = app.locked ? '<span class="lock-pill" title="Richiede un codice d\'accesso">🔒 Codice</span>' : "";
+  const since = (archived && app.archivedAt)
+    ? '<span class="arch-date">archiviato il ' + new Date(app.archivedAt).toLocaleDateString("it-IT") + '</span>'
+    : "";
+  const tagRow = (tags || warn || since) ? '<div class="tags">' + since + tags + warn + '</div>' : "";
+
+  const hit = todo
+    ? '<span class="card-hit"></span>'
+    : '<a class="card-hit" href="' + esc(app.url) + '" target="_blank" rel="noopener" aria-label="' + esc(app.name) + '"></a>';
+
+  el.innerHTML =
+    hit +
+    '<div class="card-actions">' +
+      (archived
+        ? '<button class="mini restore" type="button" title="Ripristina">↺</button>'
+        : '<button class="mini arch" type="button" title="Archivia">🗄</button>') +
+      '<button class="mini edit" type="button" title="Modifica">✎</button>' +
+      '<button class="mini del" type="button" title="Elimina">✕</button>' +
+    '</div>' +
+    '<div class="card-top">' +
+      '<div class="icon">' + (esc(app.icon) || "▦") + '</div>' +
+      '<div class="card-top-right">' +
+        lock +
+        '<svg class="arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M9 7h8v8"/></svg>' +
+      '</div>' +
+    '</div>' +
+    '<h3>' + esc(app.name) + '</h3>' +
+    (app.desc ? '<p>' + esc(app.desc) + '</p>' : "") +
+    (archived ? '<button class="btn sm restore-btn" type="button">↺ Ripristina</button>' : "") +
+    tagRow;
+
+  const archBtn = el.querySelector(".mini.arch");
+  if(archBtn) archBtn.addEventListener("click", function(e){
+    e.preventDefault(); e.stopPropagation(); setArchived(app.id, true);
+  });
+  Array.prototype.forEach.call(el.querySelectorAll(".mini.restore, .restore-btn"), function(b){
+    b.addEventListener("click", function(e){
+      e.preventDefault(); e.stopPropagation(); setArchived(app.id, false);
+    });
+  });
+
+  el.querySelector(".edit").addEventListener("click", function(e){
+    e.preventDefault(); e.stopPropagation(); openAppModal(app.id);
+  });
+  el.querySelector(".del").addEventListener("click", function(e){
+    e.preventDefault(); e.stopPropagation();
+    if(confirm('Eliminare definitivamente "' + app.name + '" dall\'hub?')){
+      apps = apps.filter(function(x){ return x.id !== app.id; });
+      saveApps(); renderApps(); toast("Programma eliminato");
+    }
+  });
+  el.addEventListener("mousemove", function(e){
+    const r = el.getBoundingClientRect();
+    el.style.setProperty("--mx", (e.clientX - r.left) + "px");
+    el.style.setProperty("--my", (e.clientY - r.top) + "px");
+  });
+  return el;
+}
+
+function renderApps(){
+  const board = $("board");
+  const q = $("search").value.trim().toLowerCase();
+  board.innerHTML = "";
+
+  const active = apps.filter(function(app){ return !app.archived; });
+  const list = active.filter(function(app){ return matches(app, q); });
+  $("count").textContent = list.length + (list.length === 1 ? " programma" : " programmi");
+
+  const groups = {};
+  list.forEach(function(app){
+    const g = app.group || "Generale";
+    (groups[g] = groups[g] || []).push(app);
+  });
+
+  let idx = 0;
+  Object.keys(groups).forEach(function(g){
+    const title = document.createElement("div");
+    title.className = "group-title";
+    title.textContent = g;
+    board.appendChild(title);
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    groups[g].forEach(function(app){ grid.appendChild(buildCard(app, idx++)); });
+    board.appendChild(grid);
+  });
+
+  if(!list.length){
+    board.innerHTML = active.length
+      ? '<div class="empty"><strong>Nessun programma trovato</strong>Prova con un\'altra parola.</div>'
+      : (apps.length
+          ? '<div class="empty"><strong>Tutti i programmi sono in archivio</strong>Ripristinane uno dalla scheda Archivio, oppure aggiungine uno nuovo.</div>'
+          : '<div class="empty"><strong>L\'hub è vuoto</strong>Aggiungi il primo programma per iniziare.</div>');
+  }
+
+  const addWrap = document.createElement("div");
+  addWrap.className = "grid";
+  addWrap.style.marginTop = "16px";
+  const add = document.createElement("div");
+  add.className = "card add";
+  add.style.animationDelay = (0.06 + idx * 0.04) + "s";
+  add.innerHTML = '<div class="plus">+</div><div>Aggiungi un programma</div>';
+  add.addEventListener("click", function(){ openAppModal(); });
+  addWrap.appendChild(add);
+  board.appendChild(addWrap);
+
+  const seen = {};
+  $("groupList").innerHTML = apps.map(function(a){ return a.group; })
+    .filter(function(g){ if(!g || seen[g]) return false; seen[g] = 1; return true; })
+    .map(function(g){ return '<option value="' + esc(g) + '">'; }).join("");
+
+  renderArchive();
+}
+
+function matches(app, q){
+  const hay = [app.name, app.desc, (app.tags||[]).join(" "), app.group].join(" ").toLowerCase();
+  return hay.indexOf(q) !== -1;
+}
+
+/* ─────────── archivio ─────────── */
+function renderArchive(){
+  const board = $("archBoard");
+  const q = $("asearch").value.trim().toLowerCase();
+  const archived = apps.filter(function(app){ return app.archived; });
+  const list = archived
+    .filter(function(app){ return matches(app, q); })
+    .sort(function(a, b){ return (b.archivedAt || 0) - (a.archivedAt || 0); });
+
+  $("archCount").textContent = archived.length ? archived.length : "";
+  $("acount").textContent = list.length + (list.length === 1 ? " archiviato" : " archiviati");
+  board.innerHTML = "";
+
+  if(!list.length){
+    board.innerHTML = archived.length
+      ? '<div class="empty"><strong>Nessun archiviato trovato</strong>Prova con un\'altra parola.</div>'
+      : '<div class="empty"><strong>L\'archivio è vuoto</strong>Passa sopra una card nella pagina Programmi e premi 🗄 per archiviarla.</div>';
+    return;
+  }
+
+  const groups = {};
+  list.forEach(function(app){
+    const g = app.group || "Generale";
+    (groups[g] = groups[g] || []).push(app);
+  });
+  let idx = 0;
+  Object.keys(groups).forEach(function(g){
+    const title = document.createElement("div");
+    title.className = "group-title";
+    title.textContent = g;
+    board.appendChild(title);
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    groups[g].forEach(function(app){ grid.appendChild(buildCard(app, idx++, true)); });
+    board.appendChild(grid);
+  });
+}
+
+function setArchived(id, flag){
+  const app = apps.filter(function(a){ return a.id === id; })[0];
+  if(!app) return;
+  if(flag){ app.archived = true; app.archivedAt = Date.now(); }
+  else{ delete app.archived; delete app.archivedAt; }
+  saveApps(); renderApps();
+  toast(flag ? '"' + app.name + '" archiviato' : '"' + app.name + '" è tornato tra i programmi');
+}
+
+const EMOJI = ["⚽","🏆","👥","📒","🗂️","💶","💰","📊","📈","🧾","📅","🗓️","⏱️","📝","✅","🔧","⚙️","🛠️","🍽️","🍕","🎪","🎟️","🎨","📸","🎧","🏋️","🥇","📍","🚀","🌐","💡","🔒","📦","🧠","📮","🏠"];
+
+function buildEmojiGrid(){
+  const g = $("emojiGrid");
+  g.innerHTML = EMOJI.map(function(e){
+    return '<button type="button" data-emoji="' + e + '">' + e + '</button>';
+  }).join("");
+  Array.prototype.forEach.call(g.querySelectorAll("button"), function(b){
+    b.addEventListener("click", function(){
+      $("fIcon").value = b.dataset.emoji;
+      markEmoji();
+    });
+  });
+}
+function markEmoji(){
+  const cur = $("fIcon").value.trim();
+  Array.prototype.forEach.call($("emojiGrid").querySelectorAll("button"), function(b){
+    b.classList.toggle("on", b.dataset.emoji === cur);
+  });
+}
+buildEmojiGrid();
+$("fIcon").addEventListener("input", markEmoji);
+
+let editingApp = null;
+function openAppModal(id){
+  editingApp = id ? apps.filter(function(a){ return a.id === id; })[0] : null;
+  $("appModalTitle").textContent = editingApp ? "Modifica programma" : "Nuovo programma";
+  $("fIcon").value  = editingApp ? (editingApp.icon || "") : "";
+  $("fName").value  = editingApp ? (editingApp.name || "") : "";
+  $("fDesc").value  = editingApp ? (editingApp.desc || "") : "";
+  $("fUrl").value   = (editingApp && editingApp.url && editingApp.url !== "#") ? editingApp.url : "";
+  $("fTags").value  = editingApp ? (editingApp.tags || []).join(", ") : "";
+  $("fGroup").value = editingApp ? (editingApp.group || "") : "";
+  $("fLocked").checked = editingApp ? !!editingApp.locked : false;
+  markEmoji();
+  $("btnDelApp").style.display = editingApp ? "" : "none";
+  $("btnArchApp").style.display = editingApp ? "" : "none";
+  $("btnArchApp").textContent = (editingApp && editingApp.archived) ? "↺ Ripristina" : "🗄 Archivia";
+  $("appModal").classList.add("on");
+  setTimeout(function(){ $("fName").focus(); }, 60);
+}
+
+$("btnSaveApp").addEventListener("click", function(){
+  const name = $("fName").value.trim();
+  if(!name){ toast("Serve almeno il nome"); $("fName").focus(); return; }
+  let url = $("fUrl").value.trim();
+  if(url && !/^https?:\/\//i.test(url) && url.charAt(0) !== "#") url = "https://" + url;
+  const data = {
+    icon:  $("fIcon").value.trim(),
+    name:  name,
+    desc:  $("fDesc").value.trim(),
+    url:   url || "#",
+    tags:  $("fTags").value.split(",").map(function(t){ return t.trim(); }).filter(Boolean),
+    group: $("fGroup").value.trim() || "Generale",
+    locked:$("fLocked").checked
+  };
+  const wasEdit = !!editingApp;
+  if(editingApp) Object.assign(editingApp, data);
+  else apps.push(Object.assign({id:uid()}, data));
+  saveApps(); renderApps(); closeModals();
+  toast(wasEdit ? "Programma aggiornato" : "Programma aggiunto");
+});
+
+$("btnArchApp").addEventListener("click", function(){
+  if(!editingApp) return;
+  const id = editingApp.id, flag = !editingApp.archived;
+  closeModals();
+  setArchived(id, flag);
+});
+
+$("btnDelApp").addEventListener("click", function(){
+  if(editingApp && confirm('Eliminare "' + editingApp.name + '"?')){
+    const id = editingApp.id;
+    apps = apps.filter(function(a){ return a.id !== id; });
+    saveApps(); renderApps(); closeModals(); toast("Programma eliminato");
+  }
+});
+
+/* ─────────── password ─────────── */
+function renderVault(){
+  const box = $("vaultList");
+  const q = $("vsearch").value.trim().toLowerCase();
+  const list = vault.filter(function(e){
+    const a = appById(e.appId);
+    const hay = [e.site, e.user, e.url, e.note, a ? a.name : "", a ? a.group : ""].join(" ");
+    return hay.toLowerCase().indexOf(q) !== -1;
+  });
+
+  $("vcount").textContent = list.length + (list.length === 1 ? " voce" : " voci");
+  box.innerHTML = "";
+
+  if(!list.length){
+    if(vault.length){
+      box.innerHTML = '<div class="empty"><strong>La ricerca nasconde ' +
+        vault.length + (vault.length === 1 ? ' voce' : ' voci') + '</strong>' +
+        'Il filtro attivo è "' + esc(q) + '".<br><br>' +
+        '<button class="btn" id="btnClearVSearch">Svuota la ricerca</button></div>';
+      const b = $("btnClearVSearch");
+      if(b) b.addEventListener("click", function(){ $("vsearch").value = ""; renderVault(); });
+    }else{
+      box.innerHTML = '<div class="empty"><strong>Archivio vuoto</strong>Aggiungi le credenziali dei tuoi siti: vengono cifrate prima di partire.</div>';
+    }
+    return;
+  }
+
+  list.forEach(function(e, i){
+    const row = document.createElement("div");
+    row.className = "vrow";
+    row.style.animationDelay = (i * 0.04) + "s";
+    const linked = appById(e.appId);
+    const url = e.url || (linked && linked.url !== "#" ? linked.url : "");
+    const link = url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener">apri ↗</a>' : "";
+    const badge = linked
+      ? '<div class="vlink">' + (esc(linked.icon) || "▦") + ' ' + esc(linked.name) + '</div>'
+      : "";
+    row.innerHTML =
+      '<div class="vmain">' +
+        '<h4>' + esc(e.site) + ' ' + link + '</h4>' +
+        badge +
+        (e.user ? '<div class="vmeta">' + esc(e.user) + '</div>' : "") +
+        (e.note ? '<div class="vnote">' + esc(e.note) + '</div>' : "") +
+      '</div>' +
+      '<div class="secret" data-secret>••••••••</div>' +
+      '<div class="vactions">' +
+        '<button class="btn sm" data-show>Mostra</button>' +
+        '<button class="btn sm" data-copy>Copia</button>' +
+        '<button class="btn sm" data-edit>Modifica</button>' +
+      '</div>';
+
+    const cell = row.querySelector("[data-secret]");
+    let shown = false;
+    row.querySelector("[data-show]").addEventListener("click", function(ev){
+      shown = !shown;
+      cell.textContent = shown ? (e.pass || "—") : "••••••••";
+      ev.target.textContent = shown ? "Nascondi" : "Mostra";
+    });
+    row.querySelector("[data-copy]").addEventListener("click", function(){
+      if(navigator.clipboard){
+        navigator.clipboard.writeText(e.pass || "").then(
+          function(){ toast("Password copiata"); },
+          function(){ toast("Copia non riuscita: mostra la password e selezionala"); }
+        );
+      }else toast("Copia non disponibile: mostra la password e selezionala");
+    });
+    row.querySelector("[data-edit]").addEventListener("click", function(){ openEntryModal(e.id); });
+    box.appendChild(row);
+  });
+}
+
+function appById(id){
+  return id ? apps.filter(function(a){ return a.id === id; })[0] : null;
+}
+
+function fillAppSelect(selected){
+  const sel = $("eApp");
+  const groups = {};
+  const archived = [];
+  apps.forEach(function(a){
+    if(a.archived){ archived.push(a); return; }
+    const g = a.group || "Generale";
+    (groups[g] = groups[g] || []).push(a);
+  });
+  if(archived.length) groups["Archiviati"] = archived;
+  let html = '<option value="">— nessuno (sito esterno)</option>';
+  Object.keys(groups).forEach(function(g){
+    html += '<optgroup label="' + esc(g) + '">';
+    groups[g].forEach(function(a){
+      html += '<option value="' + esc(a.id) + '">' + esc(a.name) + '</option>';
+    });
+    html += '</optgroup>';
+  });
+  sel.innerHTML = html;
+  sel.value = selected || "";
+}
+
+let editingEntry = null;
+function openEntryModal(id){
+  editingEntry = id ? vault.filter(function(e){ return e.id === id; })[0] : null;
+  $("entryModalTitle").textContent = editingEntry ? "Modifica password" : "Nuova password";
+  fillAppSelect(editingEntry ? editingEntry.appId : "");
+  $("eSite").value = editingEntry ? (editingEntry.site || "") : "";
+  $("eUrl").value  = editingEntry ? (editingEntry.url  || "") : "";
+  $("eUser").value = editingEntry ? (editingEntry.user || "") : "";
+  $("ePass").value = editingEntry ? (editingEntry.pass || "") : "";
+  $("eNote").value = editingEntry ? (editingEntry.note || "") : "";
+  $("btnDelEntry").style.display = editingEntry ? "" : "none";
+  $("entryModal").classList.add("on");
+  setTimeout(function(){ $("eSite").focus(); }, 60);
+}
+
+$("eApp").addEventListener("change", function(){
+  const a = appById($("eApp").value);
+  if(!a) return;
+  if(!$("eSite").value.trim()) $("eSite").value = a.name;
+  if(!$("eUrl").value.trim() && a.url && a.url !== "#") $("eUrl").value = a.url;
+});
+
+$("btnSaveEntry").addEventListener("click", async function(){
+ try{
+  const linked = appById($("eApp").value);
+  const site = $("eSite").value.trim() || (linked ? linked.name : "");
+  if(!site){ toast("Scegli un programma o scrivi il nome del sito"); $("eSite").focus(); return; }
+  let url = $("eUrl").value.trim();
+  if(!url && linked && linked.url && linked.url !== "#") url = linked.url;
+  if(url && !/^https?:\/\//i.test(url)) url = "https://" + url;
+  const data = {
+    appId: $("eApp").value || "",
+    site: site, url: url,
+    user: $("eUser").value.trim(),
+    pass: $("ePass").value,
+    note: $("eNote").value.trim()
+  };
+  const wasEdit = !!editingEntry;
+  if(editingEntry) Object.assign(editingEntry, data);
+  else vault.push(Object.assign({id:uid()}, data));
+  const res = await saveVault();
+  renderVault(); closeModals();
+  toast(res.ok ? (wasEdit ? "Voce aggiornata" : "Voce salvata") : res.msg);
+ }catch(err){
+  toast("Salvataggio non riuscito: " + (err && err.message ? err.message : "errore"));
+ }
+});
+
+$("btnDelEntry").addEventListener("click", async function(){
+  if(editingEntry && confirm('Eliminare "' + editingEntry.site + '" dall\'archivio?')){
+    const id = editingEntry.id;
+    vault = vault.filter(function(e){ return e.id !== id; });
+    const res = await saveVault();
+    renderVault(); closeModals();
+    toast(res.ok ? "Voce eliminata" : res.msg);
+  }
+});
+
+$("btnGen").addEventListener("click", function(){
+  const chars = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!?@#%*-_";
+  const bytes = rand(18);
+  let out = "";
+  for(let i=0;i<bytes.length;i++) out += chars.charAt(bytes[i] % chars.length);
+  $("ePass").value = out;
+});
+
+function renderCryptoNote(){
+  $("cryptoNote").innerHTML = SUB
+    ? "Ogni voce è cifrata (AES-256) nel browser con la tua password prima di raggiungere il database: su Firebase arrivano stringhe illeggibili, e la password non lascia mai questo dispositivo. Anche così, tutto gira lato browser: le credenziali davvero critiche (banca, SPID) tienile fuori da qui."
+    : "Attenzione: aperto così il browser non espone la cifratura forte, quindi le voci sono solo offuscate. Apri l'hub via <strong>https</strong> per avere la cifratura AES-256.";
+}
+
+/* ─────────── impostazioni ─────────── */
+$("btnSettings").addEventListener("click", function(){ $("setModal").classList.add("on"); });
+
+$("btnExport").addEventListener("click", function(){
+  const blob = new Blob([JSON.stringify({
+    format:"hub-backup-2",
+    date:new Date().toISOString(),
+    apps: apps,
+    vault: readJSON(K_VAULT, null)
+  }, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "hub-backup-" + new Date().toISOString().slice(0,10) + ".json";
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+  toast("Backup scaricato");
+});
+
+$("btnImport").addEventListener("click", function(){ $("fileImport").click(); });
+$("fileImport").addEventListener("change", async function(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  try{
+    const data = JSON.parse(await file.text());
+    if(data.format !== "hub-backup-2" && data.format !== "hub-backup-1") throw new Error("formato");
+    if(!confirm("Il backup sostituisce programmi e password attuali, anche sugli altri dispositivi. Procedere?")) return;
+    apps = data.apps || [];
+    saveApps();
+    if(data.vault){
+      localStorage.setItem(K_VAULT, JSON.stringify(data.vault));
+      if(ref) await ref.child("vault").set(data.vault);
+      try{ vault = await openVault(masterPw, data.vault); }
+      catch(e){ toast("Archivio importato: è cifrato con un'altra password"); }
+    }
+    renderApps(); renderVault(); closeModals();
+    toast("Backup importato");
+  }catch(e){
+    toast("File non valido: serve un backup dell'hub");
+  }finally{ ev.target.value = ""; }
+});
+
+$("btnChangePw").addEventListener("click", async function(){
+  const oldPw = $("sOld").value, newPw = $("sNew").value;
+  if(oldPw !== masterPw){ toast("La password attuale non è corretta"); return; }
+  if(newPw.length < 6){ toast("La nuova password deve avere almeno 6 caratteri"); return; }
+  if(!online){ toast("Serve la connessione per cambiare password"); return; }
+  try{
+    await firebase.auth().currentUser.updatePassword(newPw);
+  }catch(ex){
+    toast("Firebase ha rifiutato il cambio: rientra e riprova");
+    return;
+  }
+  masterPw = newPw;
+  sessionStorage.setItem(S_PW, newPw);
+  await rememberPw(newPw);
+  await saveVault();               // ricifra l'archivio con la nuova chiave
+  $("sOld").value = ""; $("sNew").value = "";
+  closeModals(); toast("Password aggiornata");
+});
+
+$("btnDiag").addEventListener("click", async function(){
+  const out = $("diagOut");
+  const user = fbReady && firebase.auth().currentUser;
+  const lines = [];
+  lines.push("SDK Firebase: " + (fbReady ? "caricato" : "NON caricato"));
+  lines.push("Autenticato: " + (user ? user.email : "no"));
+  lines.push("Cifratura forte: " + (SUB ? "sì" : "no (serve https)"));
+  lines.push("Stato rete: " + (online ? "connesso" : "offline"));
+  lines.push("Voci in archivio: " + vault.length);
+  out.innerHTML = lines.join("<br>") + "<br>Scrittura di prova…";
+  if(!ref){ out.innerHTML = lines.join("<br>") + "<br><b>Nessun collegamento al database.</b>"; return; }
+  try{
+    await ref.child("diagnostica").set({ts:Date.now()});
+    out.innerHTML = lines.join("<br>") + "<br><b>Scrittura riuscita.</b>";
+  }catch(err){
+    out.innerHTML = lines.join("<br>") + "<br><b>Scrittura RIFIUTATA:</b> " +
+                    esc(err && err.message ? err.message : "errore");
+  }
+});
+
+$("btnReset").addEventListener("click", function(){
+  if(!confirm("Ripristinare la lista iniziale dei programmi? Le tue aggiunte andranno perse, anche sugli altri dispositivi. Le password restano.")) return;
+  apps = SEED_APPS.map(seed);
+  saveApps(); renderApps(); closeModals(); toast("Lista ripristinata");
+});
+
+/* ─────────── finestre e scorciatoie ─────────── */
+function closeModals(){
+  Array.prototype.forEach.call(document.querySelectorAll(".modal"), function(m){ m.classList.remove("on"); });
+}
+Array.prototype.forEach.call(document.querySelectorAll("[data-close]"), function(b){
+  b.addEventListener("click", closeModals);
+});
+Array.prototype.forEach.call(document.querySelectorAll(".modal"), function(m){
+  m.addEventListener("click", function(e){ if(e.target === m) closeModals(); });
+});
+
+$("btnAddApp").addEventListener("click", function(){ openAppModal(); });
+$("btnAddEntry").addEventListener("click", function(){ openEntryModal(); });
+$("search").addEventListener("input", renderApps);
+$("vsearch").addEventListener("input", renderVault);
+$("asearch").addEventListener("input", renderArchive);
+
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){ closeModals(); return; }
+  if($("app").style.display === "none") return;
+  const inField = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
+  if(e.key === "/" && !inField){
+    e.preventDefault();
+    if($("viewVault").style.display !== "none") $("vsearch").focus();
+    else if($("viewArchive").style.display !== "none") $("asearch").focus();
+    else $("search").focus();
+  }
+});
+
+/* ─────────── avvio ─────────── */
+(async function(){
+  const saved = sessionStorage.getItem(S_PW);
+  if(saved){
+    const ok = await unlock(saved);
+    if(ok) return;
+    sessionStorage.removeItem(S_PW);
+    $("lockErr").textContent = "";
+  }
+  $("lockPw").focus();
+})();
+</script>
+</body>
+</html>
