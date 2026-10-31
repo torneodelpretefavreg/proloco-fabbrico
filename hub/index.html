@@ -366,7 +366,7 @@
 <!-- ══════════ HUB ══════════ -->
 <div class="wrap" id="app" style="display:none">
   <header>
-    <div class="kicker">Pro Loco Fabbrico · <span id="who"></span></div>
+    <div class="kicker">Pro Loco Fabbrico</div>
     <h1>Gli strumenti della <em>Pro Loco</em>,<br>in un posto solo.</h1>
     <p class="sub">Planner, contabilità, sito e tutti gli account del direttivo. Cerca, clicca, sei dentro.</p>
   </header>
@@ -746,7 +746,6 @@ async function enter(user){
     return;
   }
   me = { uid:user.uid, nome: prof.nome || user.email, admin: prof.ruolo === "admin" };
-  $("who").textContent = me.nome;
 
   // dati locali come primo riempimento (istantaneo, poi arriva il remoto)
   const localApps = readJSON(K_APPS, null);
