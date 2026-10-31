@@ -9,16 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#14110e;
-    --bg-2:#1c1813;
-    --card:#211c16;
-    --card-hover:#2a241c;
-    --line:#352e24;
-    --text:#f3ece1;
-    --muted:#a4988440;
-    --muted-text:#9a8d77;
-    --accent:#4dba87;
-    --accent-soft:#4dba8722;
+    --bg:#0b1a2e;
+    --bg-2:#10233c;
+    --card:#132a47;
+    --card-hover:#183457;
+    --line:#24426a;
+    --text:#eaf3fc;
+    --muted:#8fb0d440;
+    --muted-text:#8faccc;
+    --accent:#5cb8ff;
+    --accent-soft:#5cb8ff22;
     --danger:#d9705c;
     --ok:#7fb069;
     --radius:18px;
@@ -32,8 +32,8 @@
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
     background-image:
-      radial-gradient(900px 500px at 85% -10%, #4dba8714, transparent 60%),
-      radial-gradient(700px 500px at -10% 110%, #4dba870d, transparent 55%);
+      radial-gradient(900px 500px at 85% -10%, #5cb8ff18, transparent 60%),
+      radial-gradient(700px 500px at -10% 110%, #5cb8ff10, transparent 55%);
     background-attachment:fixed;
   }
   body::before{
@@ -49,7 +49,7 @@
   .lock{
     position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:28px;
     background:var(--bg);
-    background-image:radial-gradient(700px 460px at 50% 0%, #4dba8716, transparent 65%);
+    background-image:radial-gradient(700px 460px at 50% 0%, #5cb8ff1c, transparent 65%);
   }
   .lock-box{width:100%;max-width:400px;text-align:center}
   .vault-lock{margin:30px auto}
@@ -89,11 +89,11 @@
     background:var(--bg-2);color:var(--text);
     transition:border-color .2s, background .2s, transform .15s;
   }
-  .btn:hover{border-color:#5a4e3c;background:var(--card-hover)}
+  .btn:hover{border-color:#3d6593;background:var(--card-hover)}
   .btn:active{transform:scale(.98)}
   .btn:disabled{opacity:.5;cursor:default}
-  .btn.primary{background:var(--accent);border-color:var(--accent);color:#20180a}
-  .btn.primary:hover{background:#f0b258;border-color:#f0b258}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#06213d}
+  .btn.primary:hover{background:#86cbff;border-color:#86cbff}
   .btn.ghost{background:transparent}
   .btn.danger{color:var(--danger)}
   .btn.sm{padding:8px 13px;font-size:.84rem;border-radius:10px}
@@ -134,7 +134,7 @@
     border:1px solid var(--line);color:var(--muted-text);vertical-align:1px;
   }
   .tab-count:empty{display:none}
-  .tab.on .tab-count{color:var(--accent);border-color:#5a4e3c}
+  .tab.on .tab-count{color:var(--accent);border-color:#3d6593}
   .status{
     font-size:.78rem;color:var(--muted-text);display:flex;align-items:center;gap:7px;
     white-space:nowrap;
@@ -174,7 +174,7 @@
     background:radial-gradient(420px circle at var(--mx,50%) var(--my,0%), var(--accent-soft), transparent 60%);
     opacity:0;transition:opacity .3s;pointer-events:none;
   }
-  .card:hover{transform:translateY(-4px);border-color:#5a4e3c;background:var(--card-hover)}
+  .card:hover{transform:translateY(-4px);border-color:#3d6593;background:var(--card-hover)}
   .card:hover::after{opacity:1}
   .card-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:2px}
   .card-top-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
@@ -207,7 +207,7 @@
   .card.todo{opacity:.62}
   .card.todo .icon{filter:grayscale(1)}
   .card.todo .arrow{display:none}
-  .tag.warn{color:#e8a33d;background:transparent;border:1px dashed #5a4e3c}
+  .tag.warn{color:#f0b258;background:transparent;border:1px dashed #3d6593}
 
   .card-actions{
     position:absolute;top:14px;right:14px;display:flex;gap:6px;z-index:3;
@@ -219,7 +219,7 @@
     background:var(--bg-2);border:1px solid var(--line);color:var(--muted-text);
     font-size:.82rem;transition:all .18s;
   }
-  .mini:hover{color:var(--text);border-color:#5a4e3c}
+  .mini:hover{color:var(--text);border-color:#3d6593}
   .mini.del:hover{color:var(--danger);border-color:var(--danger)}
   .mini.arch:hover,.mini.restore:hover{color:var(--accent);border-color:var(--accent)}
 
@@ -254,7 +254,7 @@
     opacity:0;transform:translateY(10px);animation:rise .5s forwards;
     transition:border-color .2s;
   }
-  .vrow:hover{border-color:#5a4e3c}
+  .vrow:hover{border-color:#3d6593}
   .vmain{flex:1;min-width:200px}
   .vmain h4{font-size:1.05rem;font-weight:600;display:flex;align-items:center;gap:8px}
   .vmain h4 a{color:var(--accent);text-decoration:none;font-size:.8rem;font-weight:600}
@@ -285,7 +285,7 @@
   /* ─────────── finestre ─────────── */
   .modal{
     position:fixed;inset:0;z-index:60;display:none;place-items:center;padding:24px;
-    background:#0b0907cc;backdrop-filter:blur(4px);
+    background:#06101ccc;backdrop-filter:blur(4px);
   }
   .modal.on{display:grid}
   .sheet{
@@ -351,7 +351,7 @@
 <!-- ══════════ ACCESSO ══════════ -->
 <div class="lock" id="lock">
   <div class="lock-box">
-    <div class="lock-mark">🎪</div>
+    <div class="lock-mark">🔐</div>
     <h2>Hub Pro Loco</h2>
     <p>Entra con lo stesso nome utente e password del planner delle attività.</p>
     <form id="lockForm" autocomplete="on">
@@ -368,7 +368,7 @@
   <header>
     <div class="kicker">Pro Loco Fabbrico · <span id="who"></span></div>
     <h1>Gli strumenti della <em>Pro Loco</em>,<br>in un posto solo.</h1>
-    <p class="sub">Planner, contabilità, festival e tutti gli account del direttivo. Cerca, clicca, sei dentro.</p>
+    <p class="sub">Planner, contabilità, sito e tutti gli account del direttivo. Cerca, clicca, sei dentro.</p>
   </header>
 
   <nav class="tabs">
@@ -604,14 +604,6 @@ const SEED_APPS = [
     desc:"Il sito per il paese.",
     url:"https://torneodelpretefavreg.github.io/lapiazza/",
     tags:["Sito","Pubblico"], group:"Pro Loco Fabbrico" },
-  { icon:"🎪", name:"Festival · Prenotazioni",
-    desc:"Prenotazioni del Festival Fabbrico.",
-    url:"https://torneodelpretefavreg.github.io/festival/",
-    tags:["Eventi"], group:"Festival Fabbrico", locked:true },
-  { icon:"💶", name:"Cassa Festival",
-    desc:"Cassa per gli stand del Festival.",
-    url:"https://torneodelpretefavreg.github.io/cassafestival/",
-    tags:["POS","Eventi"], group:"Festival Fabbrico", locked:true },
 ];
 
 const K_APPS  = "proloco_apps_v1";
@@ -822,6 +814,12 @@ function startSync(){
     const v = snap.exists ? snap.data() : null;
     const localRec = readJSON(K_APPS, null);
 
+    if(v && v.list && !v.mig && !cached){
+      // pulizia una tantum: tolgo i programmi del Festival dalla lista iniziale
+      apps = v.list.filter(function(x){ return !/\/(cassa)?festival\/?$/.test(x.url || ""); });
+      saveApps(); renderApps(); appsSnapSeen = true;
+      return;
+    }
     if(v && v.list){
       if(localRec && localRec.ts && v.ts && localRec.ts > v.ts && localRec.list){
         ref.doc("apps").set(clean(localRec)).catch(function(){});
@@ -873,7 +871,7 @@ function startSync(){
 }
 
 function saveApps(){
-  const rec = {list:apps, ts:Date.now()};
+  const rec = {list:apps, ts:Date.now(), mig:1};
   localStorage.setItem(K_APPS, JSON.stringify(rec));
   if(ref) ref.doc("apps").set(clean(rec)).catch(function(err){
     toast("Programmi non salvati sul database: " + (err && err.message ? err.message : "errore"));
