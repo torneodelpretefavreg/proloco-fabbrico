@@ -343,6 +343,8 @@
   .pl-appr.plain{background:#f0eee8;color:var(--ink-2)}
   .pl-btn.green{background:var(--ok);border-color:var(--ok)}
   .pl-btn.green:hover{background:#244c32}
+  .pl-invito{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--brand-soft-2);border-left:4px solid var(--brand);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--ink-2);line-height:1.45}
+  .pl-invito > svg{color:var(--brand);flex-shrink:0}
   .pl-import{border:1px solid var(--brand-soft-2);background:var(--brand-soft);border-radius:12px;padding:14px 16px;margin-bottom:14px}
   .pl-import h4{font-family:'Fraunces',serif;font-weight:500;font-size:17px;color:var(--brand-dark)}
   .pl-import-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin:10px 0}
@@ -508,7 +510,7 @@ const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.04-2";
+const APP_VERSION = "2026.11.04-3";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -1050,6 +1052,7 @@ function Shell({ uid }) {
       </header>
 
       <main className="pl-main">
+        <InvitoNotifiche uid={uid} avviso={avviso} />
         {isAdmin && (vista === "gantt" || vista === "persone") && <ImportVigilia utenti={utenti} bus={bus} attivita={attivita} uid={uid} me={me} avviso={avviso} />}
         {(vista === "gantt" || vista === "calendario" || vista === "priorita") && (
           <Filtri bus={bus} utenti={utenti} fBu={fBu} setFBu={setFBu} fResp={fResp} setFResp={setFResp} fStato={fStato} setFStato={setFStato} cerca={cerca} setCerca={setCerca}
@@ -1578,6 +1581,45 @@ function CalendarView({ attivita, buMap, utMap, onOpen, onNew }) {
         onTouchEnd={e => { const s0 = swRef.current; swRef.current = null; if (!s0) return; const dx = e.changedTouches[0].clientX - s0.x, dy = e.changedTouches[0].clientY - s0.y; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) sposta(dx < 0 ? 1 : -1); }}>{corpo}</div>
       <div className="pg-fuori">Tocca un giorno per creare un'attività in quella data{mobile ? ", scorri di lato per cambiare periodo" : ""}.{modo !== "settimana" && " Le attività più lunghe di una settimana compaiono solo all'inizio (▸) e alla scadenza (⚑)."}</div>
     </>
+  );
+}
+
+/* =====================================================================
+   INVITO AD ATTIVARE LE NOTIFICHE SU QUESTO DISPOSITIVO
+   ===================================================================== */
+function InvitoNotifiche({ uid, avviso }) {
+  const [stato, setStato] = useState(null); // null = controllo | "ok" | "chiedi" | "ios" | "no"
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (DEMO || lsGet("plf-invito-notifiche") === "chiuso") { setStato("no"); return; }
+    if (isIOS() && !isStandalone()) { setStato("ios"); return; }
+    if (typeof Notification === "undefined") { setStato("no"); return; }
+    if (Notification.permission === "denied") { setStato("no"); return; }
+    getMessaging().then(m => setStato(!m ? "no" : (Notification.permission === "granted" && lsGet(LS_TOKEN)) ? "ok" : "chiedi"));
+  }, []);
+  if (!stato || stato === "ok" || stato === "no") return null;
+  const chiudi = () => { lsSet("plf-invito-notifiche", "chiuso"); setStato("no"); };
+  const attiva = async () => {
+    setBusy(true);
+    try {
+      const p = await Notification.requestPermission();
+      if (p !== "granted") throw new Error("Notifiche non permesse: puoi attivarle dalle impostazioni del telefono.");
+      await registraDispositivo(uid, VAPID_KEY);
+      setStato("ok"); avviso("Notifiche attive su questo telefono ✓");
+    } catch (e) { avviso(e.message || String(e), "error"); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div className="pl-invito">
+      <Icon name="bell" size={18} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {stato === "ios"
+          ? <><b>Vuoi sapere quando ti assegnano qualcosa?</b><br />Su iPhone le notifiche arrivano solo dall'app sulla schermata Home: in Safari tocca <b>Condividi</b> → <b>Aggiungi alla schermata Home</b> e apri l'app da lì.</>
+          : <><b>Attiva le notifiche</b> per sapere quando ti assegnano un'attività e quando si avvicina una scadenza.</>}
+      </div>
+      {stato === "chiedi" && <button className="pl-btn sm" disabled={busy} onClick={attiva}>{busy ? "Attendi…" : "Attiva"}</button>}
+      <button className="pl-icon" title="Chiudi" onClick={chiudi}><Icon name="x" size={14} /></button>
+    </div>
   );
 }
 
@@ -2479,7 +2521,7 @@ function NotifichePanel({ uid, isAdmin, avviso }) {
             <input className="pl-input" placeholder={cfg.vapidKey ? "Chiave impostata · incolla per sostituirla" : "Chiave (inizia di solito con B…)"} value={chiave} onChange={e => setChiave(e.target.value)} />
             <button className="pl-btn" disabled={!chiave.trim()} onClick={() => store.set("config", "push", { ...cfg, vapidKey: chiave.trim() }).then(() => { setChiave(""); avviso("Chiave salvata"); }).catch(e => avviso("Errore: " + (e.code || e.message), "error"))}>Salva</button>
           </div>
-          <p className="pl-hint" style={{ marginTop: 8 }}>{cfg.ultimoInvio ? `Ultimo controllo automatico: ${new Date(cfg.ultimoInvio).toLocaleString("it-IT")}` : "Il controllo automatico che invia le notifiche non è ancora attivo."}</p>
+          <p className="pl-hint" style={{ marginTop: 8 }}>{cfg.ultimoInvio ? `Ultimo controllo automatico: ${new Date(cfg.ultimoInvio).toLocaleString("it-IT")}` : "Il servizio che invia le notifiche non ha ancora fatto il primo giro."}</p>
         </div>
       )}
     </>
