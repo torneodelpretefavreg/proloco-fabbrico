@@ -275,14 +275,14 @@
   .pl-overlay{position:fixed;inset:0;z-index:100;background:rgba(20,20,20,.38);display:flex;align-items:center;justify-content:center;padding:16px;animation:fade .15s}
   .pl-overlay.right{justify-content:flex-end;align-items:stretch;padding:0}
   @keyframes fade{from{opacity:0}to{opacity:1}}
-  .pl-modal{width:min(620px,100%);max-height:92vh;overflow-y:auto;background:var(--panel);border-radius:12px;box-shadow:0 24px 60px rgba(20,20,20,.22)}
+  .pl-modal{width:min(620px,100%);max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;background:var(--panel);border-radius:12px;box-shadow:0 24px 60px rgba(20,20,20,.22)}
   .pl-mhead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px;border-bottom:1px solid var(--rule);position:sticky;top:0;background:var(--panel);z-index:2}
   .pl-mhead h3{font-family:'Fraunces',serif;font-weight:500;font-size:18px}
   .pl-mbody{padding:6px 20px 18px}
   .pl-mfoot{display:flex;align-items:center;gap:8px;padding:12px 20px;border-top:1px solid var(--rule);position:sticky;bottom:0;background:var(--panel)}
   .pl-mfoot .dx{margin-left:auto;display:flex;gap:8px}
   .pl-meta{font-size:11.5px;color:var(--ink-3);margin-top:14px;line-height:1.5}
-  .pl-drawer{width:min(440px,100%);height:100%;background:var(--panel-2);overflow-y:auto;padding:18px 20px 30px;box-shadow:-12px 0 40px rgba(20,20,20,.15)}
+  .pl-drawer{width:min(440px,100%);height:100%;max-height:100%;background:var(--panel-2);overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:18px 20px 30px;box-shadow:-12px 0 40px rgba(20,20,20,.15)}
   .pl-dtabs{display:flex;gap:3px;background:#eeece5;border-radius:8px;padding:3px;margin:14px 0 16px;flex-wrap:wrap}
   .pl-dtabs button{flex:1;border:none;background:none;padding:7px 6px;border-radius:6px;font-size:12.5px;color:var(--ink-2);font-weight:500;white-space:nowrap}
   .pl-dtabs button.on{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
@@ -401,6 +401,8 @@
     .pc-whead{text-align:left;display:flex;gap:8px;align-items:baseline}
     .pl-overlay{padding:0;align-items:flex-end}
     .pl-modal{width:100%;max-height:94dvh;border-radius:16px 16px 0 0}
+    .pl-overlay.right{display:block}
+    .pl-drawer{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:auto;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(110px + env(safe-area-inset-bottom,0px))}
     .pl-mfoot{padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
     .pl-input,.pl-select,.pl-area{font-size:16px}
     .pl-toast{left:12px;right:12px;bottom:80px;text-align:center}
@@ -1034,12 +1036,15 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, o
       pressRef.current = null;
       if (navigator.vibrate) { try { navigator.vibrate(15); } catch (er) {} }
       d.touch = true; d.moved = true; dragRef.current = d; setDrag({ ...d });
+      // se il dito si alza prima che il trascinamento sia agganciato, lo chiudo comunque
+      const fine = () => { window.removeEventListener("pointerup", fine); window.removeEventListener("pointercancel", fine); window.removeEventListener("touchend", fine); setTimeout(() => { if (dragRef.current === d) { dragRef.current = null; setDrag(null); } }, 50); };
+      window.addEventListener("pointerup", fine); window.addEventListener("pointercancel", fine); window.addEventListener("touchend", fine);
     }, 450) };
     window.addEventListener("pointermove", annulla); window.addEventListener("pointerup", annulla); window.addEventListener("pointercancel", annulla);
   };
   // mentre trascino col dito blocco lo scorrimento della pagina
   useEffect(() => {
-    const blocca = (ev) => { if (dragRef.current && dragRef.current.touch) ev.preventDefault(); };
+    const blocca = (ev) => { if (dragRef.current && dragRef.current.touch && ev.target && ev.target.closest && ev.target.closest(".pg-scroll")) ev.preventDefault(); };
     window.addEventListener("touchmove", blocca, { passive: false });
     return () => window.removeEventListener("touchmove", blocca);
   }, []);
