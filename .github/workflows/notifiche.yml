@@ -1,0 +1,26 @@
+name: Notifiche
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: notifiche
+  cancel-in-progress: false
+
+jobs:
+  invia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Installa firebase-admin
+        run: npm install --no-save --no-audit --no-fund firebase-admin@12
+      - name: Invia le notifiche
+        run: node notifiche.mjs
+        env:
+          FIREBASE_SA: ${{ secrets.FIREBASE_SA }}
