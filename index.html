@@ -171,6 +171,8 @@
   .pg-bg{position:absolute;top:0;bottom:0;pointer-events:none;z-index:0}
   .pg-we{position:absolute;top:0;bottom:0;background:#f8f6f0}
   .pg-msep{position:absolute;top:0;bottom:0;border-left:1px solid var(--rule)}
+  .pg-past{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,rgba(120,113,108,.07) 0 6px,rgba(120,113,108,.12) 6px 12px);border-right:1px dashed #c9c5bb}
+  .pg-d.past,.pg-m.past{color:#c2bdb2}
   .pg-now{position:absolute;top:0;bottom:0;width:2px;background:var(--brand);opacity:.8}
   .pg-row{display:flex;position:relative;border-bottom:1px solid #f1efe9;height:44px}
   .pg-row:hover .pg-lbl{background:var(--brand-soft)}
@@ -506,7 +508,7 @@ const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.04-1";
+const APP_VERSION = "2026.11.04-2";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -1126,16 +1128,17 @@ function Filtri({ bus, utenti, fBu, setFBu, fResp, setFResp, fStato, setFStato, 
    GANTT
    ===================================================================== */
 const ZOOM = {
-  "4s": { lbl: "4 settimane", giorni: 28, col: 40, colM: 26, prima: 1, passo: 7 },
-  "3m": { lbl: "3 mesi", giorni: 91, col: 16, colM: 11, prima: 2, passo: 28 },
-  "6m": { lbl: "6 mesi", giorni: 182, col: 8, colM: 6, prima: 4, passo: 56 },
-  "12m": { lbl: "Anno", giorni: 364, col: 4, colM: 3, prima: 6, passo: 91 },
+  "4s": { lbl: "4 settimane", giorni: 28, col: 40, colM: 26, prima: 2, passo: 7 },
+  "3m": { lbl: "3 mesi", giorni: 91, col: 16, colM: 11, prima: 5, passo: 28 },
+  "6m": { lbl: "6 mesi", giorni: 182, col: 8, colM: 6, prima: 10, passo: 56 },
+  "12m": { lbl: "Anno", giorni: 364, col: 4, colM: 3, prima: 14, passo: 91 },
 };
 
 function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, fStato, onOpen, onNew, onPatch, setFStato, onSeedBu }) {
   const [zoom, setZoomS] = useState(() => (ZOOM[lsGet("plf-zoom")] ? lsGet("plf-zoom") : (mobile ? "4s" : "3m")));
   const Z = ZOOM[zoom];
-  const inizioPer = (z) => addDays(startOfWeek(new Date()), -7 * ZOOM[z].prima);
+  // si parte pochi giorni prima di oggi: il passato resta "messo da parte"
+  const inizioPer = (z) => addDays(startOfDay(new Date()), -ZOOM[z].prima);
   const [start, setStart] = useState(() => inizioPer(zoom));
   const setZoom = (z) => { setZoomS(z); lsSet("plf-zoom", z); setStart(inizioPer(z)); };
   const colW = mobile ? Z.colM : Z.col;
@@ -1357,10 +1360,10 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, f
           <div className="pg-head">
             <div className="pg-head-lbl" style={{ width: LBL, padding: mobile ? "0 4px 5px" : undefined }}>{mobile ? <button className="pl-icon" style={{ width: 30, height: 30 }} title={compatto ? "Mostra i nomi" : "Nascondi i nomi"} onClick={() => setCompatto(!compatto)}><Icon name={compatto ? "right" : "left"} size={15} /></button> : "Attività"}</div>
             <div className="pg-head-track" style={{ width: W }}>
-              <div className="pg-mrow">{mesiSeg.map(s => <div key={s.k} className="pg-m" style={{ width: s.n * colW }}>{etichettaMese(s)}</div>)}</div>
+              <div className="pg-mrow">{mesiSeg.map(s => <div key={s.k} className={"pg-m" + (toKey(addDays(s.d, s.n - 1)) < oggi ? " past" : "")} style={{ width: s.n * colW }}>{etichettaMese(s)}</div>)}</div>
               <div className="pg-drow">
                 {perGiorno
-                  ? days.map(d => { const k = toKey(d); return <div key={k} className={"pg-d" + (wd(d) >= 5 ? " we" : "") + (k === oggi ? " oggi" : "")} style={{ width: colW }}><span>{colW >= 28 ? `${GIORNI[wd(d)].slice(0, 1)} ${d.getDate()}` : d.getDate()}</span></div>; })
+                  ? days.map(d => { const k = toKey(d); return <div key={k} className={"pg-d" + (wd(d) >= 5 ? " we" : "") + (k === oggi ? " oggi" : "") + (k < oggi ? " past" : "")} style={{ width: colW }}><span>{colW >= 28 ? `${GIORNI[wd(d)].slice(0, 1)} ${d.getDate()}` : d.getDate()}</span></div>; })
                   : days.map((d, i) => wd(d) === 0 || i === 0 ? <div key={toKey(d)} className={"pg-d" + (daysBetween(d, new Date()) >= 0 && daysBetween(d, new Date()) < 7 ? " oggi" : "")} style={{ width: Math.min(7 - (i === 0 ? wd(d) : 0), N - i) * colW, textAlign: "left", paddingLeft: 3 }}>{colW * 7 >= 22 && <span>{d.getDate()}</span>}</div> : null)}
               </div>
             </div>
@@ -1370,6 +1373,7 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, f
             <div className="pg-bg" style={{ left: LBL, width: W }}>
               {colW >= 6 && days.map((d, i) => wd(d) >= 5 ? <div key={i} className="pg-we" style={{ left: i * colW, width: colW }} /> : null)}
               {mesiSeg.slice(1).reduce((acc, s, i) => { const x = acc.x + mesiSeg[i].n * colW; acc.el.push(<div key={s.k} className="pg-msep" style={{ left: x }} />); acc.x = x; return acc; }, { x: 0, el: [] }).el}
+              {iOggi > 0 && <div className="pg-past" style={{ left: 0, width: Math.min(iOggi, N) * colW }} />}
               {iOggi >= 0 && iOggi < N && <div className="pg-now" style={{ left: iOggi * colW + colW / 2 - 1 }} />}
             </div>
 
