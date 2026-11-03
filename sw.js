@@ -1,7 +1,7 @@
 /* Service worker — Pro Loco Fabbrico
    - riceve le notifiche push anche ad app chiusa (Firebase Cloud Messaging)
    - tiene in cache la "scocca" dell'app per aprirla più in fretta */
-const CACHE = "plf-v1";
+const CACHE = "plf-v2";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 let cfg = null;
@@ -30,6 +30,9 @@ if (cfg && cfg.apiKey) {
   } catch (e) { console.warn("FCM nel service worker non disponibile", e); }
 }
 
+// la pagina può chiedere di attivare subito la nuova versione
+self.addEventListener("message", (e) => { if (e.data === "skipWaiting") self.skipWaiting(); });
+
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).catch(() => {}));
   self.skipWaiting();
@@ -45,8 +48,10 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.endsWith("version.json")) return; // sempre dalla rete
   e.respondWith(
-    fetch(req).then((res) => {
+    // le pagine le ricontrollo sempre col server (GitHub le terrebbe in cache 10 minuti)
+    (req.mode === "navigate" ? fetch(req.url, { cache: "no-cache", credentials: "same-origin" }).then((r) => (r.redirected ? fetch(req) : r)) : fetch(req)).then((res) => {
       if (res.ok) { const copia = res.clone(); caches.open(CACHE).then((c) => c.put(req, copia)).catch(() => {}); }
       return res;
     }).catch(() => caches.match(req).then((r) => r || caches.match("./index.html")))
