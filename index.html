@@ -202,6 +202,20 @@
   .pg-tip{position:fixed;z-index:200;background:var(--ink);color:#fff;font-size:12px;padding:6px 10px;border-radius:6px;pointer-events:none;white-space:nowrap}
   .pg-dragtip{position:fixed;top:calc(70px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:210;background:var(--brand-dark);color:#fff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:999px;box-shadow:0 8px 24px rgba(20,20,20,.25);white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
   .pg-grp-float{position:sticky;left:8px;display:inline-block;margin-top:9px;font-size:12px;font-weight:700;white-space:nowrap;padding-left:8px}
+  .pg-sub{height:32px;background:rgba(251,250,246,.5)}
+  .pg-sub .pg-lbl{background:#fcfbf8;gap:6px}
+  .pg-sub-n{font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;cursor:pointer}
+  .pg-sub-dot{width:12px;height:12px;border-radius:50%;border:3px solid;background:#fff;display:inline-block}
+  .pg-subbtn{display:inline-flex;align-items:center;gap:3px;border:1px solid var(--rule-2);background:var(--panel);border-radius:999px;padding:1px 7px;font-size:10.5px;font-weight:600;color:var(--ink-2);flex-shrink:0}
+  .pg-subbtn.on{background:var(--brand-soft);border-color:var(--brand-soft-2);color:var(--brand-dark)}
+  .pg-st{height:34px}
+  .pg-st .pg-lbl{gap:7px;background:#fdfcfa}
+  .pg-st-main{flex:1;min-width:0;cursor:pointer}
+  .pg-st-t{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-2)}
+  .pg-st.done .pg-st-t{text-decoration:line-through;color:var(--ink-3)}
+  .pg-st-s{font-size:10px;color:var(--ink-3)}
+  .pg-st-s.late{color:var(--danger);font-weight:600}
+  .pg-st-ms{position:absolute;top:11px;width:12px;height:12px;transform:rotate(45deg);border-radius:2px;border:2px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.25)}
   .pg-fuori{font-size:12px;color:var(--ink-3);margin-top:8px}
 
   /* ---------- CALENDARIO ---------- */
@@ -300,8 +314,25 @@
   .pl-cred b{font-family:ui-monospace,Menlo,monospace;font-size:14px;word-break:break-all}
   .pl-inline{background:var(--panel-2);border:1px solid var(--rule);border-radius:8px;padding:8px 10px 10px;margin:0 0 8px}
   a.pl-btn{text-decoration:none}
+  .pl-bu-blk{border-top:1px solid #f1efe9;padding-bottom:6px}
+  .pl-bu-blk:first-of-type{border-top:none}
+  .pl-bu-blk .pl-urow{border-top:none}
+  .pl-aree{padding-left:24px;display:flex;flex-direction:column;gap:4px}
+  .pl-area-row{display:flex;align-items:center;gap:6px;min-height:30px}
+  .pl-area-row .pl-input{padding:5px 8px;font-size:12.5px}
+  .pl-area-dot{width:10px;height:10px;border-radius:50%;border:3px solid;flex-shrink:0}
+  .pl-area-n{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pl-icon.sm{width:26px;height:26px}
   .pl-avbtn{position:relative;border:none;background:none;padding:0;display:inline-flex;flex-shrink:0;cursor:pointer}
   .pl-avedit{position:absolute;right:-3px;bottom:-3px;width:15px;height:15px;border-radius:50%;background:#fff;border:1px solid var(--rule-2);display:grid;place-items:center;color:var(--ink-2)}
+  .pl-sub-card{border:1px solid var(--rule);border-radius:9px;padding:6px 8px 8px;margin-bottom:6px;background:var(--panel-2)}
+  .pl-sub-card.done{opacity:.65}
+  .pl-sub-card.done .pl-sub-in{text-decoration:line-through}
+  .pl-sub-in{flex:1;min-width:0;border:none;background:transparent;font-size:13.5px;padding:4px 2px;outline:none;border-bottom:1px dashed transparent}
+  .pl-sub-in:focus{border-bottom-color:var(--brand)}
+  .pl-sub-meta{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:6px;margin-top:4px;padding-left:28px}
+  .pl-sub-meta .pl-select,.pl-sub-meta .pl-input{padding:5px 7px;font-size:12.5px}
+  .pl-sub-meta .pl-input.late{border-color:var(--danger);color:var(--danger)}
   .pl-sub-row{display:flex;align-items:center;gap:8px;padding:4px 0}
   .pl-sub-row .t{flex:1;min-width:0;font-size:13px;word-break:break-word}
   .pl-sub-row.done .t{text-decoration:line-through;color:var(--ink-3)}
@@ -367,6 +398,12 @@
     .pg-lbl-t{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:12.5px;line-height:1.2}
     .pg-lbl-s{display:none}
     .pg-row{height:52px}
+    .pg-row.pg-sub{height:38px}
+    .pg-row.pg-st{height:42px}
+    .pg-subbtn{padding:4px 6px}
+    .pl-sub-meta{grid-template-columns:1fr 1fr;padding-left:0}
+    .pl-icon.sm{width:32px;height:32px}
+    .pl-aree{padding-left:8px}
     .pg-bar{top:12px;height:28px}
     .pg-ms{top:16px}
     .pg-out{top:17px}
@@ -509,21 +546,22 @@ function seedDemo() {
   };
   const bu = {
     "bu-gen": { nome: "Generale", colore: "#3b4a5a", ordine: 0 },
-    "bu-sagra": { nome: "Sagra", colore: "#1f6fb0", ordine: 1 },
+    "bu-sagra": { nome: "Sagra", colore: "#1f6fb0", ordine: 1, sottoaree: [{ id: "sa-cucina", nome: "Cucina" }, { id: "sa-logistica", nome: "Logistica e permessi" }, { id: "sa-sponsor", nome: "Sponsor" }] },
     "bu-eventi": { nome: "Eventi e manifestazioni", colore: "#c2410c", ordine: 2 },
-    "bu-tur": { nome: "Turismo e promozione", colore: "#2d5e3e", ordine: 3 },
+    "bu-tur": { nome: "Turismo e promozione", colore: "#2d5e3e", ordine: 3, sottoaree: [{ id: "sa-social", nome: "Social" }, { id: "sa-sito", nome: "Sito web" }] },
   };
   const A = (titolo, buId, resp, da, a, extra) => ({ titolo, buId, responsabili: resp, inizio: k(da), fine: k(a), stato: "da_fare", avanzamento: 0, sottoattivita: [], note: "", notifica: true, creatoDa: "Davide Lodi", creatoIl: ora(), ...(extra || {}) });
   const attivita = {
     a1: A("Rinnovo iscrizione Albo Pro Loco", "bu-gen", ["demo-admin"], -20, -3, { stato: "in_corso", avanzamento: 60 }),
     a2: A("Assemblea dei soci", "bu-gen", ["demo-admin", "u-giulia"], 12, 12, { milestone: true, luogo: "Sala civica" }),
     a3: A("Bilancio preventivo", "bu-gen", ["u-marco"], -5, 18, { stato: "in_corso", avanzamento: 30, priorita: "alta" }),
-    a4: A("Richiesta permessi e SCIA", "bu-sagra", ["u-giulia"], 3, 25, { priorita: "alta", sottoattivita: [{ id: "s1", text: "Modulo SCIA al Comune", done: true }, { id: "s2", text: "Piano sicurezza", done: false }] }),
-    a5: A("Ricerca sponsor", "bu-sagra", ["demo-admin", "u-sara"], -10, 40, { stato: "in_corso", avanzamento: 40 }),
-    a6: A("Ordine materiale cucina", "bu-sagra", ["u-marco"], 30, 45),
+    a4: A("Richiesta permessi e SCIA", "bu-sagra", ["u-giulia"], 3, 25, { sottoareaId: "sa-logistica", priorita: "alta", sottoattivita: [{ id: "s1", text: "Modulo SCIA al Comune", done: true, resp: "u-giulia", scadenza: k(5) }, { id: "s2", text: "Piano sicurezza", done: false, resp: "u-marco", scadenza: k(15) }, { id: "s3", text: "Permesso suolo pubblico", done: false, scadenza: k(22) }] }),
+    a5: A("Ricerca sponsor", "bu-sagra", ["demo-admin", "u-sara"], -10, 40, { sottoareaId: "sa-sponsor", stato: "in_corso", avanzamento: 40 }),
+    a6: A("Ordine materiale cucina", "bu-sagra", ["u-marco"], 30, 45, { sottoareaId: "sa-cucina" }),
     a7: A("Mercatino di Natale", "bu-eventi", ["u-sara", "u-giulia"], 38, 40, { luogo: "Piazza" }),
     a8: A("Volantini e social", "bu-eventi", ["u-sara"], 15, 36),
-    a9: A("Aggiornamento sito e pagina Facebook", "bu-tur", ["u-giulia"], -14, -2, { stato: "fatto", avanzamento: 100 }),
+    a9: A("Aggiornamento sito e pagina Facebook", "bu-tur", ["u-giulia"], -14, -2, { sottoareaId: "sa-sito", stato: "fatto", avanzamento: 100 }),
+    a11: A("Piano editoriale Instagram", "bu-tur", ["u-sara"], 0, 30, { sottoareaId: "sa-social", stato: "in_corso", avanzamento: 20, sottoattivita: [{ id: "s4", text: "Foto della Sagra", done: false, resp: "u-sara", scadenza: k(6) }, { id: "s5", text: "Calendario post di novembre", done: false, resp: "u-giulia", scadenza: k(12) }] }),
     a10: A("Visite guidate primavera", "bu-tur", [], 60, 90),
   };
   const promemoria = {
@@ -856,6 +894,7 @@ function Shell({ uid }) {
     const st = d.stato || "da_fare";
     const p = {
       titolo: (d.titolo || "").trim() || "Senza titolo", buId: d.buId || null, responsabili: d.responsabili || [],
+      sottoareaId: (d.buId && d.sottoareaId && buMap[d.buId] && (buMap[d.buId].sottoaree || []).some(x => x.id === d.sottoareaId)) ? d.sottoareaId : null,
       inizio: d.inizio, fine: d.milestone ? d.inizio : (d.fine < d.inizio ? d.inizio : d.fine), ora: d.ora || "",
       milestone: !!d.milestone, luogo: (d.luogo || "").trim(), stato: st, done: st === "fatto",
       priorita: d.priorita || null, avanzamento: st === "fatto" ? 100 : Math.max(0, Math.min(100, Number(d.avanzamento) || 0)),
@@ -1086,6 +1125,59 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, o
   const etichettaMese = (s) => { const w = s.n * colW; const m = MESI[s.d.getMonth()]; if (w > 110) return `${m} ${s.d.getFullYear()}`; if (w > 60) return m; if (w > 26) return m.slice(0, 3); return ""; };
   const perGiorno = colW >= 14;
 
+  const [espanse, setEspanse] = useState(() => { try { return JSON.parse(lsGet("plf-espanse") || "{}"); } catch (e) { return {}; } });
+  const togEspansa = (id) => { const n = { ...espanse, [id]: !espanse[id] }; setEspanse(n); lsSet("plf-espanse", JSON.stringify(n)); };
+  const rigaAttivita = (a, g, livello) => {
+    const st = statoDi(a), late = inRitardo(a);
+    const subs = a.sottoattivita || [];
+    const aperta = !!espanse[a.id];
+    const rientro = livello ? (mobile ? 6 : 14) : 0;
+    return (
+      <React.Fragment key={a.id}>
+        <div className="pg-row">
+          <div className="pg-lbl" style={{ width: LBL, paddingLeft: corto ? undefined : (mobile ? 6 : 10) + rientro }}>
+            <button className="pg-stbtn" title={`${STATI[st].lbl} · tocca per cambiare`}
+              style={{ background: st === "fatto" ? "var(--ok)" : st === "in_corso" ? "var(--brand-soft-2)" : "#efede6", color: st === "fatto" ? "#fff" : st === "in_corso" ? "var(--brand-dark)" : "var(--ink-3)" }}
+              onClick={() => onPatch(a.id, { stato: PROSSIMO[st], done: PROSSIMO[st] === "fatto", ...(PROSSIMO[st] === "fatto" ? { avanzamento: 100 } : {}) })}>
+              <Icon name={STATI[st].ic} size={12} />
+            </button>
+            {!corto && <div className="pg-lbl-main" onClick={() => onOpen(a)}>
+              <div className={"pg-lbl-t" + (st === "fatto" ? " done" : "")} title={a.titolo}>{(a.priorita === "alta" || a.priorita === "media") && <span className="pg-prio" title={`Priorità ${a.priorita}`} style={{ color: a.priorita === "alta" ? "#b4462f" : "#a46a12" }}><Icon name="flag" size={12} /></span>}{a.milestone ? "◆ " : ""}{a.titolo}</div>
+              <div className="pg-lbl-s"><span className={late ? "late" : ""}>{fmtPeriodo(a)}{late ? " · in ritardo" : ""}</span>{!mobile && (a.responsabili || []).length === 0 && <span style={{ fontStyle: "italic" }}>senza responsabile</span>}</div>
+            </div>}
+            {!corto && subs.length > 0 && <button className={"pg-subbtn" + (aperta ? " on" : "")} title={aperta ? "Nascondi sotto-attività" : "Mostra sotto-attività"} onClick={() => togEspansa(a.id)}>{!mobile && `${subs.filter(x => x.done).length}/${subs.length}`}<Icon name={aperta ? "up" : "down"} size={mobile ? 12 : 10} /></button>}
+            {!mobile && <Avatars ids={a.responsabili} utMap={utMap} size={22} max={3} />}
+          </div>
+          <div className="pg-track" style={{ width: W }}>{barra(a)}</div>
+        </div>
+        {aperta && !corto && subs.map(sb => {
+          const col = g.colore || "#8a8a82";
+          const off = sb.scadenza ? daysBetween(start, fromKey(sb.scadenza)) : null;
+          const tardi = !sb.done && sb.scadenza && sb.scadenza < oggi;
+          const r = sb.resp && utMap[sb.resp];
+          return (
+            <div key={sb.id} className={"pg-row pg-st" + (sb.done ? " done" : "")}>
+              <div className="pg-lbl" style={{ width: LBL, paddingLeft: (mobile ? 6 + rientro + 12 : 10 + rientro + 26) }}>
+                <button className={"pl-check" + (sb.done ? " on" : "")} style={{ width: 18, height: 18 }} onClick={() => onPatch(a.id, { sottoattivita: subs.map(x => x.id === sb.id ? { ...x, done: !x.done } : x) })}>{sb.done && <Icon name="check" size={10} style={{ color: "#fff" }} />}</button>
+                <div className="pg-st-main" onClick={() => onOpen(a)}>
+                  <div className="pg-st-t" title={sb.text}>{sb.text}</div>
+                  {sb.scadenza && <div className={"pg-st-s" + (tardi ? " late" : "")}>{fmtData(sb.scadenza)}{tardi ? " · in ritardo" : ""}</div>}
+                </div>
+                {r && !mobile && <Avatar u={r} size={18} />}
+              </div>
+              <div className="pg-track" style={{ width: W }}>
+                {off !== null && off >= 0 && off < N && <>
+                  <div className="pg-st-ms" style={{ left: off * colW + colW / 2 - 6, background: sb.done ? "var(--ok)" : tardi ? "var(--danger)" : col }} title={`${sb.text} · ${fmtData(sb.scadenza)}`} />
+                  <span className="pg-out" style={{ left: off * colW + colW / 2 + 10, top: 9, fontSize: 11 }}>{sb.text}{r ? " · " + r.nome.split(" ")[0] : ""}</span>
+                </>}
+              </div>
+            </div>
+          );
+        })}
+      </React.Fragment>
+    );
+  };
+
   const periodoLbl = `${fmtData(startK)} ${fromKey(startK).getFullYear() !== fromKey(fineK).getFullYear() ? fromKey(startK).getFullYear() + " " : ""}– ${fmtData(fineK)} ${fromKey(fineK).getFullYear()}`;
   const [tip, setTip] = useState(null);
 
@@ -1190,26 +1282,38 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, o
                       {chiuso && g.items.map(a => { const d = dateDi(a); const off = Math.max(0, daysBetween(start, fromKey(d.inizio))); const end = Math.min(N, daysBetween(start, fromKey(d.fine)) + 1); return <div key={a.id} style={{ position: "absolute", top: 15, height: 6, borderRadius: 3, left: off * colW, width: Math.max(3, (end - off) * colW - 1), background: hexA(g.colore, 0.5) }} />; })}
                     </div>
                   </div>
-                  {!chiuso && g.items.map(a => {
-                    const st = statoDi(a), late = inRitardo(a);
-                    return (
-                      <div key={a.id} className="pg-row">
-                        <div className="pg-lbl" style={{ width: LBL }}>
-                          <button className="pg-stbtn" title={`${STATI[st].lbl} · tocca per cambiare`}
-                            style={{ background: st === "fatto" ? "var(--ok)" : st === "in_corso" ? "var(--brand-soft-2)" : "#efede6", color: st === "fatto" ? "#fff" : st === "in_corso" ? "var(--brand-dark)" : "var(--ink-3)" }}
-                            onClick={() => onPatch(a.id, { stato: PROSSIMO[st], done: PROSSIMO[st] === "fatto", ...(PROSSIMO[st] === "fatto" ? { avanzamento: 100 } : {}) })}>
-                            <Icon name={STATI[st].ic} size={12} />
-                          </button>
-                          {!corto && <div className="pg-lbl-main" onClick={() => onOpen(a)}>
-                            <div className={"pg-lbl-t" + (st === "fatto" ? " done" : "")} title={a.titolo}>{(a.priorita === "alta" || a.priorita === "media") && <span className="pg-prio" title={`Priorità ${a.priorita}`} style={{ color: a.priorita === "alta" ? "#b4462f" : "#a46a12" }}><Icon name="flag" size={12} /></span>}{a.milestone ? "◆ " : ""}{a.titolo}</div>
-                            <div className="pg-lbl-s"><span className={late ? "late" : ""}>{fmtPeriodo(a)}{late ? " · in ritardo" : ""}</span>{!mobile && (a.responsabili || []).length === 0 && <span style={{ fontStyle: "italic" }}>senza responsabile</span>}</div>
-                          </div>}
-                          {!mobile && <Avatars ids={a.responsabili} utMap={utMap} size={22} max={3} />}
-                        </div>
-                        <div className="pg-track" style={{ width: W }}>{barra(a)}</div>
-                      </div>
-                    );
-                  })}
+                  {!chiuso && (() => {
+                    const b = g.id ? buMap[g.id] : null;
+                    const aree = (b && b.sottoaree) || [];
+                    const idAree = aree.map(x => x.id);
+                    const libere = g.items.filter(a => !a.sottoareaId || !idAree.includes(a.sottoareaId));
+                    return <>
+                      {libere.map(a => rigaAttivita(a, g, 0))}
+                      {aree.map(sa => {
+                        const its = g.items.filter(a => a.sottoareaId === sa.id);
+                        if (!its.length) return null;
+                        const ks = k + "/" + sa.id, ch = !!chiusi[ks];
+                        return (
+                          <React.Fragment key={ks}>
+                            <div className="pg-row pg-sub">
+                              <div className="pg-lbl" style={{ width: LBL }}>
+                                {corto ? <span className="pg-sub-dot" style={{ borderColor: g.colore, margin: "0 auto" }} onClick={() => togGruppo(ks)} /> : <>
+                                <button className="pl-icon" style={{ width: 20, height: 20, border: "none", background: "none", marginLeft: 14 }} onClick={() => togGruppo(ks)}><Icon name={ch ? "right" : "down"} size={12} /></button>
+                                <span className="pg-sub-n" style={{ color: g.colore }} onClick={() => togGruppo(ks)} title={sa.nome}>{sa.nome}</span>
+                                <span className="pg-grp-c hide-sm">{its.length}</span>
+                                <button className="pl-icon hide-sm" style={{ width: 22, height: 22 }} title={`Nuova attività in ${sa.nome}`} onClick={() => onNew({ buId: g.id, sottoareaId: sa.id })}><Icon name="plus" size={12} /></button></>}
+                              </div>
+                              <div className="pg-track" style={{ width: W }}>
+                                {corto && <span className="pg-grp-float" style={{ color: g.colore, left: LBL + 6, marginTop: 6, fontWeight: 600 }}>› {sa.nome}</span>}
+                                {ch && its.map(a => { const d = dateDi(a); const off = Math.max(0, daysBetween(start, fromKey(d.inizio))); const end = Math.min(N, daysBetween(start, fromKey(d.fine)) + 1); return end > off ? <div key={a.id} style={{ position: "absolute", top: 13, height: 5, borderRadius: 3, left: off * colW, width: Math.max(3, (end - off) * colW - 1), background: hexA(g.colore, 0.4) }} /> : null; })}
+                              </div>
+                            </div>
+                            {!ch && its.map(a => rigaAttivita(a, g, 1))}
+                          </React.Fragment>
+                        );
+                      })}
+                    </>;
+                  })()}
                 </React.Fragment>
               );
             })}
@@ -1390,7 +1494,7 @@ function PriorityView({ attivita, buMap, utMap, mobile, onOpen, onPatch, onNew }
         draggable={!mobile} onDragStart={e => { e.dataTransfer.setData("text/plain", a.id); e.dataTransfer.effectAllowed = "move"; }}
         onClick={() => onOpen(a)}>
         <div className="pq-top">
-          <span className="pq-bu"><span className="dot" style={{ background: b ? b.colore : "#8a8a82" }} />{b ? b.nome : "Senza BU"}</span>
+          <span className="pq-bu"><span className="dot" style={{ background: b ? b.colore : "#8a8a82" }} />{b ? b.nome : "Senza BU"}{b && a.sottoareaId && (b.sottoaree || []).find(x => x.id === a.sottoareaId) ? " › " + b.sottoaree.find(x => x.id === a.sottoareaId).nome : ""}</span>
           <span className={"pq-due " + sc.cls}>{sc.lbl}</span>
         </div>
         <div className="pq-title">{a.milestone ? "◆ " : ""}{a.titolo}</div>
@@ -1597,9 +1701,21 @@ function ActivityModal({ draft, setDraft, bus, utenti, utMap, uid, onClose, onSa
 
           <label className="pl-lbl">Business unit</label>
           <div className="pl-chips">
-            {bus.map(b => <button key={b.id} type="button" className={"pl-chip" + (draft.buId === b.id ? " on" : "")} style={draft.buId === b.id ? { background: b.colore, borderColor: b.colore } : null} onClick={() => set({ buId: b.id })}><span className="dot" style={{ background: draft.buId === b.id ? "#fff" : b.colore }} />{b.nome}</button>)}
-            <button type="button" className={"pl-chip" + (!draft.buId ? " on" : "")} onClick={() => set({ buId: null })}>Nessuna</button>
+            {bus.map(b => <button key={b.id} type="button" className={"pl-chip" + (draft.buId === b.id ? " on" : "")} style={draft.buId === b.id ? { background: b.colore, borderColor: b.colore } : null} onClick={() => set({ buId: b.id, sottoareaId: draft.buId === b.id ? draft.sottoareaId : null })}><span className="dot" style={{ background: draft.buId === b.id ? "#fff" : b.colore }} />{b.nome}</button>)}
+            <button type="button" className={"pl-chip" + (!draft.buId ? " on" : "")} onClick={() => set({ buId: null, sottoareaId: null })}>Nessuna</button>
           </div>
+          {(() => {
+            const b = bus.find(x => x.id === draft.buId);
+            const aree = (b && b.sottoaree) || [];
+            if (!aree.length) return null;
+            return <>
+              <label className="pl-lbl">Sottoarea di {b.nome}</label>
+              <div className="pl-chips">
+                {aree.map(sa => <button key={sa.id} type="button" className={"pl-chip" + (draft.sottoareaId === sa.id ? " on" : "")} style={draft.sottoareaId === sa.id ? { background: b.colore, borderColor: b.colore } : null} onClick={() => set({ sottoareaId: sa.id })}>{sa.nome}</button>)}
+                <button type="button" className={"pl-chip" + (!draft.sottoareaId ? " on" : "")} onClick={() => set({ sottoareaId: null })}>Nessuna</button>
+              </div>
+            </>;
+          })()}
 
           <label className="pl-lbl">Responsabili</label>
           <div className="pl-chips">
@@ -1641,13 +1757,26 @@ function ActivityModal({ draft, setDraft, bus, utenti, utMap, uid, onClose, onSa
           </>}
 
           <label className="pl-lbl">Sotto-attività {subs.length ? `· ${subFatte}/${subs.length}` : ""}</label>
-          {subs.map(s => (
-            <div key={s.id} className={"pl-sub-row" + (s.done ? " done" : "")}>
-              <button type="button" className={"pl-check" + (s.done ? " on" : "")} onClick={() => set({ sottoattivita: subs.map(x => x.id === s.id ? { ...x, done: !x.done } : x) })}>{s.done && <Icon name="check" size={11} style={{ color: "#fff" }} />}</button>
-              <span className="t">{s.text}</span>
-              <button type="button" className="pl-icon" style={{ width: 24, height: 24 }} onClick={() => set({ sottoattivita: subs.filter(x => x.id !== s.id) })}><Icon name="x" size={12} /></button>
-            </div>
-          ))}
+          {subs.map(s => {
+            const cambia = (p) => set({ sottoattivita: subs.map(x => x.id === s.id ? { ...x, ...p } : x) });
+            const tardi = !s.done && s.scadenza && s.scadenza < oggiKey();
+            return (
+              <div key={s.id} className={"pl-sub-card" + (s.done ? " done" : "")}>
+                <div className="pl-sub-row">
+                  <button type="button" className={"pl-check" + (s.done ? " on" : "")} onClick={() => cambia({ done: !s.done })}>{s.done && <Icon name="check" size={11} style={{ color: "#fff" }} />}</button>
+                  <input className="pl-sub-in" value={s.text} onChange={e => cambia({ text: e.target.value })} />
+                  <button type="button" className="pl-icon" style={{ width: 26, height: 26 }} title="Elimina" onClick={() => set({ sottoattivita: subs.filter(x => x.id !== s.id) })}><Icon name="x" size={12} /></button>
+                </div>
+                <div className="pl-sub-meta">
+                  <select className="pl-select" value={s.resp || ""} onChange={e => cambia({ resp: e.target.value || null })}>
+                    <option value="">Chi se ne occupa?</option>
+                    {utenti.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
+                  </select>
+                  <input className={"pl-input" + (tardi ? " late" : "")} type="date" value={s.scadenza || ""} title="Scadenza" onChange={e => cambia({ scadenza: e.target.value || null })} />
+                </div>
+              </div>
+            );
+          })}
           <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
             <input className="pl-input" value={nuovaSub} placeholder="Aggiungi una sotto-attività…" onChange={e => setNuovaSub(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addSub(); } }} />
             <button type="button" className="pl-btn ghost" onClick={addSub}><Icon name="plus" size={14} /></button>
@@ -1941,25 +2070,76 @@ function BuTab({ bus, attivita, isAdmin, avviso }) {
     if (!confirm(`Eliminare la business unit "${b.nome}"?${n ? `\n\n${n} attività finiranno in "Senza business unit".` : ""}`)) return;
     try { await store.del("bu", b.id); } catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
   };
+  // ---- sottoaree (es. Turismo e promozione › Social) ----
+  const [nuoveAree, setNuoveAree] = useState({});
+  const [rinomina, setRinomina] = useState(null); // { buId, id, nome }
+  const salvaAree = (b, aree) => store.update("bu", b.id, { sottoaree: aree }).catch(e => avviso("Errore: " + (e.code || e.message), "error"));
+  const aggiungiArea = (b) => {
+    const nome = (nuoveAree[b.id] || "").trim(); if (!nome) return;
+    const aree = b.sottoaree || [];
+    if (aree.some(x => norm(x.nome) === norm(nome))) { avviso("Questa sottoarea esiste già", "error"); return; }
+    salvaAree(b, [...aree, { id: nid(), nome }]); setNuoveAree({ ...nuoveAree, [b.id]: "" });
+  };
+  const eliminaArea = (b, sa) => {
+    const n = attivita.filter(a => a.sottoareaId === sa.id).length;
+    if (!confirm(`Eliminare la sottoarea "${sa.nome}"?${n ? `\n\n${n} attività resteranno in ${b.nome}, senza sottoarea.` : ""}`)) return;
+    salvaAree(b, (b.sottoaree || []).filter(x => x.id !== sa.id));
+  };
+  const spostaArea = (b, i, dir) => {
+    const aree = [...(b.sottoaree || [])]; const j = i + dir; if (j < 0 || j >= aree.length) return;
+    [aree[i], aree[j]] = [aree[j], aree[i]]; salvaAree(b, aree);
+  };
+  const salvaRinomina = (b) => {
+    const nome = (rinomina.nome || "").trim(); if (!nome) return;
+    salvaAree(b, (b.sottoaree || []).map(x => x.id === rinomina.id ? { ...x, nome } : x)); setRinomina(null);
+  };
   const creaDefault = async () => {
     try { for (let i = 0; i < BU_DEFAULT.length; i++) await store.add("bu", { nome: BU_DEFAULT[i][0], colore: BU_DEFAULT[i][1], ordine: bus.length + i }); avviso("Business unit create"); }
     catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
   };
   return (
     <>
-      <p className="pl-hint" style={{ marginBottom: 12 }}>Le business unit raggruppano le attività nel Gantt e nei filtri.{!isAdmin && " Solo gli amministratori possono modificarle."}</p>
+      <p className="pl-hint" style={{ marginBottom: 12 }}>Le business unit raggruppano le attività nel Gantt e nei filtri. Dentro ognuna puoi creare delle sottoaree (es. Turismo e promozione › Social, Sito web).{!isAdmin && " Solo gli amministratori possono modificarle."}</p>
       <div className="pl-box">
         {!bus.length && <div className="pl-hint">Nessuna business unit.</div>}
         {bus.map((b, i) => (
-          <div key={b.id} className="pl-urow">
+          <div key={b.id} className="pl-bu-blk">
+          <div className="pl-urow">
             <span style={{ width: 14, height: 14, borderRadius: 4, background: b.colore, flexShrink: 0 }} />
-            <div className="nm"><b>{b.nome}</b><span>{conta(b.id)} attività</span></div>
+            <div className="nm"><b>{b.nome}</b><span>{conta(b.id)} attività{(b.sottoaree || []).length ? ` · ${(b.sottoaree || []).length} sottoaree` : ""}</span></div>
             {isAdmin && <>
               <button className="pl-icon" disabled={i === 0} onClick={() => sposta(i, -1)}><Icon name="up" size={14} /></button>
               <button className="pl-icon" disabled={i === bus.length - 1} onClick={() => sposta(i, 1)}><Icon name="down" size={14} /></button>
               <button className="pl-icon" onClick={() => setForm({ ...b })}><Icon name="pencil" size={14} /></button>
               <button className="pl-icon danger" onClick={() => elimina(b)}><Icon name="trash" size={14} /></button>
             </>}
+          </div>
+          <div className="pl-aree">
+            {(b.sottoaree || []).map((sa, i) => rinomina && rinomina.id === sa.id ? (
+              <div key={sa.id} className="pl-area-row">
+                <input className="pl-input" autoFocus value={rinomina.nome} onChange={e => setRinomina({ ...rinomina, nome: e.target.value })} onKeyDown={e => { if (e.key === "Enter") salvaRinomina(b); if (e.key === "Escape") setRinomina(null); }} />
+                <button className="pl-btn sm" onClick={() => salvaRinomina(b)}>Salva</button>
+                <button className="pl-btn ghost sm" onClick={() => setRinomina(null)}>Annulla</button>
+              </div>
+            ) : (
+              <div key={sa.id} className="pl-area-row">
+                <span className="pl-area-dot" style={{ borderColor: b.colore }} />
+                <span className="pl-area-n">{sa.nome}</span>
+                <span className="pl-hint" style={{ fontSize: 11.5 }}>{attivita.filter(a => a.sottoareaId === sa.id).length} att.</span>
+                {isAdmin && <>
+                  <button className="pl-icon sm" disabled={i === 0} onClick={() => spostaArea(b, i, -1)}><Icon name="up" size={12} /></button>
+                  <button className="pl-icon sm" onClick={() => setRinomina({ buId: b.id, id: sa.id, nome: sa.nome })}><Icon name="pencil" size={12} /></button>
+                  <button className="pl-icon sm danger" onClick={() => eliminaArea(b, sa)}><Icon name="trash" size={12} /></button>
+                </>}
+              </div>
+            ))}
+            {isAdmin && (
+              <div className="pl-area-row add">
+                <input className="pl-input" placeholder={`Nuova sottoarea di ${b.nome}…`} value={nuoveAree[b.id] || ""} onChange={e => setNuoveAree({ ...nuoveAree, [b.id]: e.target.value })} onKeyDown={e => e.key === "Enter" && aggiungiArea(b)} />
+                <button className="pl-btn ghost sm" onClick={() => aggiungiArea(b)}><Icon name="plus" size={13} /></button>
+              </div>
+            )}
+          </div>
           </div>
         ))}
       </div>
