@@ -45,8 +45,13 @@ service cloud.firestore {
     }
 
     // Attività e promemoria: lavoro condiviso di tutto il direttivo
+    // l'approvazione finale (e chi può darla) la gestiscono solo l'admin o il responsabile dell'attività
     match /attivita/{id} {
-      allow read, write: if attivo();
+      allow read, delete: if attivo();
+      allow create: if attivo() && (request.resource.data.get('approvato', null) == null || admin());
+      allow update: if attivo() && (admin()
+        || !request.resource.data.diff(resource.data).affectedKeys().hasAny(['approvato', 'referente'])
+        || resource.data.get('referente', null) == request.auth.uid);
     }
     match /promemoria/{id} {
       allow read, write: if attivo();
@@ -62,11 +67,6 @@ service cloud.firestore {
     // Preferenze notifiche personali
     match /pushSettings/{userId} {
       allow read, write: if signedIn() && request.auth.uid == userId;
-    }
-
-    // Hub (cartella /hub): elenco programmi e archivio password cifrato
-    match /hub/{id} {
-      allow read, write: if attivo();
     }
 
     // Configurazione generale (chiave web push ecc.)

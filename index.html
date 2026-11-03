@@ -317,6 +317,36 @@
   .pl-cred b{font-family:ui-monospace,Menlo,monospace;font-size:14px;word-break:break-all}
   .pl-inline{background:var(--panel-2);border:1px solid var(--rule);border-radius:8px;padding:8px 10px 10px;margin:0 0 8px}
   a.pl-btn{text-decoration:none}
+  .pl-avc{position:relative;display:inline-grid;place-items:center;flex-shrink:0;border:none;background:none;padding:0}
+  button.pl-avc{cursor:pointer}
+  button.pl-avc:disabled{cursor:default}
+  .pl-avc .pl-ring{position:absolute;inset:0}
+  .pl-avc .pl-av{border:none}
+  .pl-ring-ok{position:absolute;right:-1px;bottom:-1px;width:42%;height:42%;min-width:12px;min-height:12px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;border:1.5px solid #fff}
+  .pl-cerchi{display:inline-flex;align-items:center;gap:1px;flex-shrink:0}
+  .pl-approved{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--ok);color:#fff;flex-shrink:0;margin-left:3px;box-shadow:0 0 0 2px #fff}
+  .pl-wait{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--warn-soft);color:var(--warn);flex-shrink:0;margin-left:3px}
+  .st-attesa{background:var(--warn-soft);color:var(--warn)}
+  .pl-kpi.amber{border-left-color:var(--warn)}.pl-kpi.amber .v{color:var(--warn)}
+  .pg-bar.attesa{outline:2px solid var(--warn);outline-offset:1px}
+  .pg-bar-ok{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;pointer-events:none}
+  .pl-comp{border:1px solid var(--rule);border-radius:10px;background:var(--panel-2);padding:8px 10px;margin-top:4px}
+  .pl-comp-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid #f1efe9}
+  .pl-comp-row:first-child{border-top:none}
+  .pl-comp-row .nm{flex:1;min-width:0;font-size:13.5px}
+  .pl-comp-row .nm small{display:block;font-size:11.5px;color:var(--ink-3)}
+  .pl-appr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-radius:10px;padding:10px 12px;margin-top:8px}
+  .pl-appr.ok{background:var(--ok-soft);color:var(--ok)}
+  .pl-appr.wait{background:var(--warn-soft);color:var(--warn)}
+  .pl-appr.plain{background:#f0eee8;color:var(--ink-2)}
+  .pl-btn.green{background:var(--ok);border-color:var(--ok)}
+  .pl-btn.green:hover{background:#244c32}
+  .pl-import{border:1px solid var(--brand-soft-2);background:var(--brand-soft);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .pl-import h4{font-family:'Fraunces',serif;font-weight:500;font-size:17px;color:var(--brand-dark)}
+  .pl-import-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin:10px 0}
+  .pl-import-map label{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:6px 8px;font-size:13px;font-weight:600}
+  .pl-import-map select{flex:1;min-width:0;padding:5px 6px;font-size:12.5px}
+  .pl-import-list{font-size:12.5px;color:var(--ink-2);margin:6px 0 10px;padding-left:18px}
   .pl-bu-blk{border-top:1px solid #f1efe9;padding-bottom:6px}
   .pl-bu-blk:first-of-type{border-top:none}
   .pl-bu-blk .pl-urow{border-top:none}
@@ -476,7 +506,7 @@ const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.03-2";
+const APP_VERSION = "2026.11.04-1";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -524,7 +554,15 @@ const statoDi = (a) => a.stato || (a.done ? "fatto" : "da_fare");
 const fineDi = (a) => a.fine || a.inizio;
 const inRitardo = (a) => statoDi(a) !== "fatto" && !!fineDi(a) && fineDi(a) < oggiKey();
 const STATI = { da_fare: { lbl: "Da fare", ic: "circle" }, in_corso: { lbl: "In corso", ic: "hourglass" }, fatto: { lbl: "Fatto", ic: "check" } };
-const PROSSIMO = { da_fare: "in_corso", in_corso: "fatto", fatto: "da_fare" };
+const PROSSIMO = { da_fare: "in_corso", in_corso: "da_fare", fatto: "fatto" };
+// completamento: ogni incaricato "chiude il suo cerchio"; l'approvazione finale (spunta verde)
+// la danno l'amministratore o il responsabile dell'attività (referente)
+const chiusiDi = (a) => (a.responsabili || []).filter(id => a.completamenti && a.completamenti[id]);
+const faseDi = (a) => {
+  if (statoDi(a) === "fatto") return "approvata";
+  const r = a.responsabili || [];
+  return r.length && chiusiDi(a).length === r.length ? "da_approvare" : "in_lavoro";
+};
 const PRIORITA = { alta: "Alta", media: "Media", bassa: "Bassa" };
 const MOBILE_Q = "(max-width:760px)";
 
@@ -591,6 +629,7 @@ function creaArchivioLocale() {
     async add(c, v) { const id = nid(); data[c] = data[c] || {}; data[c][id] = pulisci(v); salva(); avvisa(c); return id; },
     async set(c, id, v) { data[c] = data[c] || {}; data[c][id] = pulisci(v); salva(); avvisa(c); },
     async update(c, id, p) { data[c] = data[c] || {}; data[c][id] = { ...(data[c][id] || {}), ...pulisci(p) }; salva(); avvisa(c); },
+    async replace(c, id, p) { return this.update(c, id, p); },
     async del(c, id) { if (data[c]) delete data[c][id]; salva(); avvisa(c); },
     async getDoc(c, id) { return data[c] && data[c][id] ? { id, ...data[c][id] } : null; },
     azzera() { lsDel(KEY); location.reload(); },
@@ -606,6 +645,7 @@ function creaArchivioFirestore() {
     async add(c, v) { const r = await db.collection(c).add(pulisci(v)); return r.id; },
     set: (c, id, v) => db.collection(c).doc(id).set(pulisci(v)),
     update: (c, id, p) => db.collection(c).doc(id).set(pulisci(p), { merge: true }),
+    replace: (c, id, p) => db.collection(c).doc(id).update(pulisci(p)),
     del: (c, id) => db.collection(c).doc(id).delete(),
     async getDoc(c, id) { const s = await db.collection(c).doc(id).get(); return s.exists ? { id: s.id, ...s.data() } : null; },
   };
@@ -704,6 +744,40 @@ function Avatars({ ids, utMap, size = 22, max = 3 }) {
   return <span className="pl-avs">{l.slice(0, max).map(u => <Avatar key={u.id} u={u} size={size} />)}{l.length > max && <span className="pl-av more" style={{ width: size, height: size, fontSize: Math.round(size * 0.38) }}>+{l.length - max}</span>}</span>;
 }
 // usati: { "#colore": "Nome di chi lo usa" } per segnare i colori già presi
+function AvatarCerchio({ u, chiuso, size = 22, onClick, disabled }) {
+  const box = size + 8;
+  const inner = (
+    <>
+      <svg className="pl-ring" width={box} height={box} viewBox="0 0 36 36" aria-hidden="true">
+        <circle cx="18" cy="18" r="16.3" fill="none" stroke={chiuso ? "var(--brand)" : "#cfcabe"} strokeWidth="2.6"
+          strokeLinecap="round" strokeDasharray={chiuso ? "none" : "72 30.4"} transform="rotate(-62 18 18)" />
+      </svg>
+      <Avatar u={u} size={size} />
+      {chiuso && <span className="pl-ring-ok"><Icon name="check" size={Math.max(8, Math.round(size * 0.36))} /></span>}
+    </>
+  );
+  const titolo = `${u ? u.nome : "?"}: ${chiuso ? "ha segnato fatto" : "non ha ancora segnato fatto"}`;
+  return onClick
+    ? <button type="button" className="pl-avc" style={{ width: box, height: box }} title={titolo} disabled={disabled} onClick={e => { e.stopPropagation(); onClick(); }}>{inner}</button>
+    : <span className="pl-avc" style={{ width: box, height: box }} title={titolo}>{inner}</span>;
+}
+function BadgeFase({ a, piccolo }) {
+  const f = faseDi(a);
+  if (f === "approvata") return <span className="pl-approved" title={a.approvato ? `Approvata da ${a.approvato.nome}` : "Completata"}><Icon name="check" size={piccolo ? 10 : 12} /></span>;
+  if (f === "da_approvare") return piccolo ? <span className="pl-wait" title="Da approvare"><Icon name="hourglass" size={10} /></span> : <span className="pl-pill st-attesa">da approvare</span>;
+  return null;
+}
+function StatoCerchi({ a, utMap, size = 22, max = 4 }) {
+  const ids = (a.responsabili || []).filter(id => utMap[id]);
+  return (
+    <span className="pl-cerchi">
+      {ids.slice(0, max).map(id => <AvatarCerchio key={id} u={utMap[id]} chiuso={!!(a.completamenti && a.completamenti[id])} size={size} />)}
+      {ids.length > max && <span className="pl-av more" style={{ width: size, height: size, fontSize: Math.round(size * 0.38) }}>+{ids.length - max}</span>}
+      <BadgeFase a={a} piccolo />
+    </span>
+  );
+}
+
 function Swatches({ value, onPick, usati }) {
   const u = usati || {};
   const v = String(value || "").toLowerCase();
@@ -886,6 +960,7 @@ function Shell({ uid }) {
       const st = statoDi(a);
       if (fStato === "aperte" && st === "fatto") return false;
       if (fStato === "fatte" && st !== "fatto") return false;
+      if (fStato === "da_approvare" && faseDi(a) !== "da_approvare") return false;
       if (fStato === "ritardo" && !inRitardo(a)) return false;
       if (q && !norm(`${a.titolo} ${a.note || ""} ${a.luogo || ""}`).includes(q)) return false;
       if (vista !== "priorita" && fPrio === "none" && a.priorita) return false;
@@ -896,14 +971,15 @@ function Shell({ uid }) {
 
   const firma = () => ({ modificatoDa: me.nome, modificatoDaUid: uid, modificatoIl: ora() });
   const salvaAttivita = async (d) => {
-    const st = d.stato || "da_fare";
+    const live = d.id ? attivita.find(x => x.id === d.id) : null;
+    const st = live && statoDi(live) === "fatto" ? "fatto" : (d.stato || "da_fare");
     const p = {
       titolo: (d.titolo || "").trim() || "Senza titolo", buId: d.buId || null, responsabili: d.responsabili || [],
       sottoareaId: (d.buId && d.sottoareaId && buMap[d.buId] && (buMap[d.buId].sottoaree || []).some(x => x.id === d.sottoareaId)) ? d.sottoareaId : null,
       inizio: d.inizio, fine: d.milestone ? d.inizio : (d.fine < d.inizio ? d.inizio : d.fine), ora: d.ora || "",
       milestone: !!d.milestone, luogo: (d.luogo || "").trim(), stato: st, done: st === "fatto",
       priorita: d.priorita || null, avanzamento: st === "fatto" ? 100 : Math.max(0, Math.min(100, Number(d.avanzamento) || 0)),
-      note: d.note || "", sottoattivita: d.sottoattivita || [], notifica: d.notifica !== false, ...firma(),
+      note: d.note || "", sottoattivita: d.sottoattivita || [], notifica: d.notifica !== false, referente: d.referente || null, ...firma(),
     };
     try {
       if (d.id) await store.update("attivita", d.id, p);
@@ -913,6 +989,29 @@ function Shell({ uid }) {
   };
   const patchAtt = async (id, patch) => {
     try { await store.update("attivita", id, { ...patch, ...firma() }); }
+    catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
+  const puoApprovare = (a) => isAdmin || (!!a.referente && a.referente === uid);
+  const toggleCompleto = async (a, persona) => {
+    if (!(persona === uid || isAdmin)) { avviso("Puoi segnare solo la tua parte", "error"); return; }
+    if (statoDi(a) === "fatto") { avviso("È già approvata: per riaprirla va prima revocata l'approvazione", "error"); return; }
+    const c = { ...(a.completamenti || {}) };
+    if (c[persona]) delete c[persona]; else c[persona] = ora();
+    const r = a.responsabili || [];
+    const tutti = r.length > 0 && r.every(id => c[id]);
+    try {
+      await store.replace("attivita", a.id, { completamenti: c, ...(statoDi(a) === "da_fare" && c[persona] ? { stato: "in_corso" } : {}), ...firma() });
+      avviso(tutti ? "Tutti hanno segnato fatto: ora manca l'approvazione" : (c[persona] ? "Segnato come fatto" : "Riaperto"));
+    } catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
+  const approva = async (a) => {
+    if (!puoApprovare(a)) return;
+    try { await store.update("attivita", a.id, { approvato: { uid, nome: me.nome, il: ora() }, stato: "fatto", done: true, avanzamento: 100, ...firma() }); avviso("Attività approvata ✓"); }
+    catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+  };
+  const revoca = async (a) => {
+    if (!puoApprovare(a)) return;
+    try { await store.update("attivita", a.id, { approvato: null, stato: "in_corso", done: false, ...firma() }); avviso("Approvazione revocata"); }
     catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
   };
   const eliminaAtt = async (a) => {
@@ -949,15 +1048,16 @@ function Shell({ uid }) {
       </header>
 
       <main className="pl-main">
+        {isAdmin && (vista === "gantt" || vista === "persone") && <ImportVigilia utenti={utenti} bus={bus} attivita={attivita} uid={uid} me={me} avviso={avviso} />}
         {(vista === "gantt" || vista === "calendario" || vista === "priorita") && (
           <Filtri bus={bus} utenti={utenti} fBu={fBu} setFBu={setFBu} fResp={fResp} setFResp={setFResp} fStato={fStato} setFStato={setFStato} cerca={cerca} setCerca={setCerca}
             fPrio={fPrio} setFPrio={setFPrio} conPrio={vista !== "priorita"} />
         )}
-        {vista === "gantt" && <GanttView attivita={filtrate} tutte={attivita} bus={bus} buMap={buMap} fBu={fBu} utMap={utMap} isAdmin={isAdmin} mobile={mobile}
+        {vista === "gantt" && <GanttView attivita={filtrate} tutte={attivita} bus={bus} buMap={buMap} fBu={fBu} utMap={utMap} isAdmin={isAdmin} mobile={mobile} fStato={fStato}
           onOpen={apri} onNew={nuova} onPatch={patchAtt} setFStato={setFStato} onSeedBu={() => setManage("bu")} />}
         {vista === "calendario" && <CalendarView attivita={filtrate} buMap={buMap} utMap={utMap} onOpen={apri} onNew={nuova} />}
         {vista === "priorita" && <PriorityView attivita={filtrate} buMap={buMap} utMap={utMap} mobile={mobile} onOpen={apri} onPatch={patchAtt} onNew={nuova} />}
-        {vista === "persone" && <PeopleView attivita={attivita} utenti={utenti} uid={uid} buMap={buMap} utMap={utMap} promemoria={promRaw} onOpen={apri} onPatch={patchAtt} />}
+        {vista === "persone" && <PeopleView attivita={attivita} utenti={utenti} uid={uid} isAdmin={isAdmin} buMap={buMap} utMap={utMap} promemoria={promRaw} onOpen={apri} onPatch={patchAtt} onToggle={toggleCompleto} />}
         {vista === "promemoria" && <ReminderView promemoria={promRaw} utenti={utenti} utMap={utMap} uid={uid} me={me} avviso={avviso} />}
       </main>
 
@@ -965,9 +1065,10 @@ function Shell({ uid }) {
         {VISTE.map(([v, l, ic]) => <button key={v} className={vista === v ? "on" : ""} onClick={() => setVista(v)}><Icon name={ic} size={19} /><span>{l}</span></button>)}
       </nav>
 
-      {editing && <ActivityModal draft={editing} setDraft={setEditing} bus={bus} utenti={utenti} utMap={utMap} uid={uid}
+      {editing && <ActivityModal draft={editing} setDraft={setEditing} bus={bus} utenti={utenti} utMap={utMap} uid={uid} isAdmin={isAdmin}
+        live={editing.id ? attivita.find(x => x.id === editing.id) : null} puoApprovare={puoApprovare} onToggle={toggleCompleto} onApprova={approva} onRevoca={revoca}
         onClose={() => setEditing(null)} onSave={salvaAttivita} onDelete={eliminaAtt}
-        onDuplicate={(d) => setEditing({ ...pulisci(d), id: null, titolo: d.titolo + " (copia)", stato: "da_fare", avanzamento: 0, creatoDa: null, modificatoDa: null })} />}
+        onDuplicate={(d) => setEditing({ ...pulisci(d), id: null, titolo: d.titolo + " (copia)", stato: "da_fare", avanzamento: 0, creatoDa: null, modificatoDa: null, completamenti: null, approvato: null })} />}
       {manage && <ManageDrawer tab={manage} setTab={setManage} onClose={() => setManage(null)} me={me} uid={uid} isAdmin={isAdmin}
         utenti={utentiTutti} bus={bus} attivita={attivita} promemoria={promRaw} avviso={avviso} />}
       {toast && <div className={"pl-toast " + (toast.tipo || "")}>{toast.msg}</div>}
@@ -1005,6 +1106,7 @@ function Filtri({ bus, utenti, fBu, setFBu, fResp, setFResp, fStato, setFStato, 
       <select className="pl-select" value={fStato} onChange={e => setFStato(e.target.value)}>
         <option value="aperte">Da fare e in corso</option>
         <option value="tutte">Tutte</option>
+        <option value="da_approvare">Da approvare</option>
         <option value="ritardo">In ritardo</option>
         <option value="fatte">Completate</option>
       </select>
@@ -1030,7 +1132,7 @@ const ZOOM = {
   "12m": { lbl: "Anno", giorni: 364, col: 4, colM: 3, prima: 6, passo: 91 },
 };
 
-function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, onOpen, onNew, onPatch, setFStato, onSeedBu }) {
+function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, fStato, onOpen, onNew, onPatch, setFStato, onSeedBu }) {
   const [zoom, setZoomS] = useState(() => (ZOOM[lsGet("plf-zoom")] ? lsGet("plf-zoom") : (mobile ? "4s" : "3m")));
   const Z = ZOOM[zoom];
   const inizioPer = (z) => addDays(startOfWeek(new Date()), -7 * ZOOM[z].prima);
@@ -1141,9 +1243,9 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, o
       <React.Fragment key={a.id}>
         <div className="pg-row">
           <div className="pg-lbl" style={{ width: LBL, paddingLeft: corto ? undefined : (mobile ? 6 : 10) + rientro }}>
-            <button className="pg-stbtn" title={`${STATI[st].lbl} · tocca per cambiare`}
+            <button className="pg-stbtn" title={st === "fatto" ? "Approvata" : `${STATI[st].lbl} · tocca per cambiare`}
               style={{ background: st === "fatto" ? "var(--ok)" : st === "in_corso" ? "var(--brand-soft-2)" : "#efede6", color: st === "fatto" ? "#fff" : st === "in_corso" ? "var(--brand-dark)" : "var(--ink-3)" }}
-              onClick={() => onPatch(a.id, { stato: PROSSIMO[st], done: PROSSIMO[st] === "fatto", ...(PROSSIMO[st] === "fatto" ? { avanzamento: 100 } : {}) })}>
+              onClick={() => st === "fatto" ? onOpen(a) : onPatch(a.id, { stato: PROSSIMO[st] })}>
               <Icon name={STATI[st].ic} size={12} />
             </button>
             {!corto && <div className="pg-lbl-main" onClick={() => onOpen(a)}>
@@ -1151,7 +1253,8 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, o
               <div className="pg-lbl-s"><span className={late ? "late" : ""}>{fmtPeriodo(a)}{late ? " · in ritardo" : ""}</span>{!mobile && (a.responsabili || []).length === 0 && <span style={{ fontStyle: "italic" }}>senza responsabile</span>}</div>
             </div>}
             {!corto && subs.length > 0 && <button className={"pg-subbtn" + (aperta ? " on" : "")} title={aperta ? "Nascondi sotto-attività" : "Mostra sotto-attività"} onClick={() => togEspansa(a.id)}>{!mobile && `${subs.filter(x => x.done).length}/${subs.length}`}<Icon name={aperta ? "up" : "down"} size={mobile ? 12 : 10} /></button>}
-            {!mobile && <Avatars ids={a.responsabili} utMap={utMap} size={22} max={3} />}
+            {!mobile && <StatoCerchi a={a} utMap={utMap} size={20} max={3} />}
+            {mobile && !corto && <BadgeFase a={a} piccolo />}
           </div>
           <div className="pg-track" style={{ width: W }}>{barra(a)}</div>
         </div>
@@ -1208,7 +1311,7 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, o
     }
     const dentro = w > (corto ? 60 : 76);
     return <>
-      <div className={`pg-bar${late ? " late" : ""}${st === "fatto" ? " done" : ""}${isDrag ? " drag" : ""}${clipL ? " cl-l" : ""}${clipR ? " cl-r" : ""}`}
+      <div className={`pg-bar${late ? " late" : ""}${st === "fatto" ? " done" : ""}${faseDi(a) === "da_approvare" ? " attesa" : ""}${isDrag ? " drag" : ""}${clipL ? " cl-l" : ""}${clipR ? " cl-r" : ""}`}
         style={{ left: left + 1, width: w, background: hexA(col, 0.2), borderColor: hexA(col, 0.55) }}
         onPointerDown={e => startDrag(e, a, "move")} onClick={click}
         onMouseEnter={e => !drag && setTip({ x: e.clientX, y: e.clientY, t: tipTxt })} onMouseMove={e => !drag && setTip({ x: e.clientX, y: e.clientY, t: tipTxt })} onMouseLeave={() => setTip(null)}>
@@ -1216,6 +1319,7 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, o
         {!clipL && <span className="pg-handle l" onPointerDown={e => startDrag(e, a, "start")} />}
         {!clipR && <span className="pg-handle r" onPointerDown={e => startDrag(e, a, "end")} />}
         {dentro && <span className="pg-bar-t" style={{ color: "#1a1a1a" }}>{a.titolo}</span>}
+        {st === "fatto" && w > 30 && <span className="pg-bar-ok"><Icon name="check" size={11} /></span>}
       </div>
       {!dentro && right < W - 40 && <span className="pg-out" style={{ left: left + w + 8 }}>{a.titolo}</span>}
     </>;
@@ -1224,7 +1328,7 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, o
   return (
     <>
       <div className="pl-kpis">
-        <button className="pl-kpi blue clic" onClick={() => setFStato("tutte")}><div className="k">Attività</div><div className="v">{kTot}</div></button>
+        <button className="pl-kpi amber clic" onClick={() => setFStato("da_approvare")}><div className="k">Da approvare</div><div className="v">{tutte.filter(a => faseDi(a) === "da_approvare").length}</div></button>
         <button className="pl-kpi blue clic" onClick={() => setFStato("aperte")}><div className="k">In corso</div><div className="v">{kCorso}</div></button>
         <button className="pl-kpi red clic" onClick={() => setFStato("ritardo")}><div className="k">In ritardo</div><div className="v">{kRit}</div></button>
         <button className="pl-kpi green clic" onClick={() => setFStato("fatte")}><div className="k">Completate</div><div className="v">{kFatte}</div></button>
@@ -1388,7 +1492,7 @@ function CalendarView({ attivita, buMap, utMap, onOpen, onNew }) {
           {a.ora && <span>{a.ora}</span>}
           {a.inizio !== fineDi(a) && <span>{fmtPeriodo(a)}</span>}
           {inRitardo(a) && <span style={{ color: "var(--danger)", fontWeight: 600 }}>in ritardo</span>}
-          <Avatars ids={a.responsabili} utMap={utMap} size={18} max={3} />
+          <StatoCerchi a={a} utMap={utMap} size={16} max={3} />
         </span>
       </button>
     );
@@ -1474,6 +1578,79 @@ function CalendarView({ attivita, buMap, utMap, onOpen, onNew }) {
 }
 
 /* =====================================================================
+   MANSIONI VIGILIA (caricamento una tantum, solo amministratore)
+   ===================================================================== */
+const MANSIONI_VIGILIA = [
+  ["Analisi margini", ["Lalli"]],
+  ["Social", ["Michi", "Cotta"]],
+  ["DJ", ["Michi"]],
+  ["Menu & procurement", ["Gala", "Gian", "Cotta"]],
+  ["Layout", ["Michi", "Gala"]],
+  ["Gestione manodopera", ["Ricca"]],
+  ["Gestione mezzi e magazzino", ["Ricca"]],
+];
+const SCADENZA_VIGILIA = "2026-11-20";
+function abbinaUtente(nome, utenti) {
+  const n = norm(nome);
+  const esatto = utenti.find(u => norm(u.nome) === n || u.username === n || norm(String(u.nome).split(" ")[0]) === n);
+  if (esatto) return esatto.id;
+  const pre = utenti.filter(u => norm(u.nome).startsWith(n.slice(0, 3)) || String(u.username || "").startsWith(n.slice(0, 3)));
+  return pre.length === 1 ? pre[0].id : "";
+}
+function ImportVigilia({ utenti, bus, attivita, uid, me, avviso }) {
+  const [cfg, setCfg] = useState(undefined);
+  const [nascosto, setNascosto] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const nomi = [...new Set(MANSIONI_VIGILIA.flatMap(m => m[1]))];
+  const [mappa, setMappa] = useState({});
+  useEffect(() => store.watchDoc("config", "import-vigilia", d => setCfg(d || null)), []);
+  useEffect(() => { setMappa(m => { const n = { ...m }; nomi.forEach(x => { if (!n[x]) n[x] = abbinaUtente(x, utenti); }); return n; }); }, [utenti.length]);
+  const buV = bus.find(b => norm(b.nome).includes("vigilia"));
+  const giaFatte = buV ? MANSIONI_VIGILIA.filter(([t]) => attivita.some(a => a.buId === buV.id && norm(a.titolo) === norm(t))).length : 0;
+  if (cfg === undefined || (cfg && cfg.fatto) || nascosto || giaFatte === MANSIONI_VIGILIA.length) return null;
+  const mancanti = nomi.filter(x => !mappa[x]);
+  const carica = async () => {
+    setBusy(true);
+    try {
+      let buId = buV && buV.id;
+      if (!buId) buId = await store.add("bu", { nome: "Vigilia", colore: coloreLibero(Object.keys(usatiDa(bus))), ordine: bus.length });
+      let n = 0;
+      for (const [titolo, persone] of MANSIONI_VIGILIA) {
+        if (attivita.some(a => a.buId === buId && norm(a.titolo) === norm(titolo))) continue;
+        const resp = [...new Set(persone.map(x => mappa[x]).filter(Boolean))];
+        await store.add("attivita", { titolo, buId, sottoareaId: null, responsabili: resp, referente: null, inizio: oggiKey() > SCADENZA_VIGILIA ? SCADENZA_VIGILIA : oggiKey(), fine: SCADENZA_VIGILIA, ora: "", milestone: false, luogo: "", stato: "da_fare", done: false, priorita: null, avanzamento: 0, note: "", sottoattivita: [], notifica: true, creatoDa: me.nome, creatoDaUid: uid, creatoIl: ora() });
+        n++;
+      }
+      await store.set("config", "import-vigilia", { fatto: true, il: ora(), da: me.nome });
+      avviso(`Caricate ${n} mansioni nella Vigilia`);
+    } catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div className="pl-import">
+      <h4>Mansioni della Vigilia da caricare</h4>
+      <p className="pl-hint">{MANSIONI_VIGILIA.length} mansioni nella business unit <b>{buV ? buV.nome : "Vigilia"}</b>{buV ? "" : " (la creo io)"}, con scadenza 20 novembre. Controlla chi è chi:</p>
+      <div className="pl-import-map">
+        {nomi.map(x => (
+          <label key={x}>{x} →
+            <select className="pl-select" value={mappa[x] || ""} onChange={e => setMappa({ ...mappa, [x]: e.target.value })}>
+              <option value="">— scegli —</option>
+              {utenti.map(u => <option key={u.id} value={u.id}>{u.nome}{u.username ? ` (@${u.username})` : ""}</option>)}
+            </select>
+          </label>
+        ))}
+      </div>
+      <ul className="pl-import-list">{MANSIONI_VIGILIA.map(([t, p]) => <li key={t}><b>{t}</b> — {p.join(", ")}</li>)}</ul>
+      {mancanti.length > 0 && <p className="pl-hint" style={{ color: "var(--warn)", marginBottom: 8 }}>Non trovo {mancanti.join(", ")} tra gli utenti: aggiungili da ⚙️ → Utenti, poi torna qui (oppure sceglili dall'elenco).</p>}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <button className="pl-btn" disabled={busy || mancanti.length > 0} onClick={carica}>{busy ? "Carico…" : "Carica le mansioni"}</button>
+        <button className="pl-btn ghost" onClick={() => setNascosto(true)}>Non ora</button>
+      </div>
+    </div>
+  );
+}
+
+/* =====================================================================
    PRIORITÀ
    ===================================================================== */
 const COL_PRIO = [["alta", "Alta", "#b4462f"], ["media", "Media", "#a46a12"], ["bassa", "Bassa", "#5e7e52"], [null, "Senza priorità", "#8a8a82"]];
@@ -1505,7 +1682,7 @@ function PriorityView({ attivita, buMap, utMap, mobile, onOpen, onPatch, onNew }
         <div className="pq-title">{a.milestone ? "◆ " : ""}{a.titolo}</div>
         {prog > 0 && st !== "fatto" && <div className="pq-prog"><div style={{ width: prog + "%", background: b ? b.colore : "var(--brand)" }} /></div>}
         <div className="pq-bottom">
-          {(a.responsabili || []).length ? <Avatars ids={a.responsabili} utMap={utMap} size={22} max={4} /> : <span className="pq-none">senza responsabile</span>}
+          {(a.responsabili || []).length ? <StatoCerchi a={a} utMap={utMap} size={20} max={4} /> : <span className="pq-none">senza responsabile</span>}
           {subs.length > 0 && <span className="pq-sub"><Icon name="check" size={11} />{fatte}/{subs.length}</span>}
           <span className="pq-move" onClick={e => e.stopPropagation()}>
             {COL_PRIO.filter(c => c[0]).map(([k, l, col]) => (
@@ -1553,20 +1730,26 @@ function PriorityView({ attivita, buMap, utMap, mobile, onOpen, onPatch, onNew }
 /* =====================================================================
    PERSONE (vista per responsabile)
    ===================================================================== */
-function PeopleView({ attivita, utenti, uid, buMap, utMap, promemoria, onOpen, onPatch }) {
+function PeopleView({ attivita, utenti, uid, isAdmin, buMap, utMap, promemoria, onOpen, onPatch, onToggle }) {
   const [mostraFatte, setMostraFatte] = useState(false);
   const oggi = oggiKey(), tra7 = toKey(addDays(new Date(), 7));
   const ordinati = [...utenti].sort((a, b) => (a.id === uid ? -1 : b.id === uid ? 1 : 0));
   const settimane = Array.from({ length: 8 }, (_, i) => addDays(startOfWeek(new Date()), 7 * i));
 
-  const riga = (a) => {
-    const st = statoDi(a), late = inRitardo(a), b = a.buId && buMap[a.buId];
+  const riga = (a, u) => {
+    const st = statoDi(a), late = inRitardo(a), b = a.buId && buMap[a.buId], fase = faseDi(a);
+    const mio = !!(u && a.completamenti && a.completamenti[u.id]);
+    const puo = !!u && (u.id === uid || isAdmin) && st !== "fatto";
     return (
       <div key={a.id} className="pp-item" onClick={() => onOpen(a)}>
-        <button className={"pl-check" + (st === "fatto" ? " on" : "")} onClick={e => { e.stopPropagation(); const n = st === "fatto" ? "da_fare" : "fatto"; onPatch(a.id, { stato: n, done: n === "fatto", ...(n === "fatto" ? { avanzamento: 100 } : {}) }); }}>{st === "fatto" && <Icon name="check" size={11} style={{ color: "#fff" }} />}</button>
+        {st === "fatto" ? <span className="pl-approved" style={{ marginLeft: 0 }} title="Approvata"><Icon name="check" size={12} /></span>
+          : u ? <AvatarCerchio u={u} chiuso={mio} size={18} onClick={puo ? () => onToggle(a, u.id) : undefined} />
+          : <span style={{ width: 26 }} />}
         <span className="dot" style={{ background: b ? b.colore : "#8a8a82" }} />
         <span className="t" style={st === "fatto" ? { textDecoration: "line-through", color: "var(--ink-3)" } : null}>{a.priorita === "alta" && <span className="pg-prio" style={{ color: "#b4462f" }}><Icon name="flag" size={12} /></span>}{a.titolo}</span>
-        {st === "in_corso" && <span className="pl-pill st-in_corso">{a.avanzamento ? a.avanzamento + "%" : "in corso"}</span>}
+        {fase === "da_approvare" && <span className="pl-pill st-attesa">da approvare</span>}
+        {fase === "in_lavoro" && (a.responsabili || []).length > 1 && <span className="pl-pill st-da_fare">{chiusiDi(a).length}/{a.responsabili.length}</span>}
+        {st === "in_corso" && fase === "in_lavoro" && a.avanzamento > 0 && <span className="pl-pill st-in_corso">{a.avanzamento}%</span>}
         <span className={"d" + (late ? " late" : "")}>{late ? "scad. " + fmtData(fineDi(a)) : fmtPeriodo(a)}</span>
       </div>
     );
@@ -1587,6 +1770,7 @@ function PeopleView({ attivita, utenti, uid, buMap, utMap, promemoria, onOpen, o
           <div className="pp-counts">
             <span className="pl-pill st-da_fare">{aperte.length} aperte</span>
             {late > 0 && <span className="pl-pill st-ritardo">{late} in ritardo</span>}
+            {u && aperte.some(a => a.completamenti && a.completamenti[u.id]) && <span className="pl-pill st-in_corso">{aperte.filter(a => a.completamenti && a.completamenti[u.id]).length} segnate fatte</span>}
             {presto > 0 && <span className="pl-pill st-in_corso">{presto} entro 7 gg</span>}
           </div>
         </div>
@@ -1596,7 +1780,7 @@ function PeopleView({ attivita, utenti, uid, buMap, utMap, promemoria, onOpen, o
           </div>
           <div className="pp-loadlbl"><span>questa settimana</span><span>fra 8 settimane</span></div>
         </>}
-        {visibili.length ? visibili.map(riga) : <div className="pl-empty" style={{ padding: 18 }}>Niente da fare 🎉</div>}
+        {visibili.length ? visibili.map(a => riga(a, u)) : <div className="pl-empty" style={{ padding: 18 }}>Niente da fare 🎉</div>}
       </div>
     );
   };
@@ -1681,7 +1865,7 @@ function ReminderView({ promemoria, utenti, utMap, uid, me, avviso }) {
 /* =====================================================================
    SCHEDA ATTIVITÀ
    ===================================================================== */
-function ActivityModal({ draft, setDraft, bus, utenti, utMap, uid, onClose, onSave, onDelete, onDuplicate }) {
+function ActivityModal({ draft, setDraft, bus, utenti, utMap, uid, isAdmin, live, puoApprovare, onToggle, onApprova, onRevoca, onClose, onSave, onDelete, onDuplicate }) {
   const set = (p) => setDraft({ ...draft, ...p });
   const [nuovaSub, setNuovaSub] = useState("");
   const st = draft.stato || "da_fare";
@@ -1745,7 +1929,9 @@ function ActivityModal({ draft, setDraft, bus, utenti, utMap, uid, onClose, onSa
             <div>
               <label className="pl-lbl">Stato</label>
               <div className="pl-seg" style={{ display: "flex" }}>
-                {Object.entries(STATI).map(([k, s]) => <button key={k} type="button" style={{ flex: 1, justifyContent: "center" }} className={st === k ? "on" : ""} onClick={() => set({ stato: k, avanzamento: k === "fatto" ? 100 : (draft.avanzamento === 100 ? 0 : draft.avanzamento) })}><Icon name={s.ic} size={13} />{s.lbl}</button>)}
+                {(live && statoDi(live) === "fatto") || st === "fatto"
+                  ? <button type="button" className="on" style={{ flex: 1, justifyContent: "center", background: "var(--ok)" }} disabled><Icon name="check" size={13} />Approvata</button>
+                  : Object.entries(STATI).filter(([k]) => k !== "fatto").map(([k, s]) => <button key={k} type="button" style={{ flex: 1, justifyContent: "center" }} className={st === k ? "on" : ""} onClick={() => set({ stato: k })}><Icon name={s.ic} size={13} />{s.lbl}</button>)}
               </div>
             </div>
             <div>
@@ -1756,10 +1942,57 @@ function ActivityModal({ draft, setDraft, bus, utenti, utMap, uid, onClose, onSa
             </div>
           </div>
 
-          {st !== "fatto" && !draft.milestone && <>
+          {st !== "fatto" && !(live && statoDi(live) === "fatto") && !draft.milestone && <>
             <label className="pl-lbl">Avanzamento · {draft.avanzamento || 0}%</label>
             <input className="pl-range" type="range" min="0" max="100" step="10" value={draft.avanzamento || 0} onChange={e => set({ avanzamento: Number(e.target.value), stato: Number(e.target.value) > 0 && st === "da_fare" ? "in_corso" : st })} />
           </>}
+
+          <label className="pl-lbl">Responsabile dell'attività (può approvare)</label>
+          <select className="pl-select" value={draft.referente || ""} disabled={!(isAdmin || !draft.id || (live && live.referente === uid))} onChange={e => set({ referente: e.target.value || null })}>
+            <option value="">Nessuno: approva solo l'amministratore</option>
+            {utenti.map(u => <option key={u.id} value={u.id}>{u.nome}{u.id === uid ? " (tu)" : ""}</option>)}
+          </select>
+
+          {live && (() => {
+            const resp = (live.responsabili || []).filter(id => utMap[id]);
+            const appr = statoDi(live) === "fatto";
+            const mancano = resp.filter(id => !(live.completamenti && live.completamenti[id]));
+            const puo = puoApprovare(live);
+            const approvatori = ["l'amministratore", ...(live.referente && utMap[live.referente] ? [utMap[live.referente].nome] : [])].join(" o ");
+            return <>
+              <label className="pl-lbl">Chi ha finito la sua parte</label>
+              <div className="pl-comp">
+                {!resp.length && <div className="pl-hint" style={{ padding: "4px 0" }}>Nessun incaricato: scegli i responsabili qui sopra e salva.</div>}
+                {resp.map(id => {
+                  const u = utMap[id], quando = live.completamenti && live.completamenti[id];
+                  const posso = (id === uid || isAdmin) && !appr;
+                  return (
+                    <div key={id} className="pl-comp-row">
+                      <AvatarCerchio u={u} chiuso={!!quando} size={26} onClick={posso ? () => onToggle(live, id) : undefined} />
+                      <div className="nm">{u.nome}{id === uid ? " (tu)" : ""}<small>{quando ? `ha segnato fatto il ${new Date(quando).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}` : "non ancora fatto"}</small></div>
+                      {posso && <button type="button" className={"pl-btn sm " + (quando ? "ghost" : "")} onClick={() => onToggle(live, id)}>{quando ? "Riapri" : (id === uid ? "Ho fatto" : "Segna fatto")}</button>}
+                    </div>
+                  );
+                })}
+              </div>
+              {appr ? (
+                <div className="pl-appr ok">
+                  <span className="pl-approved" style={{ margin: 0 }}><Icon name="check" size={13} /></span>
+                  <span style={{ flex: 1, fontWeight: 600, fontSize: 13.5 }}>{live.approvato ? `Approvata da ${live.approvato.nome} il ${new Date(live.approvato.il).toLocaleDateString("it-IT", { day: "numeric", month: "long" })}` : "Completata"}</span>
+                  {puo && <button type="button" className="pl-btn ghost sm" onClick={() => onRevoca(live)}>Revoca</button>}
+                </div>
+              ) : puo ? (
+                <div className={"pl-appr " + (mancano.length ? "plain" : "wait")}>
+                  <span style={{ flex: 1, fontSize: 13 }}>{mancano.length ? `Mancano ancora: ${mancano.map(id => utMap[id].nome).join(", ")}. Puoi approvare comunque.` : "Tutti hanno segnato fatto: manca la tua approvazione."}</span>
+                  <button type="button" className="pl-btn green sm" onClick={() => onApprova(live)}><Icon name="check" size={13} />Approva</button>
+                </div>
+              ) : (
+                <div className={"pl-appr " + (mancano.length ? "plain" : "wait")}>
+                  <span style={{ fontSize: 13 }}>{mancano.length ? `Quando tutti avranno segnato fatto, l'approvazione spetta a ${approvatori}.` : `In attesa dell'approvazione di ${approvatori}.`}</span>
+                </div>
+              )}
+            </>;
+          })()}
 
           <label className="pl-lbl">Sotto-attività {subs.length ? `· ${subFatte}/${subs.length}` : ""}</label>
           {subs.map(s => {
