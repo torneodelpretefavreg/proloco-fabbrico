@@ -90,6 +90,9 @@
   .pl-area{resize:vertical;min-height:80px;line-height:1.5}
   .pl-lbl{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin:14px 0 6px}
   .pl-row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+  .pl-quando{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr);gap:10px}
+  .pl-input[type=date],.pl-input[type=time]{min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;min-height:40px;text-align:left}
+  .pl-input::-webkit-date-and-time-value{text-align:left}
   .pl-row3{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:12px}
   .pl-chips{display:flex;flex-wrap:wrap;gap:6px}
   .pl-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule-2);background:var(--panel);border-radius:999px;padding:4px 11px;font-size:12.5px;color:var(--ink-2)}
@@ -439,6 +442,8 @@
     .pg-row.pg-st{height:42px}
     .pg-subbtn{padding:4px 6px}
     .pl-sub-meta{grid-template-columns:1fr 1fr;padding-left:0}
+    .pl-quando{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:8px}
+    .pl-input[type=date],.pl-input[type=time]{min-height:46px}
     .pl-icon.sm{width:32px;height:32px}
     .pl-aree{padding-left:8px}
     .pg-bar{top:12px;height:28px}
@@ -510,7 +515,7 @@ const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.04-4";
+const APP_VERSION = "2026.11.04-5";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -564,6 +569,7 @@ const PROSSIMO = { da_fare: "in_corso", in_corso: "da_fare", fatto: "fatto" };
 // in calendario: scelta esplicita, altrimenti solo traguardi e attività brevi (fino a 7 giorni)
 const inCalendario = (a) => typeof a.calendario === "boolean" ? a.calendario
   : (!!a.milestone || (a.inizio ? daysBetween(fromKey(a.inizio), fromKey(fineDi(a))) + 1 <= 7 : false));
+const orarioDi = (a) => a.ora ? (a.oraFine ? `${a.ora}–${a.oraFine}` : a.ora) : (a.oraFine ? `fino alle ${a.oraFine}` : "");
 const chiusiDi = (a) => (a.responsabili || []).filter(id => a.completamenti && a.completamenti[id]);
 const faseDi = (a) => {
   if (statoDi(a) === "fatto") return "approvata";
@@ -983,7 +989,7 @@ function Shell({ uid }) {
     const p = {
       titolo: (d.titolo || "").trim() || "Senza titolo", buId: d.buId || null, responsabili: d.responsabili || [],
       sottoareaId: (d.buId && d.sottoareaId && buMap[d.buId] && (buMap[d.buId].sottoaree || []).some(x => x.id === d.sottoareaId)) ? d.sottoareaId : null,
-      inizio: d.inizio, fine: d.milestone ? d.inizio : (d.fine < d.inizio ? d.inizio : d.fine), ora: d.ora || "",
+      inizio: d.inizio, fine: d.milestone ? d.inizio : (d.fine < d.inizio ? d.inizio : d.fine), ora: d.ora || "", oraFine: d.oraFine || "",
       milestone: !!d.milestone, luogo: (d.luogo || "").trim(), stato: st, done: st === "fatto",
       priorita: d.priorita || null, avanzamento: st === "fatto" ? 100 : Math.max(0, Math.min(100, Number(d.avanzamento) || 0)),
       note: d.note || "", sottoattivita: d.sottoattivita || [], notifica: d.notifica !== false, referente: d.referente || null,
@@ -1502,7 +1508,7 @@ function CalendarView({ attivita: tutteFiltrate, buMap, utMap, onOpen, onNew }) 
       <button key={a.id + giorno} className="pc-card" style={{ background: hexA(c, 0.12), borderLeftColor: c, opacity: st === "fatto" ? 0.6 : 1 }} onClick={(e) => { e.stopPropagation(); onOpen(a); }}>
         <span className="t" style={{ textDecoration: st === "fatto" ? "line-through" : "none" }}>{a.milestone ? "◆ " : ""}{a.titolo}</span>
         <span className="s">
-          {a.ora && <span>{a.ora}</span>}
+          {orarioDi(a) && <span>{orarioDi(a)}</span>}
           {a.inizio !== fineDi(a) && <span>{fmtPeriodo(a)}</span>}
           {inRitardo(a) && <span style={{ color: "var(--danger)", fontWeight: 600 }}>in ritardo</span>}
           <StatoCerchi a={a} utMap={utMap} size={16} max={3} />
@@ -1528,7 +1534,7 @@ function CalendarView({ attivita: tutteFiltrate, buMap, utMap, onOpen, onNew }) 
                 <span className="pc-day">{d.getDate()}</span>
                 {l.slice(0, max).map(a => {
                   const c = colore(a), sg = segno(a, k), cont = sg === "↳ ";
-                  return <button key={a.id} className={"pc-pill" + (cont ? " cont" : "") + (statoDi(a) === "fatto" ? " done" : "")} style={{ background: hexA(c, 0.14), borderLeftColor: c, color: "#1a1a1a" }} title={`${a.titolo} · ${fmtPeriodo(a)}${sg === "⚑ " ? " · scadenza" : sg === "▸ " ? " · inizio" : ""}`} onClick={e => { e.stopPropagation(); onOpen(a); }}>{sg}{a.ora && !sg ? a.ora + " " : ""}{a.titolo}</button>;
+                  return <button key={a.id} className={"pc-pill" + (cont ? " cont" : "") + (statoDi(a) === "fatto" ? " done" : "")} style={{ background: hexA(c, 0.14), borderLeftColor: c, color: "#1a1a1a" }} title={`${a.titolo} · ${fmtPeriodo(a)}${orarioDi(a) ? " · " + orarioDi(a) : ""}${sg === "⚑ " ? " · scadenza" : sg === "▸ " ? " · inizio" : ""}`} onClick={e => { e.stopPropagation(); onOpen(a); }}>{sg}{a.ora && !sg ? a.ora + " " : ""}{a.titolo}</button>;
                 })}
                 {l.length > max && <span className="pc-more">+{l.length - max}</span>}
               </div>
@@ -1968,11 +1974,18 @@ function ActivityModal({ draft, setDraft, bus, utenti, utMap, uid, isAdmin, live
             {responsabiliMancanti.map(id => <span key={id} className="pl-chip" style={{ opacity: .6 }} title="Utente disattivato">{(utMap[id] && utMap[id].nome) || "Utente rimosso"} <button type="button" className="pl-link" onClick={() => togResp(id)}>✕</button></span>)}
           </div>
 
-          <div className="pl-row3">
+          <div className="pl-quando">
             <div><label className="pl-lbl">{draft.milestone ? "Data" : "Inizio"}</label><input className="pl-input" type="date" value={draft.inizio} onChange={e => cambiaInizio(e.target.value)} /></div>
+            <div><label className="pl-lbl">Ora inizio</label><input className="pl-input" type="time" value={draft.ora || ""} onChange={e => set({ ora: e.target.value })} /></div>
             {!draft.milestone && <div><label className="pl-lbl">Fine / scadenza</label><input className="pl-input" type="date" value={draft.fine} min={draft.inizio} onChange={e => set({ fine: e.target.value })} /></div>}
-            <div><label className="pl-lbl">Orario (facoltativo)</label><input className="pl-input" type="time" value={draft.ora || ""} onChange={e => set({ ora: e.target.value })} /></div>
+            <div><label className="pl-lbl">Ora fine</label><input className="pl-input" type="time" value={draft.oraFine || ""} onChange={e => set({ oraFine: e.target.value })} /></div>
           </div>
+          {(draft.ora || draft.oraFine) && <div className="pl-hint" style={{ marginTop: 6, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            {draft.ora && draft.oraFine && (draft.milestone || draft.fine === draft.inizio) && draft.oraFine <= draft.ora
+              ? <span style={{ color: "var(--danger)" }}>L'ora di fine è prima di quella di inizio.</span>
+              : <span>Orari facoltativi: utili per eventi e riunioni.</span>}
+            <button type="button" className="pl-link" style={{ fontSize: 12 }} onClick={() => set({ ora: "", oraFine: "" })}>Togli gli orari</button>
+          </div>}
           <Toggle on={!!draft.milestone} onChange={v => set({ milestone: v, fine: v ? draft.inizio : draft.fine })}>Traguardo di un solo giorno (es. assemblea, inaugurazione)</Toggle>
           <Toggle on={inCalendario(draft)} onChange={v => set({ calendario: v })}><Icon name="calendar" size={14} style={{ verticalAlign: "-2px", marginRight: 4 }} />Mostra nel calendario <span className="pl-hint" style={{ fontSize: 12 }}>(gli eventi sì, le mansioni lunghe di solito no)</span></Toggle>
 
