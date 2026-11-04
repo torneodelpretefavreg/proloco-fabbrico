@@ -26,7 +26,7 @@ service cloud.firestore {
       // ognuno può cambiare nome, incarico e colore; il resto solo l'admin
       allow update: if admin()
         || (attivo() && request.auth.uid == userId
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'incarico', 'colore']));
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'incarico', 'colore', 'ultimoAccesso', 'notificheAttive']));
       allow delete: if admin();
     }
 

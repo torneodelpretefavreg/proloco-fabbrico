@@ -314,7 +314,7 @@
   .pl-urow:first-of-type{border-top:none}
   .pl-urow .nm{flex:1;min-width:0}
   .pl-urow .nm b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pl-urow .nm span{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+  .pl-urow .nm > span{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
   .pl-urow.off{opacity:.55}
   .pl-cred{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
   .pl-cred div{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:8px 10px}
@@ -322,6 +322,8 @@
   .pl-cred b{font-family:ui-monospace,Menlo,monospace;font-size:14px;word-break:break-all}
   .pl-inline{background:var(--panel-2);border:1px solid var(--rule);border-radius:8px;padding:8px 10px 10px;margin:0 0 8px}
   a.pl-btn{text-decoration:none}
+.pl-urow .nm > span.pl-accesso{font-size:11px;color:var(--ok);margin-top:1px;white-space:normal;overflow:visible}
+  .pl-urow .nm > span.pl-accesso.mai{color:var(--warn)}
   .pl-avc{position:relative;display:inline-grid;place-items:center;flex-shrink:0;border:none;background:none;padding:0}
   button.pl-avc{cursor:pointer}
   button.pl-avc:disabled{cursor:default}
@@ -515,7 +517,7 @@ const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.04-5";
+const APP_VERSION = "2026.11.04-6";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -569,6 +571,15 @@ const PROSSIMO = { da_fare: "in_corso", in_corso: "da_fare", fatto: "fatto" };
 // in calendario: scelta esplicita, altrimenti solo traguardi e attività brevi (fino a 7 giorni)
 const inCalendario = (a) => typeof a.calendario === "boolean" ? a.calendario
   : (!!a.milestone || (a.inizio ? daysBetween(fromKey(a.inizio), fromKey(fineDi(a))) + 1 <= 7 : false));
+function quandoFa(iso) {
+  const d = new Date(iso), ms = Date.now() - d.getTime();
+  if (ms < 60 * 60 * 1000) return "meno di un'ora fa";
+  const hh = d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  const g = daysBetween(d, new Date());
+  if (g === 0) return `oggi alle ${hh}`;
+  if (g === 1) return `ieri alle ${hh}`;
+  return `il ${d.getDate()} ${MESI[d.getMonth()].slice(0, 3)}`;
+}
 const orarioDi = (a) => a.ora ? (a.oraFine ? `${a.ora}–${a.oraFine}` : a.ora) : (a.oraFine ? `fino alle ${a.oraFine}` : "");
 const chiusiDi = (a) => (a.responsabili || []).filter(id => a.completamenti && a.completamenti[id]);
 const faseDi = (a) => {
@@ -708,6 +719,7 @@ async function registraDispositivo(uid, vapidKey) {
   const vecchio = lsGet(LS_TOKEN);
   if (vecchio && vecchio !== token) db.collection("pushTokens").doc(vecchio.replace(/\//g, "_")).delete().catch(() => {});
   lsSet(LS_TOKEN, token);
+  db.collection("utenti").doc(uid).set({ notificheAttive: true }, { merge: true }).catch(() => {});
   return token;
 }
 getSw();
@@ -943,6 +955,22 @@ function Shell({ uid }) {
   const [manage, setManage] = useState(null);
   const [toast, setToast] = useState(null);
   const avviso = useCallback((msg, tipo) => { setToast({ msg, tipo }); setTimeout(() => setToast(null), 2800); }, []);
+  // segno l'accesso (al massimo una volta ogni 10 minuti) e se su questo telefono le notifiche sono attive
+  useEffect(() => {
+    if (DEMO) return;
+    const segna = () => {
+      const ultimo = Number(lsGet("plf-ultimo-segno") || 0);
+      if (Date.now() - ultimo < 10 * 60 * 1000) return;
+      lsSet("plf-ultimo-segno", String(Date.now()));
+      const p = { ultimoAccesso: ora() };
+      if (typeof Notification !== "undefined" && Notification.permission === "granted" && lsGet(LS_TOKEN)) p.notificheAttive = true;
+      store.update("utenti", uid, p).catch(() => {});
+    };
+    segna();
+    const vis = () => { if (document.visibilityState === "visible") segna(); };
+    document.addEventListener("visibilitychange", vis);
+    return () => document.removeEventListener("visibilitychange", vis);
+  }, [uid]);
 
   // filtri condivisi tra Gantt e Calendario
   const [fBu, setFBu] = useState([]);
@@ -2293,7 +2321,9 @@ function UtentiTab({ utenti, uid, me, avviso, attivita, promemoria }) {
               <button className="pl-avbtn" title="Modifica nome, incarico e colore" onClick={() => { setNuovaPw(null); setModifica(modifica && modifica.id === u.id ? null : { id: u.id, nome: u.nome, incarico: u.incarico || "", colore: u.colore || PALETTE[0] }); }}>
                 <Avatar u={modifica && modifica.id === u.id ? { ...u, nome: modifica.nome || u.nome, colore: modifica.colore } : u} size={32} /><span className="pl-avedit"><Icon name="pencil" size={9} /></span>
               </button>
-              <div className="nm"><b>{u.nome}{u.id === uid ? " (tu)" : ""}</b><span>{mostraAccesso(u)}{u.incarico ? " · " + u.incarico : ""}</span></div>
+              <div className="nm"><b>{u.nome}{u.id === uid ? " (tu)" : ""}</b><span>{mostraAccesso(u)}{u.incarico ? " · " + u.incarico : ""}</span>
+                {u.attivo !== false && <span className={"pl-accesso" + (u.ultimoAccesso ? "" : " mai")}>{u.ultimoAccesso ? `Entrato ${quandoFa(u.ultimoAccesso)}` : "Mai entrato"}{u.ultimoAccesso && <> · <span title={u.notificheAttive ? "Notifiche attive" : "Notifiche non attive"} style={{ color: u.notificheAttive ? "var(--ok)" : "var(--ink-3)" }}><Icon name="bell" size={10} style={{ verticalAlign: "-1px" }} /> {u.notificheAttive ? "notifiche sì" : "notifiche no"}</span></>}</span>}
+              </div>
               <select className="pl-select" style={{ width: 100, padding: "5px 6px", fontSize: 12 }} value={u.ruolo || "membro"} disabled={u.id === uid} onChange={e => cambiaRuolo(u, e.target.value)}>
                 <option value="membro">Membro</option><option value="admin">Admin</option>
               </select>
@@ -2498,6 +2528,7 @@ function NotifichePanel({ uid, isAdmin, avviso }) {
     if (mioToken) await db.collection("pushTokens").doc(mioToken.replace(/\//g, "_")).delete().catch(() => {});
     const m = await getMessaging(); if (m) { try { await m.deleteToken(); } catch (e) {} }
     lsDel(LS_TOKEN); setMioToken(null); avviso("Notifiche disattivate su questo dispositivo");
+    if (!DEMO) store.update("utenti", uid, { notificheAttive: false }).catch(() => {});
   };
   const prova = async () => {
     const reg = await getSw(); if (!reg) return;
