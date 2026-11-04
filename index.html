@@ -510,7 +510,7 @@ const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.04-3";
+const APP_VERSION = "2026.11.04-4";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -561,6 +561,9 @@ const STATI = { da_fare: { lbl: "Da fare", ic: "circle" }, in_corso: { lbl: "In 
 const PROSSIMO = { da_fare: "in_corso", in_corso: "da_fare", fatto: "fatto" };
 // completamento: ogni incaricato "chiude il suo cerchio"; l'approvazione finale (spunta verde)
 // la danno l'amministratore o il responsabile dell'attività (referente)
+// in calendario: scelta esplicita, altrimenti solo traguardi e attività brevi (fino a 7 giorni)
+const inCalendario = (a) => typeof a.calendario === "boolean" ? a.calendario
+  : (!!a.milestone || (a.inizio ? daysBetween(fromKey(a.inizio), fromKey(fineDi(a))) + 1 <= 7 : false));
 const chiusiDi = (a) => (a.responsabili || []).filter(id => a.completamenti && a.completamenti[id]);
 const faseDi = (a) => {
   if (statoDi(a) === "fatto") return "approvata";
@@ -983,7 +986,8 @@ function Shell({ uid }) {
       inizio: d.inizio, fine: d.milestone ? d.inizio : (d.fine < d.inizio ? d.inizio : d.fine), ora: d.ora || "",
       milestone: !!d.milestone, luogo: (d.luogo || "").trim(), stato: st, done: st === "fatto",
       priorita: d.priorita || null, avanzamento: st === "fatto" ? 100 : Math.max(0, Math.min(100, Number(d.avanzamento) || 0)),
-      note: d.note || "", sottoattivita: d.sottoattivita || [], notifica: d.notifica !== false, referente: d.referente || null, ...firma(),
+      note: d.note || "", sottoattivita: d.sottoattivita || [], notifica: d.notifica !== false, referente: d.referente || null,
+      calendario: typeof d.calendario === "boolean" ? d.calendario : null, ...firma(),
     };
     try {
       if (d.id) await store.update("attivita", d.id, p);
@@ -1450,7 +1454,9 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, f
 /* =====================================================================
    CALENDARIO
    ===================================================================== */
-function CalendarView({ attivita, buMap, utMap, onOpen, onNew }) {
+function CalendarView({ attivita: tutteFiltrate, buMap, utMap, onOpen, onNew }) {
+  const attivita = useMemo(() => tutteFiltrate.filter(inCalendario), [tutteFiltrate]);
+  const nascoste = tutteFiltrate.length - attivita.length;
   const mobile = useMedia(MOBILE_Q);
   const [modo, setModoS] = useState(() => lsGet("plf-calmodo") || "mese");
   const setModo = (m) => { setModoS(m); lsSet("plf-calmodo", m); };
@@ -1579,7 +1585,8 @@ function CalendarView({ attivita, buMap, utMap, onOpen, onNew }) {
       </div>
       <div onTouchStart={e => { swRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }}
         onTouchEnd={e => { const s0 = swRef.current; swRef.current = null; if (!s0) return; const dx = e.changedTouches[0].clientX - s0.x, dy = e.changedTouches[0].clientY - s0.y; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) sposta(dx < 0 ? 1 : -1); }}>{corpo}</div>
-      <div className="pg-fuori">Tocca un giorno per creare un'attività in quella data{mobile ? ", scorri di lato per cambiare periodo" : ""}.{modo !== "settimana" && " Le attività più lunghe di una settimana compaiono solo all'inizio (▸) e alla scadenza (⚑)."}</div>
+      <div className="pg-fuori">Tocca un giorno per creare un'attività in quella data{mobile ? ", scorri di lato per cambiare periodo" : ""}.{modo !== "settimana" && " Le attività più lunghe di una settimana compaiono solo all'inizio (▸) e alla scadenza (⚑)."}
+        {nascoste > 0 && <> {nascoste} {nascoste === 1 ? "attività non è" : "attività non sono"} nel calendario: le vedi nel Gantt, e puoi aggiungerle dalla loro scheda con "Mostra nel calendario".</>}</div>
     </>
   );
 }
@@ -1967,6 +1974,7 @@ function ActivityModal({ draft, setDraft, bus, utenti, utMap, uid, isAdmin, live
             <div><label className="pl-lbl">Orario (facoltativo)</label><input className="pl-input" type="time" value={draft.ora || ""} onChange={e => set({ ora: e.target.value })} /></div>
           </div>
           <Toggle on={!!draft.milestone} onChange={v => set({ milestone: v, fine: v ? draft.inizio : draft.fine })}>Traguardo di un solo giorno (es. assemblea, inaugurazione)</Toggle>
+          <Toggle on={inCalendario(draft)} onChange={v => set({ calendario: v })}><Icon name="calendar" size={14} style={{ verticalAlign: "-2px", marginRight: 4 }} />Mostra nel calendario <span className="pl-hint" style={{ fontSize: 12 }}>(gli eventi sì, le mansioni lunghe di solito no)</span></Toggle>
 
           <label className="pl-lbl">Luogo</label>
           <input className="pl-input" value={draft.luogo || ""} placeholder="Facoltativo" onChange={e => set({ luogo: e.target.value })} />
