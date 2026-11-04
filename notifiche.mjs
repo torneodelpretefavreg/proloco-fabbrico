@@ -6,6 +6,7 @@
 //  - "Nuova attività per te" quando qualcuno viene aggiunto come incaricato
 //  - "Da approvare" all'amministratore (e al responsabile) quando tutti hanno chiuso il loro cerchio
 //  - ogni mattina dalle 8: scadenze vicine e riepilogo (giornaliero o del lunedì), secondo le preferenze di ognuno
+//  - agli amministratori: nuove attività create da altri, ogni "fatto" segnato, approvazioni date da altri
 
 import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
@@ -13,7 +14,7 @@ import { getMessaging } from "firebase-admin/messaging";
 
 const APP_URL = "https://torneodelpretefavreg.github.io/proloco-fabbrico/";
 const ORA_MATTINA = 8;
-const DEFAULT = { scadenze: true, giorniPrima: 2, assegnazioni: true, riepilogo: "settimanale" };
+const DEFAULT = { scadenze: true, giorniPrima: 2, assegnazioni: true, riepilogo: "settimanale", adminAttivita: true };
 const MESI = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"];
 
 let sa = null;
@@ -33,12 +34,13 @@ const giorniTra = (a, b) => Math.round((Date.parse(b + "T12:00:00Z") - Date.pars
 const fmt = (k) => { const [, m, d] = String(k).split("-").map(Number); return `${d} ${MESI[m - 1]}`; };
 const fineDi = (a) => a.fine || a.inizio;
 const fatta = (a) => !!(a.approvato && a.approvato.il) || a.stato === "fatto" || a.done === true;
-const elenco = (arr, n = 3) => arr.slice(0, n).join(", ") + (arr.length > n ? ` e altre ${arr.length - n}` : "");
+const elenco = (arr, n = 3) => arr.slice(0, n).join(", ") + (arr.length - n === 1 ? " e un'altra" : arr.length > n ? ` e altre ${arr.length - n}` : "");
 
 const tutti = async (c) => (await db.collection(c).get()).docs.map(d => ({ id: d.id, ref: d.ref, ...d.data() }));
 
 async function main() {
   const { oggi, ora, giorno } = adessoRoma();
+  const inizioGiro = new Date().toISOString(); // le novità successive le vedrà il giro dopo
   const [utenti, attivita, tokens, settings] = await Promise.all([tutti("utenti"), tutti("attivita"), tutti("pushTokens"), tutti("pushSettings")]);
   const statoRef = db.collection("config").doc("notifiche");
   const stato = (await statoRef.get()).data() || {};
@@ -51,8 +53,9 @@ async function main() {
   tokens.forEach(t => { if (t.uid && t.token) (tokPer[t.uid] = tokPer[t.uid] || []).push(t); });
   const admins = attivi.filter(u => u.ruolo === "admin").map(u => u.id);
 
-  const coda = {}; // uid -> { assegnate: [], altre: [] }
-  const metti = (uid, tipo, msg) => { if (!utMap[uid] || utMap[uid].attivo === false) return; (coda[uid] = coda[uid] || { assegnate: [], altre: [] })[tipo].push(msg); };
+  const coda = {}; // uid -> { assegnate: [], altre: [], novita: [] }
+  const metti = (uid, tipo, msg) => { if (!utMap[uid] || utMap[uid].attivo === false) return; (coda[uid] = coda[uid] || { assegnate: [], altre: [], novita: [] })[tipo].push(msg); };
+  const nome = (uid, fallback) => (utMap[uid] && utMap[uid].nome) || fallback || "Qualcuno";
   const scritture = [];
 
   // 1) nuove assegnazioni
@@ -81,6 +84,23 @@ async function main() {
     } else if (!daApprovare && a.avvisoApprovazione) {
       scritture.push(a.ref.update({ avvisoApprovazione: false }));
     }
+  }
+
+  // 2b) novità per gli amministratori (solo eventi successivi all'ultimo giro)
+  const da = stato.ultimoControlloAdmin; // al primo giro non avviso niente: fisso solo il punto di partenza
+  if (da) {
+    const destinatari = admins.filter(u => prefDi(u).adminAttivita !== false);
+    const eventi = [];
+    for (const a of attivita) {
+      if (a.creatoIl && a.creatoIl > da && a.creatoIl <= inizioGiro)
+        eventi.push({ chi: a.creatoDaUid, testo: `${nome(a.creatoDaUid, a.creatoDa)} ha creato: ${a.titolo}` });
+      for (const [uid, quando] of Object.entries(a.completamenti || {}))
+        if (quando > da && quando <= inizioGiro && (a.responsabili || []).includes(uid))
+          eventi.push({ chi: uid, testo: `${nome(uid)} ha segnato fatto: ${a.titolo}` });
+      if (a.approvato && a.approvato.il > da && a.approvato.il <= inizioGiro)
+        eventi.push({ chi: a.approvato.uid, testo: `${nome(a.approvato.uid, a.approvato.nome)} ha approvato: ${a.titolo}` });
+    }
+    for (const u of destinatari) eventi.filter(e => e.chi !== u).forEach(e => metti(u, "novita", e.testo));
   }
 
   // 3) una volta al giorno, dalle 8: scadenze e riepilogo
@@ -126,6 +146,8 @@ async function main() {
     } else if (q.assegnate.length > 1) {
       msgs.unshift({ title: `${q.assegnate.length} nuove attività per te`, body: elenco(q.assegnate.map(a => a.titolo), 4), tag: "ass-multi" });
     }
+    if (q.novita.length === 1) msgs.push({ title: "Novità dal team", body: q.novita[0], tag: "novita" });
+    else if (q.novita.length > 1) msgs.push({ title: `${q.novita.length} novità dal team`, body: elenco(q.novita, 3).replace(/, /g, " · "), tag: "novita" });
     const tk = tokPer[uid] || [];
     if (!tk.length || !msgs.length) continue;
     for (const m of msgs) {
@@ -146,7 +168,7 @@ async function main() {
   }
   daCancellare.forEach(id => scritture.push(db.collection("pushTokens").doc(id).delete()));
 
-  const nuovoStato = { inizializzato: true, ultimoGiro: new Date().toISOString() };
+  const nuovoStato = { inizializzato: true, ultimoGiro: new Date().toISOString(), ultimoControlloAdmin: inizioGiro };
   if (giro) nuovoStato.ultimoGiorno = oggi;
   scritture.push(statoRef.set(nuovoStato, { merge: true }));
   scritture.push(db.collection("config").doc("push").set({ ultimoInvio: Date.now() }, { merge: true }));

@@ -517,7 +517,7 @@ const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.04-6";
+const APP_VERSION = "2026.11.04-7";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -2501,7 +2501,7 @@ function BuTab({ bus, attivita, isAdmin, avviso }) {
   );
 }
 
-const NT_DEFAULT = { scadenze: true, giorniPrima: 2, assegnazioni: true, riepilogo: "settimanale" };
+const NT_DEFAULT = { scadenze: true, giorniPrima: 2, assegnazioni: true, riepilogo: "settimanale", adminAttivita: true };
 function NotifichePanel({ uid, isAdmin, avviso }) {
   const [pref, setPref] = useState(null);
   const [cfg, setCfg] = useState(null);
@@ -2562,6 +2562,7 @@ function NotifichePanel({ uid, isAdmin, avviso }) {
           {[[0, "Il giorno stesso"], [1, "1 giorno prima"], [2, "2 giorni prima"], [7, "1 settimana prima"]].map(([g, l]) => <button key={g} className={"pl-chip" + (Number(pref.giorniPrima) === g ? " on" : "")} onClick={() => salvaPref({ giorniPrima: g })}>{l}</button>)}
         </div>}
         <Toggle on={pref.assegnazioni} onChange={v => salvaPref({ assegnazioni: v })}>Quando mi assegnano un'attività</Toggle>
+        {isAdmin && <Toggle on={pref.adminAttivita !== false} onChange={v => salvaPref({ adminAttivita: v })}>Novità dal team <span className="pl-hint" style={{ fontSize: 12 }}>(nuove attività, "fatto" segnati, approvazioni date da altri)</span></Toggle>}
         <label className="pl-lbl">Riepilogo</label>
         <div className="pl-seg">{[["nessuno", "Nessuno"], ["giornaliero", "Ogni mattina"], ["settimanale", "Ogni lunedì"]].map(([k, l]) => <button key={k} className={pref.riepilogo === k ? "on" : ""} onClick={() => salvaPref({ riepilogo: k })}>{l}</button>)}</div>
       </div>
