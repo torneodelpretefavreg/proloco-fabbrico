@@ -382,6 +382,46 @@
   .pl-status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;margin-bottom:8px}
   .pl-status.on{background:var(--ok-soft);color:var(--ok)}.pl-status.off{background:#f0eee8;color:var(--ink-3)}.pl-status.bad{background:var(--danger-soft);color:var(--danger)}
 
+  /* ---------- PLANNER ---------- */
+  .pn-sum{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-3);flex-wrap:wrap}
+  .pn-sum b{color:var(--ink)}
+  .pn-sum .sep{color:#cfcabe}
+  .pn-sum .late,.pn-sum .late b{color:var(--danger)}
+  .pn-group{margin-bottom:18px}
+  .pn-group-h{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;margin-bottom:10px;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+  .pn-group-h .nm{cursor:pointer}
+  .pn-group-h .n{background:rgba(255,255,255,.7);border-radius:999px;padding:0 8px;font-size:11px;color:var(--ink-2)}
+  .pn-dot{width:10px;height:10px;border-radius:3px}
+  .pn-area{margin:12px 0 0 6px}
+  .pn-area-h{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;margin:0 0 8px 2px}
+  .pn-area-h .n{font-size:11px;color:var(--ink-3);font-weight:600}
+  .pn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:12px;align-items:start}
+  .pn-card{background:var(--panel);border:1px solid var(--rule);border-left:5px solid #c9c5bb;border-radius:12px;padding:11px 13px 12px;box-shadow:0 2px 8px rgba(20,20,20,.04);min-width:0}
+  .pn-card.late{box-shadow:0 0 0 1px var(--danger-soft),0 2px 8px rgba(181,67,67,.08)}
+  .pn-card.attesa{background:#fffcf3}
+  .pn-card.done{opacity:.6}
+  .pn-card.done .pn-title{text-decoration:line-through}
+  .pn-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .pn-bu{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pn-top .pl-pill{gap:3px}
+  .pn-title{display:block;width:100%;text-align:left;background:none;border:none;padding:4px 0 0;font-family:'Fraunces',serif;font-size:16.5px;font-weight:500;line-height:1.3;color:var(--ink);word-break:break-word}
+  .pn-title:hover{color:var(--brand-dark)}
+  .pn-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:5px;font-size:11.5px}
+  .pn-meta .pq-due{display:inline-flex;align-items:center;gap:3px}
+  .pn-dim{color:var(--ink-3);display:inline-flex;align-items:center;gap:3px}
+  .pn-people{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:10px}
+  .pn-person{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--ink-2)}
+  .pn-person.chiuso span:last-child{color:var(--brand-dark);font-weight:600}
+  .pn-subs{margin-top:10px;border-top:1px dashed var(--rule);padding-top:8px}
+  .pn-subs-h{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);margin-bottom:4px}
+  .pn-sub{display:flex;align-items:center;gap:7px;padding:3px 0;font-size:12.5px}
+  .pn-sub .t{flex:1;min-width:0;word-break:break-word}
+  .pn-sub.done .t{text-decoration:line-through;color:var(--ink-3)}
+  .pn-sub-d{font-size:10.5px;color:var(--ink-3);white-space:nowrap}
+  .pn-sub-d.late{color:var(--danger);font-weight:600}
+  .pn-note{margin-top:9px;font-size:12px;line-height:1.45;color:var(--ink-2);background:var(--panel-2);border-radius:8px;padding:6px 9px;cursor:pointer;word-break:break-word}
+  .pn-foot{display:flex;justify-content:flex-end;margin-top:10px}
+
   /* ---------- PRIORITÀ ---------- */
   .pq-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
   .pq-col{background:#f0eee7;border-radius:10px;padding:0 8px 8px;min-height:140px;transition:background .12s}
@@ -459,6 +499,9 @@
     .pp-item{padding:11px 14px}
     .pr-row{padding:12px}
     .pq-board{grid-template-columns:1fr;gap:10px}
+    .pn-grid{grid-template-columns:minmax(0,1fr);gap:10px}
+    .pn-area{margin-left:0}
+    .pl-bottom button span{font-size:9.5px;white-space:nowrap}
     .pl-swatches{gap:8px}
     .pl-sw{width:34px;height:34px;border-radius:9px}
     .pq-col{min-height:0}
@@ -517,7 +560,7 @@ const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.04-7";
+const APP_VERSION = "2026.11.05-1";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -940,7 +983,7 @@ function Login() {
 /* =====================================================================
    SHELL
    ===================================================================== */
-const VISTE = [["gantt", "Gantt", "gantt"], ["calendario", "Calendario", "calendar"], ["priorita", "Priorità", "flag"], ["persone", "Persone", "users"], ["promemoria", "Promemoria", "bell"]];
+const VISTE = [["gantt", "Gantt", "gantt"], ["planner", "Planner", "layers"], ["calendario", "Calendario", "calendar"], ["priorita", "Priorità", "flag"], ["persone", "Persone", "users"], ["promemoria", "Promemoria", "bell"]];
 
 function Shell({ uid }) {
   const utentiRaw = useCollection("utenti");
@@ -1071,7 +1114,7 @@ function Shell({ uid }) {
   if (!utentiRaw || !buRaw || !attRaw || !promRaw) return <div className="pl-center">Carico i dati…</div>;
 
   const promApertiMiei = (promRaw || []).filter(p => !p.done && p.assegnatoA === uid).length;
-  const sottotitolo = { gantt: "Gantt delle attività", calendario: "Calendario", priorita: "Attività per priorità", persone: "Responsabili e carichi di lavoro", promemoria: "Promemoria" }[vista];
+  const sottotitolo = { gantt: "Gantt delle attività", planner: "Planner delle attività", calendario: "Calendario", priorita: "Attività per priorità", persone: "Responsabili e carichi di lavoro", promemoria: "Promemoria" }[vista];
 
   return (
     <div className="pl-shell">
@@ -1092,13 +1135,15 @@ function Shell({ uid }) {
       <main className="pl-main">
         <InvitoNotifiche uid={uid} avviso={avviso} />
         {isAdmin && (vista === "gantt" || vista === "persone") && <ImportVigilia utenti={utenti} bus={bus} attivita={attivita} uid={uid} me={me} avviso={avviso} />}
-        {(vista === "gantt" || vista === "calendario" || vista === "priorita") && (
+        {(vista === "gantt" || vista === "planner" || vista === "calendario" || vista === "priorita") && (
           <Filtri bus={bus} utenti={utenti} fBu={fBu} setFBu={setFBu} fResp={fResp} setFResp={setFResp} fStato={fStato} setFStato={setFStato} cerca={cerca} setCerca={setCerca}
             fPrio={fPrio} setFPrio={setFPrio} conPrio={vista !== "priorita"} />
         )}
         {vista === "gantt" && <GanttView attivita={filtrate} tutte={attivita} bus={bus} buMap={buMap} fBu={fBu} utMap={utMap} isAdmin={isAdmin} mobile={mobile} fStato={fStato}
           onOpen={apri} onNew={nuova} onPatch={patchAtt} setFStato={setFStato} onSeedBu={() => setManage("bu")} />}
         {vista === "calendario" && <CalendarView attivita={filtrate} buMap={buMap} utMap={utMap} onOpen={apri} onNew={nuova} />}
+        {vista === "planner" && <PlannerView attivita={filtrate} bus={bus} buMap={buMap} utMap={utMap} uid={uid} isAdmin={isAdmin} fStato={fStato} setFStato={setFStato}
+          onOpen={apri} onPatch={patchAtt} onToggle={toggleCompleto} onApprova={approva} puoApprovare={puoApprovare} onNew={nuova} />}
         {vista === "priorita" && <PriorityView attivita={filtrate} buMap={buMap} utMap={utMap} mobile={mobile} onOpen={apri} onPatch={patchAtt} onNew={nuova} />}
         {vista === "persone" && <PeopleView attivita={attivita} utenti={utenti} uid={uid} isAdmin={isAdmin} buMap={buMap} utMap={utMap} promemoria={promRaw} onOpen={apri} onPatch={patchAtt} onToggle={toggleCompleto} />}
         {vista === "promemoria" && <ReminderView promemoria={promRaw} utenti={utenti} utMap={utMap} uid={uid} me={me} avviso={avviso} />}
@@ -1734,6 +1779,147 @@ function ImportVigilia({ utenti, bus, attivita, uid, me, avviso }) {
         <button className="pl-btn ghost" onClick={() => setNascosto(true)}>Non ora</button>
       </div>
     </div>
+  );
+}
+
+/* =====================================================================
+   PLANNER: riquadri per business unit (o per scadenza)
+   ===================================================================== */
+function PlannerCard({ a, b, utMap, uid, isAdmin, onOpen, onPatch, onToggle, onApprova, puoApprovare, soloArea }) {
+  const [tutte, setTutte] = useState(false);
+  const col = b ? b.colore : "#8a8a82";
+  const sa = b && a.sottoareaId ? (b.sottoaree || []).find(x => x.id === a.sottoareaId) : null;
+  const sc = scadenzaInfo(a), st = statoDi(a), fase = faseDi(a);
+  const subs = a.sottoattivita || [];
+  const subFatte = subs.filter(x => x.done).length;
+  const subVisibili = tutte ? subs : subs.filter(x => !x.done).slice(0, 4);
+  const resp = (a.responsabili || []).filter(id => utMap[id]);
+  const prog = st === "fatto" ? 100 : (a.avanzamento || 0);
+  const nota = String(a.note || "").replace(/\s+/g, " ").trim();
+  const toggleSub = (id) => onPatch(a.id, { sottoattivita: subs.map(x => x.id === id ? { ...x, done: !x.done } : x) });
+  return (
+    <div className={"pn-card" + (inRitardo(a) ? " late" : "") + (fase === "da_approvare" ? " attesa" : "") + (st === "fatto" ? " done" : "")} style={{ borderLeftColor: col }}>
+      <div className="pn-top">
+        <span className="pn-bu" style={{ color: col }}>{soloArea ? (sa ? sa.nome : "") : `${b ? b.nome : "Senza BU"}${sa ? ` › ${sa.nome}` : ""}`}</span>
+        {a.priorita && <span className={"pl-pill pr-" + a.priorita}><Icon name="flag" size={10} />{PRIORITA[a.priorita]}</span>}
+        <BadgeFase a={a} />
+      </div>
+      <button className="pn-title" onClick={() => onOpen(a)}>{a.milestone ? "◆ " : ""}{a.titolo}</button>
+      <div className="pn-meta">
+        <span className={"pq-due " + sc.cls}><Icon name="calendar" size={11} /> {sc.lbl}</span>
+        <span className="pn-dim">{fmtPeriodo(a)}{orarioDi(a) ? " · " + orarioDi(a) : ""}</span>
+        {a.luogo && <span className="pn-dim"><Icon name="pin" size={11} /> {a.luogo}</span>}
+      </div>
+      {prog > 0 && st !== "fatto" && <div className="pq-prog"><div style={{ width: prog + "%", background: col }} /></div>}
+
+      <div className="pn-people">
+        {resp.length ? resp.map(id => {
+          const u = utMap[id], chiuso = !!(a.completamenti && a.completamenti[id]);
+          const puo = (id === uid || isAdmin) && st !== "fatto";
+          return (
+            <span key={id} className={"pn-person" + (chiuso ? " chiuso" : "")}>
+              <AvatarCerchio u={u} chiuso={chiuso} size={20} onClick={puo ? () => onToggle(a, id) : undefined} />
+              <span>{String(u.nome).split(" ")[0]}{a.referente === id ? " ★" : ""}</span>
+            </span>
+          );
+        }) : <span className="pq-none">senza responsabile</span>}
+      </div>
+
+      {subs.length > 0 && (
+        <div className="pn-subs">
+          <div className="pn-subs-h">Sotto-attività · {subFatte}/{subs.length}</div>
+          {subVisibili.map(x => {
+            const r = x.resp && utMap[x.resp];
+            const tardi = !x.done && x.scadenza && x.scadenza < oggiKey();
+            return (
+              <div key={x.id} className={"pn-sub" + (x.done ? " done" : "")}>
+                <button className={"pl-check" + (x.done ? " on" : "")} style={{ width: 17, height: 17 }} onClick={() => toggleSub(x.id)}>{x.done && <Icon name="check" size={10} style={{ color: "#fff" }} />}</button>
+                <span className="t">{x.text}</span>
+                {x.scadenza && <span className={"pn-sub-d" + (tardi ? " late" : "")}>{fmtData(x.scadenza)}</span>}
+                {r && <Avatar u={r} size={16} />}
+              </div>
+            );
+          })}
+          {(subs.length > subVisibili.length || tutte) && subs.length > 0 && <button className="pl-link" style={{ fontSize: 11.5, marginTop: 2 }} onClick={() => setTutte(!tutte)}>{tutte ? "Mostra solo le aperte" : `Mostra tutte (${subs.length})`}</button>}
+        </div>
+      )}
+
+      {nota && <div className="pn-note" onClick={() => onOpen(a)}>{nota.length > 140 ? nota.slice(0, 140) + "…" : nota}</div>}
+
+      {fase === "da_approvare" && puoApprovare(a) && (
+        <div className="pn-foot"><button className="pl-btn green sm" onClick={() => onApprova(a)}><Icon name="check" size={13} />Approva</button></div>
+      )}
+    </div>
+  );
+}
+
+function PlannerView({ attivita, bus, buMap, utMap, uid, isAdmin, fStato, setFStato, onOpen, onPatch, onToggle, onApprova, puoApprovare, onNew }) {
+  const [per, setPerS] = useState(() => lsGet("plf-planner-per") || "bu");
+  const setPer = (v) => { setPerS(v); lsSet("plf-planner-per", v); };
+  const [chiusi, setChiusi] = useState({});
+  const oggi = oggiKey(), fraSette = toKey(addDays(new Date(), 7)), fraTrenta = toKey(addDays(new Date(), 30));
+  const ordina = (l) => l.slice().sort((x, y) => (inRitardo(y) - inRitardo(x)) || ((faseDi(y) === "da_approvare") - (faseDi(x) === "da_approvare")) || fineDi(x).localeCompare(fineDi(y)));
+  const nAperte = attivita.filter(a => statoDi(a) !== "fatto").length;
+  const nRit = attivita.filter(inRitardo).length;
+  const nAppr = attivita.filter(a => faseDi(a) === "da_approvare").length;
+
+  const card = (a) => <PlannerCard key={a.id} a={a} b={a.buId ? buMap[a.buId] : null} utMap={utMap} uid={uid} isAdmin={isAdmin} soloArea={per === "bu"}
+    onOpen={onOpen} onPatch={onPatch} onToggle={onToggle} onApprova={onApprova} puoApprovare={puoApprovare} />;
+
+  let gruppi = [];
+  if (per === "bu") {
+    gruppi = [...bus.map(b => ({ key: b.id, nome: b.nome, colore: b.colore, b })), { key: "__none", nome: "Senza business unit", colore: "#8a8a82", b: null }]
+      .map(g => ({ ...g, items: attivita.filter(a => (a.buId && buMap[a.buId] ? a.buId : "__none") === g.key) }))
+      .filter(g => g.items.length);
+  } else {
+    const fasce = [
+      ["ritardo", "In ritardo", "#b54343", a => statoDi(a) !== "fatto" && fineDi(a) < oggi],
+      ["settimana", "Entro 7 giorni", "#1f6fb0", a => statoDi(a) !== "fatto" && fineDi(a) >= oggi && fineDi(a) <= fraSette],
+      ["mese", "Entro 30 giorni", "#0e7490", a => statoDi(a) !== "fatto" && fineDi(a) > fraSette && fineDi(a) <= fraTrenta],
+      ["poi", "Più avanti", "#78716c", a => statoDi(a) !== "fatto" && fineDi(a) > fraTrenta],
+      ["fatte", "Completate", "#2d5e3e", a => statoDi(a) === "fatto"],
+    ];
+    gruppi = fasce.map(([key, nome, colore, f]) => ({ key, nome, colore, items: attivita.filter(f) })).filter(g => g.items.length);
+  }
+
+  return (
+    <>
+      <div className="pg-bar-top">
+        <div className="pn-sum">
+          <span><b>{attivita.length}</b> attività</span>
+          <span className="sep">·</span><span><b>{nAperte}</b> da fare</span>
+          {nRit > 0 && <><span className="sep">·</span><span className="late"><b>{nRit}</b> in ritardo</span></>}
+          {nAppr > 0 && <><span className="sep">·</span><button className="pl-link" style={{ color: "var(--warn)", fontSize: 13 }} onClick={() => setFStato("da_approvare")}><b>{nAppr}</b> da approvare</button></>}
+        </div>
+        <div className="pl-seg" style={{ marginLeft: "auto" }}>
+          <button className={per === "bu" ? "on" : ""} onClick={() => setPer("bu")}><Icon name="layers" size={13} />Per business unit</button>
+          <button className={per === "scadenza" ? "on" : ""} onClick={() => setPer("scadenza")}><Icon name="calendar" size={13} />Per scadenza</button>
+        </div>
+      </div>
+
+      {!gruppi.length && <div className="pl-panel pl-empty">Nessuna attività con questi filtri.{fStato !== "tutte" && <><br /><button className="pl-link" style={{ marginTop: 8 }} onClick={() => setFStato("tutte")}>Mostra anche le completate</button></>}</div>}
+
+      {gruppi.map(g => {
+        const chiuso = !!chiusi[g.key];
+        const aree = per === "bu" && g.b ? (g.b.sottoaree || []) : [];
+        const posArea = (a) => { const i = aree.findIndex(x => x.id === a.sottoareaId); return i < 0 ? -1 : i; };
+        const items = ordina(g.items).sort((x, y) => posArea(x) - posArea(y));
+        return (
+          <section key={g.key} className="pn-group">
+            <header className="pn-group-h" style={{ background: hexA(g.colore, 0.1), color: g.colore }}>
+              <button className="pl-link" style={{ color: "inherit", display: "inline-flex" }} onClick={() => setChiusi({ ...chiusi, [g.key]: !chiuso })}><Icon name={chiuso ? "right" : "down"} size={14} /></button>
+              <span className="pn-dot" style={{ background: g.colore }} />
+              <span className="nm" onClick={() => setChiusi({ ...chiusi, [g.key]: !chiuso })}>{g.nome}</span>
+              <span className="n">{g.items.length}</span>
+              {per === "bu" && <button className="pl-icon" style={{ marginLeft: "auto", width: 28, height: 28 }} title={`Nuova attività in ${g.nome}`} onClick={() => onNew({ buId: g.b ? g.b.id : null })}><Icon name="plus" size={13} /></button>}
+            </header>
+            {!chiuso && <>
+              <div className="pn-grid">{items.map(card)}</div>
+            </>}
+          </section>
+        );
+      })}
+    </>
   );
 }
 
