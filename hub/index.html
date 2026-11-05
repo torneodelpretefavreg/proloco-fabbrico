@@ -605,6 +605,16 @@ const SEED_APPS = [
     url:"https://torneodelpretefavreg.github.io/lapiazza/",
     tags:["Sito","Pubblico"], group:"Pro Loco Fabbrico" },
 ];
+const EXTRA_APPS = [
+  { icon:"💶", name:"Cassa",
+    desc:"Cassa per gli stand delle manifestazioni.",
+    url:"https://torneodelpretefavreg.github.io/cassafestival/",
+    tags:["POS","Eventi"], group:"Pro Loco Fabbrico", locked:true },
+  { icon:"🎄", name:"Vigilia di Natale",
+    desc:"Area e conti della Vigilia di Natale.",
+    url:"https://torneodelpretefavreg.github.io/vigilia/",
+    tags:["Eventi","Conti"], group:"Pro Loco Fabbrico", locked:true },
+];
 
 const K_APPS  = "proloco_apps_v1";
 const K_VAULT = "proloco_vault_v1";
@@ -813,9 +823,12 @@ function startSync(){
     const v = snap.exists ? snap.data() : null;
     const localRec = readJSON(K_APPS, null);
 
-    if(v && v.list && !v.mig && !cached){
-      // pulizia una tantum: tolgo i programmi del Festival dalla lista iniziale
-      apps = v.list.filter(function(x){ return !/\/(cassa)?festival\/?$/.test(x.url || ""); });
+    if(v && v.list && (v.mig || 0) < 2 && !cached){
+      // aggiornamento una tantum: aggiungo Cassa e Vigilia se mancano
+      apps = v.list.slice();
+      EXTRA_APPS.forEach(function(x){
+        if(!apps.some(function(a){ return (a.url || "").replace(/\/$/, "") === x.url.replace(/\/$/, ""); })) apps.push(seed(x));
+      });
       saveApps(); renderApps(); appsSnapSeen = true;
       return;
     }
@@ -830,7 +843,7 @@ function startSync(){
       renderApps();
       if($("viewArchive").style.display !== "none") renderArchive();
     }else if(!appsSnapSeen && !cached){
-      apps = apps.length ? apps : SEED_APPS.map(seed);
+      apps = apps.length ? apps : SEED_APPS.concat(EXTRA_APPS).map(seed);
       saveApps();
       renderApps();
     }
@@ -870,7 +883,7 @@ function startSync(){
 }
 
 function saveApps(){
-  const rec = {list:apps, ts:Date.now(), mig:1};
+  const rec = {list:apps, ts:Date.now(), mig:2};
   localStorage.setItem(K_APPS, JSON.stringify(rec));
   if(ref) ref.doc("apps").set(clean(rec)).catch(function(err){
     toast("Programmi non salvati sul database: " + (err && err.message ? err.message : "errore"));
