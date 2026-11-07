@@ -387,13 +387,21 @@
   .pl-status.on{background:var(--ok-soft);color:var(--ok)}.pl-status.off{background:#f0eee8;color:var(--ink-3)}.pl-status.bad{background:var(--danger-soft);color:var(--danger)}
 
   /* ---------- REPORT DI STAMPA ---------- */
-  #print-root{display:none}
+  .rp-preview{position:fixed;inset:0;z-index:500;background:#e9e7e1;display:flex;flex-direction:column}
+  .rp-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:var(--panel);border-bottom:1px solid var(--rule);flex-shrink:0}
+  .rp-bar-t{flex:1;font-family:'Fraunces',serif;font-size:16px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rp-scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:14px 12px calc(30px + env(safe-area-inset-bottom,0px))}
+  .rp-sheet{width:1100px;margin:0 auto;background:#fff;box-shadow:0 6px 30px rgba(20,20,20,.15);border-radius:4px;padding:20px}
+  #print-root{width:1060px;font-family:'Inter',sans-serif;color:#1a1a1a;font-size:9.5pt;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @media (max-width:760px){.rp-bar-t{display:none}.rp-sheet{padding:12px}}
   @media print{
     @page{size:A4 landscape;margin:10mm}
     html,body{height:auto!important;overflow:visible!important;background:#fff!important}
-    body > #root{display:none!important}
-    body > *:not(#print-root){display:none!important}
-    #print-root{display:block;font-family:'Inter',sans-serif;color:#1a1a1a;font-size:9.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    body > #root, .rp-bar, .pl-toast, .pl-update{display:none!important}
+    .rp-preview{position:static!important;background:#fff!important;display:block!important}
+    .rp-scroll{overflow:visible!important;padding:0!important}
+    .rp-sheet{zoom:1!important;width:auto!important;box-shadow:none!important;padding:0!important;margin:0!important}
+    #print-root{width:auto}
   }
   #print-root h1{font-family:'Fraunces',serif;font-weight:500;font-size:20pt;margin:0}
   #print-root h2{font-family:'Fraunces',serif;font-weight:500;font-size:13pt;margin:14px 0 6px;color:#165689}
@@ -631,7 +639,7 @@ const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.07-2";
+const APP_VERSION = "2026.11.07-3";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -1526,7 +1534,7 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, f
         <div className="pl-seg" style={{ marginLeft: "auto" }}>
           {Object.entries(ZOOM).map(([k, z]) => <button key={k} className={zoom === k ? "on" : ""} onClick={() => setZoom(k)}>{z.lbl}</button>)}
         </div>
-        <button className="pl-btn ghost sm" onClick={() => setStampa(true)} title="Stampa o salva in PDF le attività filtrate"><Icon name="print" size={14} />Stampa / PDF</button>
+        <button className="pl-btn ghost sm" onClick={() => setStampa(true)} title="Esporta in PDF le attività filtrate"><Icon name="down" size={14} />Esporta PDF</button>
       </div>
       {stampa && <StampaDialog attivita={attivita} bus={bus} buMap={buMap} utMap={utMap} me={me} filtriTesto={filtriTesto} onClose={() => setStampa(false)} />}
 
@@ -1638,20 +1646,17 @@ const statoReport = (a) => {
 };
 function StampaDialog({ attivita, bus, buMap, utMap, me, filtriTesto, onClose }) {
   const [opz, setOpz] = useState(() => { try { return { per: "bu", gantt: true, sotto: true, note: false, ...JSON.parse(lsGet("plf-stampa") || "{}") }; } catch (e) { return { per: "bu", gantt: true, sotto: true, note: false }; } });
-  const [inStampa, setInStampa] = useState(false);
+  const [anteprima, setAnteprima] = useState(false);
   const set = (p) => { const n = { ...opz, ...p }; setOpz(n); lsSet("plf-stampa", JSON.stringify(n)); };
-  useEffect(() => {
-    if (!inStampa) return;
-    const fine = () => { setInStampa(false); onClose(); };
-    window.addEventListener("afterprint", fine);
-    const t = setTimeout(() => window.print(), 350);
-    return () => { clearTimeout(t); window.removeEventListener("afterprint", fine); };
-  }, [inStampa]);
+  if (anteprima) return ReactDOM.createPortal(
+    <AnteprimaReport onClose={onClose} onIndietro={() => setAnteprima(false)}>
+      <Report attivita={attivita} bus={bus} buMap={buMap} utMap={utMap} me={me} filtriTesto={filtriTesto} opz={opz} />
+    </AnteprimaReport>, document.body);
   return (
     <>
       <div className="pl-overlay" onClick={onClose}>
         <div className="pl-modal" style={{ width: "min(480px,100%)" }} onClick={e => e.stopPropagation()}>
-          <div className="pl-mhead"><h3>Stampa report</h3><button className="pl-icon" onClick={onClose}><Icon name="x" size={16} /></button></div>
+          <div className="pl-mhead"><h3>Esporta PDF</h3><button className="pl-icon" onClick={onClose}><Icon name="x" size={16} /></button></div>
           <div className="pl-mbody">
             <p className="pl-hint" style={{ marginTop: 10 }}><b>{attivita.length}</b> attività, con i filtri attuali: {filtriTesto || "nessun filtro"}. Per stamparne altre, cambia i filtri sopra il Gantt.</p>
             <label className="pl-lbl">Raggruppa per</label>
@@ -1662,16 +1667,88 @@ function StampaDialog({ attivita, bus, buMap, utMap, me, filtriTesto, onClose })
             <Toggle on={opz.gantt} onChange={v => set({ gantt: v })}>Diagramma di Gantt</Toggle>
             <Toggle on={opz.sotto} onChange={v => set({ sotto: v })}>Sotto-attività</Toggle>
             <Toggle on={opz.note} onChange={v => set({ note: v })}>Note</Toggle>
-            <p className="pl-hint" style={{ marginTop: 12 }}>Si apre la finestra di stampa: per il PDF scegli <b>"Salva come PDF"</b> come stampante. Su iPhone: tocca Condividi → <b>Stampa</b>, poi di nuovo Condividi per salvare il PDF.</p>
+            <p className="pl-hint" style={{ marginTop: 12 }}>Sul computer il PDF si scarica da solo. Sul telefono tocca <b>"Salva / condividi PDF"</b>: puoi salvarlo in File o mandarlo su WhatsApp.</p>
           </div>
           <div className="pl-mfoot"><div className="dx">
             <button className="pl-btn ghost" onClick={onClose}>Annulla</button>
-            <button className="pl-btn" disabled={!attivita.length} onClick={() => setInStampa(true)}><Icon name="print" size={14} />Stampa / PDF</button>
+            <button className="pl-btn" disabled={!attivita.length} onClick={() => setAnteprima(true)}><Icon name="down" size={14} />Esporta PDF</button>
           </div></div>
         </div>
       </div>
-      {inStampa && ReactDOM.createPortal(<Report attivita={attivita} bus={bus} buMap={buMap} utMap={utMap} me={me} filtriTesto={filtriTesto} opz={opz} />, document.body)}
     </>
+  );
+}
+
+let html2pdfPromise = null;
+function caricaHtml2pdf() {
+  if (window.html2pdf) return Promise.resolve(window.html2pdf);
+  if (!html2pdfPromise) html2pdfPromise = new Promise((ok, ko) => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+    sc.onload = () => window.html2pdf ? ok(window.html2pdf) : ko(new Error("libreria PDF non disponibile"));
+    sc.onerror = () => { html2pdfPromise = null; ko(new Error("Non riesco a scaricare la libreria per il PDF: controlla la connessione.")); };
+    document.head.appendChild(sc);
+  });
+  return html2pdfPromise;
+}
+const LARGHEZZA_REPORT = 1060; // px ≈ A4 orizzontale meno i margini
+function AnteprimaReport({ children, onClose, onIndietro }) {
+  const [stato, setStato] = useState("prepara"); // prepara | pronto | errore
+  const [err, setErr] = useState("");
+  const [zoom, setZoom] = useState(1);
+  const blobRef = useRef(null);
+  const mobileOS = /iphone|ipad|android/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const nomeFile = `Report-attivita-ProLoco-Fabbrico-${oggiKey()}.pdf`;
+  const salva = async () => {
+    const blob = blobRef.current; if (!blob) return;
+    const file = new File([blob], nomeFile, { type: "application/pdf" });
+    if (mobileOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: "Report attività" }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = nomeFile; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  };
+  const genera = async () => {
+    setErr(""); setStato("prepara");
+    try {
+      const h2p = await caricaHtml2pdf();
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      await new Promise(r => setTimeout(r, 200));
+      const el = document.getElementById("print-root");
+      blobRef.current = await h2p().set({
+        margin: [8, 8, 8, 8], filename: nomeFile,
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: LARGHEZZA_REPORT + 40 },
+        jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
+        pagebreak: { mode: ["css", "legacy"], avoid: ["tr", ".rg-row", ".rp-kpi", ".rp-head"] },
+      }).from(el).outputPdf("blob");
+      setStato("pronto");
+      if (!mobileOS) salva(); // sul computer parte subito il download
+    } catch (e) { setErr(e.message || String(e)); setStato("errore"); }
+  };
+  useEffect(() => {
+    const f = () => setZoom(Math.min(1, (window.innerWidth - 24) / 1100));
+    f(); window.addEventListener("resize", f);
+    genera();
+    return () => window.removeEventListener("resize", f);
+  }, []);
+  return (
+    <div className="rp-preview">
+      <div className="rp-bar">
+        <button className="pl-btn ghost sm" onClick={onIndietro}><Icon name="left" size={14} />Opzioni</button>
+        <span className="rp-bar-t">Esporta PDF</span>
+        {stato === "prepara" && <span className="pl-hint">Preparo il PDF…</span>}
+        {stato === "pronto" && <button className="pl-btn sm" onClick={salva}><Icon name="down" size={14} />{mobileOS ? "Salva / condividi PDF" : "Scarica di nuovo"}</button>}
+        {stato === "errore" && <button className="pl-btn sm" onClick={genera}>Riprova</button>}
+        <button className="pl-icon" onClick={onClose} title="Chiudi"><Icon name="x" size={16} /></button>
+      </div>
+      {err && <div className="pl-err" style={{ margin: "10px 12px 0" }}>{err}</div>}
+      {stato === "pronto" && !mobileOS && <div className="pl-okmsg" style={{ margin: "10px 12px 0" }}>PDF scaricato: lo trovi nella cartella Download.</div>}
+      <div className="rp-scroll">
+        <div className="rp-sheet" style={{ zoom }}>{children}</div>
+      </div>
+    </div>
   );
 }
 
