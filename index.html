@@ -637,11 +637,13 @@ const firebaseConfig = {
   appId: "1:842802975890:web:716840a5d68dc51b85024b",
 };
 const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
+// indirizzo del servizio Cloudflare che manda subito le notifiche (vuoto = solo il controllo periodico di GitHub)
+const NOTIFY_URL = "https://proloco-notifiche.davide-lodi69.workers.dev/";
 // chiave web push (Firebase → Cloud Messaging → Certificati push web)
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.07-5";
+const APP_VERSION = "2026.11.07-6";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -847,6 +849,15 @@ async function registraDispositivo(uid, vapidKey) {
   return token;
 }
 getSw();
+
+// avvisa subito il servizio notifiche dopo un salvataggio (se non risponde, ci pensa GitHub più tardi)
+async function avvisaSubito(evento, id, extra) {
+  if (DEMO || !NOTIFY_URL || !auth || !auth.currentUser || !id) return;
+  try {
+    const idToken = await auth.currentUser.getIdToken();
+    fetch(NOTIFY_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ idToken, evento, id, ...(extra || {}) }), keepalive: true }).catch(() => {});
+  } catch (e) {}
+}
 
 /* =====================================================================
    ICONE
@@ -1150,8 +1161,14 @@ function Shell({ uid }) {
       calendario: typeof d.calendario === "boolean" ? d.calendario : null, ...firma(),
     };
     try {
-      if (d.id) await store.update("attivita", d.id, p);
-      else await store.add("attivita", { ...p, creatoDa: me.nome, creatoDaUid: uid, creatoIl: ora() });
+      if (d.id) {
+        await store.update("attivita", d.id, p);
+        const nuovi = p.responsabili.filter(x => !((live && live.responsabili) || []).includes(x));
+        if (nuovi.length) avvisaSubito("assegnazione", d.id, { nuovi });
+      } else {
+        const nuovoId = await store.add("attivita", { ...p, creatoDa: me.nome, creatoDaUid: uid, creatoIl: ora() });
+        avvisaSubito("creata", nuovoId, { nuovi: p.responsabili });
+      }
       setEditing(null); avviso(d.id ? "Attività aggiornata" : "Attività creata");
     } catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
   };
@@ -1170,11 +1187,12 @@ function Shell({ uid }) {
     try {
       await store.replace("attivita", a.id, { completamenti: c, ...(statoDi(a) === "da_fare" && c[persona] ? { stato: "in_corso" } : {}), ...firma() });
       avviso(tutti ? "Tutti hanno segnato fatto: ora manca l'approvazione" : (c[persona] ? "Segnato come fatto" : "Riaperto"));
+      if (c[persona]) avvisaSubito("fatto", a.id, { persona });
     } catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
   };
   const approva = async (a) => {
     if (!puoApprovare(a)) return;
-    try { await store.update("attivita", a.id, { approvato: { uid, nome: me.nome, il: ora() }, stato: "fatto", done: true, avanzamento: 100, ...firma() }); avviso("Attività approvata ✓"); }
+    try { await store.update("attivita", a.id, { approvato: { uid, nome: me.nome, il: ora() }, stato: "fatto", done: true, avanzamento: 100, ...firma() }); avviso("Attività approvata ✓"); avvisaSubito("approvata", a.id); }
     catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
   };
   const revoca = async (a) => {
@@ -2139,7 +2157,8 @@ function ImportVigilia({ utenti, bus, attivita, uid, me, avviso }) {
       for (const [titolo, persone] of MANSIONI_VIGILIA) {
         if (attivita.some(a => a.buId === buId && norm(a.titolo) === norm(titolo))) continue;
         const resp = [...new Set(persone.map(x => mappa[x]).filter(Boolean))];
-        await store.add("attivita", { titolo, buId, sottoareaId: null, responsabili: resp, referente: null, inizio: oggiKey() > SCADENZA_VIGILIA ? SCADENZA_VIGILIA : oggiKey(), fine: SCADENZA_VIGILIA, ora: "", milestone: false, luogo: "", stato: "da_fare", done: false, priorita: null, avanzamento: 0, note: "", sottoattivita: [], notifica: true, creatoDa: me.nome, creatoDaUid: uid, creatoIl: ora() });
+        const idNuova = await store.add("attivita", { titolo, buId, sottoareaId: null, responsabili: resp, referente: null, inizio: oggiKey() > SCADENZA_VIGILIA ? SCADENZA_VIGILIA : oggiKey(), fine: SCADENZA_VIGILIA, ora: "", milestone: false, luogo: "", stato: "da_fare", done: false, priorita: null, avanzamento: 0, note: "", sottoattivita: [], notifica: true, creatoDa: me.nome, creatoDaUid: uid, creatoIl: ora() });
+        avvisaSubito("creata", idNuova, { nuovi: resp });
         n++;
       }
       await store.set("config", "import-vigilia", { fatto: true, il: ora(), da: me.nome });

@@ -87,8 +87,11 @@ async function main() {
   }
 
   // 2b) novità per gli amministratori (solo eventi successivi all'ultimo giro)
+  // Ora questi avvisi li manda subito il servizio Cloudflare (cloudflare-worker.js): qui restano spenti
+  // per non mandarli doppi. Per riattivarli qui, metti NOVITA_DA_GITHUB = true.
+  const NOVITA_DA_GITHUB = false;
   const da = stato.ultimoControlloAdmin; // al primo giro non avviso niente: fisso solo il punto di partenza
-  if (da) {
+  if (da && NOVITA_DA_GITHUB) {
     const destinatari = admins.filter(u => prefDi(u).adminAttivita !== false);
     const eventi = [];
     for (const a of attivita) {
