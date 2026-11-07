@@ -35,6 +35,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body,#root{height:100%}
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
   body{background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,sans-serif;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
   button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
   button{cursor:pointer}
@@ -391,7 +392,8 @@
   .rp-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:var(--panel);border-bottom:1px solid var(--rule);flex-shrink:0}
   .rp-bar-t{flex:1;font-family:'Fraunces',serif;font-size:16px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .rp-scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:14px 12px calc(30px + env(safe-area-inset-bottom,0px))}
-  .rp-sheet{width:1100px;margin:0 auto;background:#fff;box-shadow:0 6px 30px rgba(20,20,20,.15);border-radius:4px;padding:20px}
+  .rp-sheet{width:1100px;margin:0;background:#fff;box-shadow:0 6px 30px rgba(20,20,20,.15);border-radius:4px;padding:20px}
+  #print-root,#print-root *{-webkit-text-size-adjust:100%!important;text-size-adjust:100%!important}
   #print-root{width:1060px;font-family:'Inter',sans-serif;color:#1a1a1a;font-size:9.5pt;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   @media (max-width:760px){.rp-bar-t{display:none}.rp-sheet{padding:12px}}
   @media print{
@@ -400,7 +402,7 @@
     body > #root, .rp-bar, .pl-toast, .pl-update{display:none!important}
     .rp-preview{position:static!important;background:#fff!important;display:block!important}
     .rp-scroll{overflow:visible!important;padding:0!important}
-    .rp-sheet{zoom:1!important;width:auto!important;box-shadow:none!important;padding:0!important;margin:0!important}
+    .rp-sheet{transform:none!important;width:auto!important;box-shadow:none!important;padding:0!important;margin:0!important}
     #print-root{width:auto}
   }
   #print-root h1{font-family:'Fraunces',serif;font-weight:500;font-size:20pt;margin:0}
@@ -639,7 +641,7 @@ const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.07-3";
+const APP_VERSION = "2026.11.07-4";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -1696,6 +1698,8 @@ function AnteprimaReport({ children, onClose, onIndietro }) {
   const [stato, setStato] = useState("prepara"); // prepara | pronto | errore
   const [err, setErr] = useState("");
   const [zoom, setZoom] = useState(1);
+  const [altezza, setAltezza] = useState(0);
+  const sheetRef = useRef(null);
   const blobRef = useRef(null);
   const mobileOS = /iphone|ipad|android/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const nomeFile = `Report-attivita-ProLoco-Fabbrico-${oggiKey()}.pdf`;
@@ -1728,10 +1732,11 @@ function AnteprimaReport({ children, onClose, onIndietro }) {
     } catch (e) { setErr(e.message || String(e)); setStato("errore"); }
   };
   useEffect(() => {
-    const f = () => setZoom(Math.min(1, (window.innerWidth - 24) / 1100));
+    const f = () => { setZoom(Math.min(1, (window.innerWidth - 24) / 1100)); if (sheetRef.current) setAltezza(sheetRef.current.offsetHeight); };
     f(); window.addEventListener("resize", f);
+    const t = setTimeout(f, 300);
     genera();
-    return () => window.removeEventListener("resize", f);
+    return () => { clearTimeout(t); window.removeEventListener("resize", f); };
   }, []);
   return (
     <div className="rp-preview">
@@ -1746,7 +1751,9 @@ function AnteprimaReport({ children, onClose, onIndietro }) {
       {err && <div className="pl-err" style={{ margin: "10px 12px 0" }}>{err}</div>}
       {stato === "pronto" && !mobileOS && <div className="pl-okmsg" style={{ margin: "10px 12px 0" }}>PDF scaricato: lo trovi nella cartella Download.</div>}
       <div className="rp-scroll">
-        <div className="rp-sheet" style={{ zoom }}>{children}</div>
+        <div style={{ width: 1100 * zoom, height: altezza ? altezza * zoom : "auto", margin: "0 auto", overflow: "hidden" }}>
+          <div ref={sheetRef} className="rp-sheet" style={{ transform: `scale(${zoom})`, transformOrigin: "top left" }}>{children}</div>
+        </div>
       </div>
     </div>
   );
