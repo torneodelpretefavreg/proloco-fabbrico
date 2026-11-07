@@ -641,7 +641,7 @@ const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.07-4";
+const APP_VERSION = "2026.11.07-5";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -878,6 +878,7 @@ function Icon({ name, size = 18, style }) {
     case "list": return <svg {...c}><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>;
     case "layers": return <svg {...c}><path d="M12 2 2 7l10 5 10-5-10-5z" /><path d="M2 12l10 5 10-5" /><path d="M2 17l10 5 10-5" /></svg>;
     case "user": return <svg {...c}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>;
+    case "file": return <svg {...c}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="8" y1="13" x2="16" y2="13" /><line x1="8" y1="17" x2="13" y2="17" /></svg>;
     case "print": return <svg {...c}><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>;
     case "mail": return <svg {...c}><rect x="2" y="4" width="20" height="16" rx="2" /><polyline points="22 6 12 13 2 6" /></svg>;
     default: return null;
@@ -1713,6 +1714,19 @@ function AnteprimaReport({ children, onClose, onIndietro }) {
     const a = document.createElement("a"); a.href = url; a.download = nomeFile; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60000);
   };
+  const urlRef = useRef(null);
+  const apri = () => {
+    const blob = blobRef.current; if (!blob) return;
+    if (!urlRef.current) urlRef.current = URL.createObjectURL(blob);
+    if (isStandalone()) {
+      // dall'app installata sulla schermata Home: il visualizzatore di sistema si apre dal foglio di condivisione
+      salva(); return;
+    }
+    const w = window.open(urlRef.current, "_blank");
+    if (!w) location.href = urlRef.current;
+  };
+  useEffect(() => () => { if (urlRef.current) URL.revokeObjectURL(urlRef.current); }, []);
+  const [grande, setGrande] = useState(false);
   const genera = async () => {
     setErr(""); setStato("prepara");
     try {
@@ -1732,24 +1746,26 @@ function AnteprimaReport({ children, onClose, onIndietro }) {
     } catch (e) { setErr(e.message || String(e)); setStato("errore"); }
   };
   useEffect(() => {
-    const f = () => { setZoom(Math.min(1, (window.innerWidth - 24) / 1100)); if (sheetRef.current) setAltezza(sheetRef.current.offsetHeight); };
+    const f = () => { setZoom(grande ? Math.min(1, Math.max(0.6, (window.innerWidth - 24) / 1100)) : Math.min(1, (window.innerWidth - 24) / 1100)); if (sheetRef.current) setAltezza(sheetRef.current.offsetHeight); };
     f(); window.addEventListener("resize", f);
     const t = setTimeout(f, 300);
-    genera();
     return () => { clearTimeout(t); window.removeEventListener("resize", f); };
-  }, []);
+  }, [grande]);
+  useEffect(() => { genera(); }, []);
   return (
     <div className="rp-preview">
       <div className="rp-bar">
         <button className="pl-btn ghost sm" onClick={onIndietro}><Icon name="left" size={14} />Opzioni</button>
         <span className="rp-bar-t">Esporta PDF</span>
         {stato === "prepara" && <span className="pl-hint">Preparo il PDF…</span>}
-        {stato === "pronto" && <button className="pl-btn sm" onClick={salva}><Icon name="down" size={14} />{mobileOS ? "Salva / condividi PDF" : "Scarica di nuovo"}</button>}
+        {stato === "pronto" && <button className="pl-btn sm" onClick={apri}><Icon name="file" size={14} />Apri PDF</button>}
+        {stato === "pronto" && <button className="pl-btn ghost sm" onClick={salva}><Icon name="down" size={14} />{mobileOS ? "Condividi" : "Scarica"}</button>}
         {stato === "errore" && <button className="pl-btn sm" onClick={genera}>Riprova</button>}
         <button className="pl-icon" onClick={onClose} title="Chiudi"><Icon name="x" size={16} /></button>
       </div>
       {err && <div className="pl-err" style={{ margin: "10px 12px 0" }}>{err}</div>}
       {stato === "pronto" && !mobileOS && <div className="pl-okmsg" style={{ margin: "10px 12px 0" }}>PDF scaricato: lo trovi nella cartella Download.</div>}
+      {stato === "pronto" && mobileOS && <div className="pl-hint" style={{ margin: "8px 12px 0", textAlign: "center" }}>{isStandalone() ? "Tocca «Apri PDF», poi l'anteprima in alto nel foglio di condivisione per vederlo a pagina intera." : "Tocca «Apri PDF» per vederlo a pagina intera."} · <button className="pl-link" style={{ fontSize: 12.5 }} onClick={() => setGrande(!grande)}>{grande ? "Anteprima intera" : "Ingrandisci anteprima"}</button></div>}
       <div className="rp-scroll">
         <div style={{ width: 1100 * zoom, height: altezza ? altezza * zoom : "auto", margin: "0 auto", overflow: "hidden" }}>
           <div ref={sheetRef} className="rp-sheet" style={{ transform: `scale(${zoom})`, transformOrigin: "top left" }}>{children}</div>
