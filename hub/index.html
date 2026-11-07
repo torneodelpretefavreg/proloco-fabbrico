@@ -606,10 +606,10 @@ const SEED_APPS = [
     tags:["Sito","Pubblico"], group:"Pro Loco Fabbrico" },
 ];
 const EXTRA_APPS = [
-  { icon:"💶", name:"Cassa",
-    desc:"CassaPro: la cassa per tutti gli eventi della Pro Loco.",
+  { icon:"💶", name:"CassaPro",
+    desc:"Casse, cucina e report per tutti gli eventi. Utenti admin, cassiere e cucina; si entra con l'account della cassa, poi PIN o Face ID.",
     url:"https://torneodelpretefavreg.github.io/cassa-eventi/",
-    tags:["POS","Eventi"], group:"Pro Loco Fabbrico", locked:true },
+    tags:["Eventi","Cucina","Report"], group:"Pro Loco Fabbrico", locked:true },
   { icon:"🎄", name:"Vigilia di Natale",
     desc:"Area e conti della Vigilia di Natale.",
     url:"https://torneodelpretefavreg.github.io/vigilia/",
@@ -823,13 +823,15 @@ function startSync(){
     const v = snap.exists ? snap.data() : null;
     const localRec = readJSON(K_APPS, null);
 
-    if(v && v.list && (v.mig || 0) < 3 && !cached){
+    if(v && v.list && (v.mig || 0) < 4 && !cached){
       // aggiornamento una tantum: la Cassa passa alla nuova app multi-evento,
       // poi aggiungo Cassa e Vigilia se mancano
+      // e la card della Cassa prende nome, descrizione ed etichette della nuova CassaPro
+      const nuovaCassa = EXTRA_APPS[0];
       apps = v.list.map(function(a){
-        if(!/\/cassafestival\/?$/.test(a.url || "")) return a;
-        return Object.assign({}, a, { url:"https://torneodelpretefavreg.github.io/cassa-eventi/",
-          desc: a.desc === "Cassa per gli stand delle manifestazioni." ? "CassaPro: la cassa per tutti gli eventi della Pro Loco." : a.desc });
+        if(!/\/(cassafestival|cassa-eventi)\/?$/.test(a.url || "")) return a;
+        return Object.assign({}, a, { url:nuovaCassa.url, name:nuovaCassa.name,
+          desc:nuovaCassa.desc, tags:nuovaCassa.tags.slice(), locked:true });
       });
       EXTRA_APPS.forEach(function(x){
         if(!apps.some(function(a){ return (a.url || "").replace(/\/$/, "") === x.url.replace(/\/$/, ""); })) apps.push(seed(x));
@@ -888,7 +890,7 @@ function startSync(){
 }
 
 function saveApps(){
-  const rec = {list:apps, ts:Date.now(), mig:3};
+  const rec = {list:apps, ts:Date.now(), mig:4};
   localStorage.setItem(K_APPS, JSON.stringify(rec));
   if(ref) ref.doc("apps").set(clean(rec)).catch(function(err){
     toast("Programmi non salvati sul database: " + (err && err.message ? err.message : "errore"));
