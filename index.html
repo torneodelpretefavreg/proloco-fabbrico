@@ -144,6 +144,7 @@
   .pl-filters{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px}
   .pl-filters .pl-select{width:auto;padding:6px 9px;font-size:12.5px}
   .pl-chips-pers{flex-basis:100%}
+  .pl-chips-prio{flex-basis:100%}
   .pl-pchip{padding-left:4px}
   .pl-pchip .pl-av{border-width:1.5px}
   .pl-search{position:relative;flex:0 1 220px}
@@ -480,6 +481,8 @@
 
     .pl-filters-m .pl-chips{width:auto;flex:1;min-width:0}
     .pl-filters.pl-filters-m .pl-chips.pl-chips-pers{flex:1 1 100%;width:100%;order:3}
+    .pl-filters.pl-filters-m .pl-chips.pl-chips-prio{flex:1 1 100%;width:100%;order:4}
+    .pl-filters .pl-chips.pl-chips-prio{flex-wrap:nowrap;overflow-x:auto;width:100%;scrollbar-width:none}
     .pl-fbtn{flex-shrink:0;font-weight:600}
     .pg-lbl{padding:0 6px;gap:6px}
     .pg-lbl-t{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:12.5px;line-height:1.2}
@@ -565,7 +568,7 @@ const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.05-2";
+const APP_VERSION = "2026.11.07-1";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -1025,7 +1028,8 @@ function Shell({ uid }) {
   const [fPers, setFPers] = useState(() => { try { const v = JSON.parse(lsGet("plf-fpers") || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } });
   const [fStato, setFStato] = useState(() => lsGet("plf-fstato") || "aperte");
   const [cerca, setCerca] = useState("");
-  const [fPrio, setFPrio] = useState("all");
+  const [fPrio, setFPrio] = useState(() => { try { const v = JSON.parse(lsGet("plf-fprio") || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } });
+  useEffect(() => { lsSet("plf-fprio", JSON.stringify(fPrio)); }, [fPrio]);
   useEffect(() => { lsSet("plf-fpers", JSON.stringify(fPers)); lsSet("plf-fstato", fStato); }, [fPers, fStato]);
 
   const utentiTutti = utentiRaw || [];
@@ -1052,8 +1056,7 @@ function Shell({ uid }) {
       if (fStato === "da_approvare" && faseDi(a) !== "da_approvare") return false;
       if (fStato === "ritardo" && !inRitardo(a)) return false;
       if (q && !norm(`${a.titolo} ${a.note || ""} ${a.luogo || ""}`).includes(q)) return false;
-      if (vista !== "priorita" && fPrio === "none" && a.priorita) return false;
-      if (vista !== "priorita" && !["all", "none"].includes(fPrio) && a.priorita !== fPrio) return false;
+      if (vista !== "priorita" && fPrio.length && !fPrio.includes(a.priorita || "none")) return false;
       return true;
     });
   }, [attivita, fBu, fPers, fStato, cerca, fPrio, vista, buMap, uid]);
@@ -1173,7 +1176,17 @@ function Filtri({ bus, utenti, fBu, setFBu, fPers, setFPers, uid, fStato, setFSt
   const mobile = useMedia(MOBILE_Q);
   const [aperti, setAperti] = useState(false);
   const tog = (id) => setFBu(fBu.includes(id) ? fBu.filter(x => x !== id) : [...fBu, id]);
-  const attivi = (fStato !== "aperte" ? 1 : 0) + (cerca.trim() ? 1 : 0) + (conPrio && fPrio !== "all" ? 1 : 0);
+  const attivi = (fStato !== "aperte" ? 1 : 0) + (cerca.trim() ? 1 : 0);
+  const togPr = (k) => setFPrio(fPrio.includes(k) ? fPrio.filter(x => x !== k) : [...fPrio, k]);
+  const priorita = conPrio ? (
+    <div className="pl-chips pl-chips-prio">
+      <button className={"pl-chip" + (!fPrio.length ? " on" : "")} onClick={() => setFPrio([])}><Icon name="flag" size={12} />Tutte le priorità</button>
+      {[["alta", "Alta", "#b4462f"], ["media", "Media", "#a46a12"], ["bassa", "Bassa", "#5e7e52"], ["none", "Senza priorità", "#8a8a82"]].map(([k, l, c]) => {
+        const on = fPrio.includes(k);
+        return <button key={k} className={"pl-chip" + (on ? " on" : "")} style={on ? { background: c, borderColor: c } : null} onClick={() => togPr(k)}><span style={{ color: on ? "#fff" : c, display: "inline-flex" }}><Icon name="flag" size={12} /></span>{l}</button>;
+      })}
+    </div>
+  ) : null;
   const chips = (
     <div className="pl-chips">
       <button className={"pl-chip" + (!fBu.length ? " on" : "")} onClick={() => setFBu([])}>Tutte le BU</button>
@@ -1198,6 +1211,7 @@ function Filtri({ bus, utenti, fBu, setFBu, fPers, setFPers, uid, fStato, setFSt
       <button className={"pl-chip pl-fbtn" + (attivi ? " on" : "")} onClick={() => setAperti(true)}><Icon name="search" size={13} />Filtri{attivi ? ` · ${attivi}` : ""}</button>
       {chips}
       {persone}
+      {priorita}
     </div>
   );
   return (
@@ -1205,6 +1219,7 @@ function Filtri({ bus, utenti, fBu, setFBu, fPers, setFPers, uid, fStato, setFSt
       {mobile && <button className="pl-chip pl-fbtn on" onClick={() => setAperti(false)}><Icon name="up" size={13} />Chiudi filtri</button>}
       {chips}
       {persone}
+      {priorita}
       <select className="pl-select" value={fStato} onChange={e => setFStato(e.target.value)}>
         <option value="aperte">Da fare e in corso</option>
         <option value="tutte">Tutte</option>
@@ -1212,13 +1227,6 @@ function Filtri({ bus, utenti, fBu, setFBu, fPers, setFPers, uid, fStato, setFSt
         <option value="ritardo">In ritardo</option>
         <option value="fatte">Completate</option>
       </select>
-      {conPrio && <select className="pl-select" value={fPrio} onChange={e => setFPrio(e.target.value)}>
-        <option value="all">Tutte le priorità</option>
-        <option value="alta">Priorità alta</option>
-        <option value="media">Priorità media</option>
-        <option value="bassa">Priorità bassa</option>
-        <option value="none">Senza priorità</option>
-      </select>}
       <div className="pl-search"><Icon name="search" size={14} /><input className="pl-input" placeholder="Cerca attività…" value={cerca} onChange={e => setCerca(e.target.value)} /></div>
     </div>
   );
@@ -1885,6 +1893,10 @@ function PlannerView({ attivita, bus, buMap, utMap, uid, isAdmin, fStato, setFSt
     gruppi = [...bus.map(b => ({ key: b.id, nome: b.nome, colore: b.colore, b })), { key: "__none", nome: "Senza business unit", colore: "#8a8a82", b: null }]
       .map(g => ({ ...g, items: attivita.filter(a => (a.buId && buMap[a.buId] ? a.buId : "__none") === g.key) }))
       .filter(g => g.items.length);
+  } else if (per === "priorita") {
+    gruppi = [["alta", "Priorità alta", "#b4462f"], ["media", "Priorità media", "#a46a12"], ["bassa", "Priorità bassa", "#5e7e52"], ["none", "Senza priorità", "#8a8a82"]]
+      .map(([key, nome, colore]) => ({ key, nome, colore, items: attivita.filter(a => (a.priorita || "none") === key) }))
+      .filter(g => g.items.length);
   } else {
     const fasce = [
       ["ritardo", "In ritardo", "#b54343", a => statoDi(a) !== "fatto" && fineDi(a) < oggi],
@@ -1906,7 +1918,8 @@ function PlannerView({ attivita, bus, buMap, utMap, uid, isAdmin, fStato, setFSt
           {nAppr > 0 && <><span className="sep">·</span><button className="pl-link" style={{ color: "var(--warn)", fontSize: 13 }} onClick={() => setFStato("da_approvare")}><b>{nAppr}</b> da approvare</button></>}
         </div>
         <div className="pl-seg" style={{ marginLeft: "auto" }}>
-          <button className={per === "bu" ? "on" : ""} onClick={() => setPer("bu")}><Icon name="layers" size={13} />Per business unit</button>
+          <button className={per === "bu" ? "on" : ""} onClick={() => setPer("bu")}><Icon name="layers" size={13} />Per BU</button>
+          <button className={per === "priorita" ? "on" : ""} onClick={() => setPer("priorita")}><Icon name="flag" size={13} />Per priorità</button>
           <button className={per === "scadenza" ? "on" : ""} onClick={() => setPer("scadenza")}><Icon name="calendar" size={13} />Per scadenza</button>
         </div>
       </div>
