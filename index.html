@@ -386,6 +386,69 @@
   .pl-status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:3px 10px;margin-bottom:8px}
   .pl-status.on{background:var(--ok-soft);color:var(--ok)}.pl-status.off{background:#f0eee8;color:var(--ink-3)}.pl-status.bad{background:var(--danger-soft);color:var(--danger)}
 
+  /* ---------- REPORT DI STAMPA ---------- */
+  #print-root{display:none}
+  @media print{
+    @page{size:A4 landscape;margin:10mm}
+    html,body{height:auto!important;overflow:visible!important;background:#fff!important}
+    body > #root{display:none!important}
+    body > *:not(#print-root){display:none!important}
+    #print-root{display:block;font-family:'Inter',sans-serif;color:#1a1a1a;font-size:9.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+  #print-root h1{font-family:'Fraunces',serif;font-weight:500;font-size:20pt;margin:0}
+  #print-root h2{font-family:'Fraunces',serif;font-weight:500;font-size:13pt;margin:14px 0 6px;color:#165689}
+  #print-root h2 small{font-family:'Inter',sans-serif;font-size:9pt;color:#8a8a82;margin-left:6px}
+  .rp-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1f6fb0;padding-bottom:8px}
+  .rp-ente{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#1f6fb0}
+  .rp-sub{font-size:8.5pt;color:#8a8a82;margin-top:2px}
+  .rp-logo{width:34px;height:34px;border-radius:9px;background:#1f6fb0;color:#fff;display:grid;place-items:center;font-family:'Fraunces',serif;font-size:19px}
+  .rp-filtri{font-size:8.5pt;color:#4a4a4a;margin:6px 0 8px}
+  .rp-kpi{display:flex;gap:8px}
+  .rp-kpi div{flex:1;border:1px solid #e8e6df;border-left:3px solid #1f6fb0;border-radius:6px;padding:4px 8px;font-size:8pt;color:#8a8a82;text-transform:uppercase;letter-spacing:.04em}
+  .rp-kpi span{display:block;font-family:'Fraunces',serif;font-size:15pt;color:#1a1a1a;text-transform:none;letter-spacing:0}
+  .rp-kpi .late{border-left-color:#b54343}.rp-kpi .late span{color:#b54343}
+  .rp-kpi .wait{border-left-color:#c08020}.rp-kpi .wait span{color:#a46a12}
+  .rp-kpi .ok{border-left-color:#2d5e3e}.rp-kpi .ok span{color:#2d5e3e}
+  .rp-gantt{page-break-inside:auto}
+  .rg-head,.rg-row{display:flex}
+  .rg-lbl{width:24%;flex-shrink:0;padding-right:6px;font-size:8pt;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:4px}
+  .rg-track{flex:1;position:relative}
+  .rg-mesi{display:flex;border-bottom:1px solid #d8d5cc}
+  .rg-mesi div{font-size:7.5pt;font-weight:700;text-transform:capitalize;color:#4a4a4a;border-left:1px solid #d8d5cc;padding:1px 3px;white-space:nowrap;overflow:hidden}
+  .rg-sett{position:relative;height:12px}
+  .rg-sett div{position:absolute;top:1px;font-size:6.5pt;color:#8a8a82;transform:translateX(2px)}
+  .rg-row{height:15px;border-bottom:1px solid #f1efe9;page-break-inside:avoid}
+  .rg-grow{height:16px;margin-top:3px}
+  .rg-grow .rg-lbl{font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:7.5pt}
+  .rg-vl{position:absolute;top:0;bottom:0;border-left:1px solid #f1efe9}
+  .rg-oggi{position:absolute;top:0;bottom:0;border-left:1.5px solid #1f6fb0}
+  .rg-bar{position:absolute;top:3px;height:9px;border:1px solid;border-radius:3px;overflow:hidden}
+  .rg-bar span{display:block;height:100%}
+  .rg-bar.late{outline:1.5px solid #b54343}
+  .rg-bar.wait{outline:1.5px solid #c08020}
+  .rg-ms{position:absolute;top:3px;width:9px;height:9px;transform:rotate(45deg)}
+  .rg-st{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0;background:#d8d5cc}
+  .rg-st.in_corso{background:#1f6fb0}.rg-st.wait{background:#c08020}.rg-st.ok{background:#2d5e3e}.rg-st.late{background:#b54343}
+  .rg-oggi-l{display:inline-block;width:0;height:9px;border-left:1.5px solid #1f6fb0;margin-right:4px;vertical-align:-1px}
+  .rp-legenda{display:flex;flex-wrap:wrap;gap:12px;font-size:7.5pt;color:#8a8a82;margin-top:5px}
+  .rp-legenda span{display:inline-flex;align-items:center;gap:4px}
+  .rp-tab table{width:100%;border-collapse:collapse;font-size:8.5pt}
+  .rp-tab th{text-align:left;font-size:7.5pt;text-transform:uppercase;letter-spacing:.05em;color:#8a8a82;border-bottom:1.5px solid #1a1a1a;padding:4px 5px}
+  .rp-tab td{padding:4px 5px;border-bottom:1px solid #e8e6df;vertical-align:top}
+  .rp-tab tr{page-break-inside:avoid}
+  .rp-grp td{font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:8pt;border-left:4px solid;background:#f7f6f2;padding-top:6px}
+  .rp-grp small{color:#8a8a82;font-weight:500}
+  .rp-dim{color:#8a8a82;font-size:7.5pt}
+  .rp-pers{white-space:nowrap}
+  .rp-tab td.late{color:#b54343;font-weight:700}
+  .rp-badge{display:inline-block;border-radius:999px;padding:1px 7px;font-size:7.5pt;font-weight:700;background:#f0eee8;color:#6b675e;white-space:nowrap}
+  .rp-badge.in_corso{background:#eaf2f9;color:#165689}.rp-badge.wait{background:#fdf3dd;color:#a46a12}.rp-badge.ok{background:#e8efe9;color:#2d5e3e}.rp-badge.late{background:#fbecec;color:#b54343}
+  .rp-extra td{border-bottom:1px solid #e8e6df;padding-top:0}
+  .rp-row:has(+ .rp-extra) td{border-bottom:none}
+  .rp-subs{display:flex;flex-wrap:wrap;gap:3px 14px;font-size:7.8pt;color:#4a4a4a;padding-left:10px}
+  .rp-subs .done{color:#8a8a82;text-decoration:line-through}
+  .rp-note{font-size:7.8pt;color:#4a4a4a;background:#fbfaf6;border-radius:4px;padding:3px 7px;margin-left:10px;white-space:pre-wrap}
+
   /* ---------- PLANNER ---------- */
   .pn-sum{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-3);flex-wrap:wrap}
   .pn-sum b{color:var(--ink)}
@@ -568,7 +631,7 @@ const ADMIN_EMAILS = ["davide.lodi69@gmail.com"];
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.07-1";
+const APP_VERSION = "2026.11.07-2";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -805,6 +868,7 @@ function Icon({ name, size = 18, style }) {
     case "list": return <svg {...c}><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>;
     case "layers": return <svg {...c}><path d="M12 2 2 7l10 5 10-5-10-5z" /><path d="M2 12l10 5 10-5" /><path d="M2 17l10 5 10-5" /></svg>;
     case "user": return <svg {...c}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>;
+    case "print": return <svg {...c}><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg>;
     case "mail": return <svg {...c}><rect x="2" y="4" width="20" height="16" rx="2" /><polyline points="22 6 12 13 2 6" /></svg>;
     default: return null;
   }
@@ -1147,7 +1211,14 @@ function Shell({ uid }) {
           <Filtri bus={bus} utenti={utenti} fBu={fBu} setFBu={setFBu} fPers={fPers} setFPers={setFPers} uid={uid} fStato={fStato} setFStato={setFStato} cerca={cerca} setCerca={setCerca}
             fPrio={fPrio} setFPrio={setFPrio} conPrio={vista !== "priorita"} />
         )}
-        {vista === "gantt" && <GanttView attivita={filtrate} tutte={attivita} bus={bus} buMap={buMap} fBu={fBu} utMap={utMap} isAdmin={isAdmin} mobile={mobile} fStato={fStato}
+        {vista === "gantt" && <GanttView attivita={filtrate} tutte={attivita} bus={bus} buMap={buMap} fBu={fBu} utMap={utMap} isAdmin={isAdmin} mobile={mobile} fStato={fStato} me={me}
+          filtriTesto={[
+            fBu.length ? "Business unit: " + fBu.map(id => id === "__none" ? "senza BU" : (buMap[id] ? buMap[id].nome : "")).filter(Boolean).join(", ") : "Tutte le business unit",
+            fPers.length ? "Persone: " + fPers.map(id => id === "__none" ? "senza responsabile" : (utMap[id] ? utMap[id].nome : "")).filter(Boolean).join(", ") : "",
+            fPrio.length ? "Priorità: " + fPrio.map(k => k === "none" ? "senza" : PRIORITA[k].toLowerCase()).join(", ") : "",
+            { aperte: "Da fare e in corso", tutte: "Tutte (anche completate)", da_approvare: "Da approvare", ritardo: "In ritardo", fatte: "Completate" }[fStato] || "",
+            cerca.trim() ? `Ricerca: "${cerca.trim()}"` : "",
+          ].filter(Boolean).join(" · ")}
           onOpen={apri} onNew={nuova} onPatch={patchAtt} setFStato={setFStato} onSeedBu={() => setManage("bu")} />}
         {vista === "calendario" && <CalendarView attivita={filtrate} buMap={buMap} utMap={utMap} onOpen={apri} onNew={nuova} />}
         {vista === "planner" && <PlannerView attivita={filtrate} bus={bus} buMap={buMap} utMap={utMap} uid={uid} isAdmin={isAdmin} fStato={fStato} setFStato={setFStato}
@@ -1242,7 +1313,7 @@ const ZOOM = {
   "12m": { lbl: "Anno", giorni: 364, col: 4, colM: 3, prima: 14, passo: 91 },
 };
 
-function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, fStato, onOpen, onNew, onPatch, setFStato, onSeedBu }) {
+function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, fStato, me, filtriTesto, onOpen, onNew, onPatch, setFStato, onSeedBu }) {
   const [zoom, setZoomS] = useState(() => (ZOOM[lsGet("plf-zoom")] ? lsGet("plf-zoom") : (mobile ? "4s" : "3m")));
   const Z = ZOOM[zoom];
   // si parte pochi giorni prima di oggi: il passato resta "messo da parte"
@@ -1399,6 +1470,7 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, f
 
   const periodoLbl = `${fmtData(startK)} ${fromKey(startK).getFullYear() !== fromKey(fineK).getFullYear() ? fromKey(startK).getFullYear() + " " : ""}– ${fmtData(fineK)} ${fromKey(fineK).getFullYear()}`;
   const [tip, setTip] = useState(null);
+  const [stampa, setStampa] = useState(false);
 
   const barra = (a) => {
     const d = dateDi(a);
@@ -1454,7 +1526,9 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, f
         <div className="pl-seg" style={{ marginLeft: "auto" }}>
           {Object.entries(ZOOM).map(([k, z]) => <button key={k} className={zoom === k ? "on" : ""} onClick={() => setZoom(k)}>{z.lbl}</button>)}
         </div>
+        <button className="pl-btn ghost sm" onClick={() => setStampa(true)} title="Stampa o salva in PDF le attività filtrate"><Icon name="print" size={14} />Stampa / PDF</button>
       </div>
+      {stampa && <StampaDialog attivita={attivita} bus={bus} buMap={buMap} utMap={utMap} me={me} filtriTesto={filtriTesto} onClose={() => setStampa(false)} />}
 
       {!bus.length && (
         <div className="pl-panel" style={{ padding: 16, marginBottom: 10 }}>
@@ -1549,6 +1623,199 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, f
       {tip && !drag && <div className="pg-tip" style={{ left: tip.x + 14, top: tip.y + 14 }}>{tip.t}</div>}
       {drag && <div className="pg-dragtip">{(attivita.find(x => x.id === drag.id) || {}).titolo} · {fmtPeriodo(dateTrascinate(drag))}</div>}
     </>
+  );
+}
+
+/* =====================================================================
+   REPORT DA STAMPARE / SALVARE IN PDF
+   ===================================================================== */
+const statoReport = (a) => {
+  const f = faseDi(a);
+  if (f === "approvata") return ["Approvata", "ok"];
+  if (f === "da_approvare") return ["Da approvare", "wait"];
+  if (inRitardo(a)) return ["In ritardo", "late"];
+  return [STATI[statoDi(a)].lbl, statoDi(a)];
+};
+function StampaDialog({ attivita, bus, buMap, utMap, me, filtriTesto, onClose }) {
+  const [opz, setOpz] = useState(() => { try { return { per: "bu", gantt: true, sotto: true, note: false, ...JSON.parse(lsGet("plf-stampa") || "{}") }; } catch (e) { return { per: "bu", gantt: true, sotto: true, note: false }; } });
+  const [inStampa, setInStampa] = useState(false);
+  const set = (p) => { const n = { ...opz, ...p }; setOpz(n); lsSet("plf-stampa", JSON.stringify(n)); };
+  useEffect(() => {
+    if (!inStampa) return;
+    const fine = () => { setInStampa(false); onClose(); };
+    window.addEventListener("afterprint", fine);
+    const t = setTimeout(() => window.print(), 350);
+    return () => { clearTimeout(t); window.removeEventListener("afterprint", fine); };
+  }, [inStampa]);
+  return (
+    <>
+      <div className="pl-overlay" onClick={onClose}>
+        <div className="pl-modal" style={{ width: "min(480px,100%)" }} onClick={e => e.stopPropagation()}>
+          <div className="pl-mhead"><h3>Stampa report</h3><button className="pl-icon" onClick={onClose}><Icon name="x" size={16} /></button></div>
+          <div className="pl-mbody">
+            <p className="pl-hint" style={{ marginTop: 10 }}><b>{attivita.length}</b> attività, con i filtri attuali: {filtriTesto || "nessun filtro"}. Per stamparne altre, cambia i filtri sopra il Gantt.</p>
+            <label className="pl-lbl">Raggruppa per</label>
+            <div className="pl-seg" style={{ display: "flex" }}>
+              {[["bu", "Business unit"], ["priorita", "Priorità"], ["scadenza", "Scadenza"]].map(([k, l]) => <button key={k} style={{ flex: 1, justifyContent: "center" }} className={opz.per === k ? "on" : ""} onClick={() => set({ per: k })}>{l}</button>)}
+            </div>
+            <label className="pl-lbl">Includi</label>
+            <Toggle on={opz.gantt} onChange={v => set({ gantt: v })}>Diagramma di Gantt</Toggle>
+            <Toggle on={opz.sotto} onChange={v => set({ sotto: v })}>Sotto-attività</Toggle>
+            <Toggle on={opz.note} onChange={v => set({ note: v })}>Note</Toggle>
+            <p className="pl-hint" style={{ marginTop: 12 }}>Si apre la finestra di stampa: per il PDF scegli <b>"Salva come PDF"</b> come stampante. Su iPhone: tocca Condividi → <b>Stampa</b>, poi di nuovo Condividi per salvare il PDF.</p>
+          </div>
+          <div className="pl-mfoot"><div className="dx">
+            <button className="pl-btn ghost" onClick={onClose}>Annulla</button>
+            <button className="pl-btn" disabled={!attivita.length} onClick={() => setInStampa(true)}><Icon name="print" size={14} />Stampa / PDF</button>
+          </div></div>
+        </div>
+      </div>
+      {inStampa && ReactDOM.createPortal(<Report attivita={attivita} bus={bus} buMap={buMap} utMap={utMap} me={me} filtriTesto={filtriTesto} opz={opz} />, document.body)}
+    </>
+  );
+}
+
+function Report({ attivita, bus, buMap, utMap, me, filtriTesto, opz }) {
+  const oggi = oggiKey(), fraSette = toKey(addDays(new Date(), 7)), fraTrenta = toKey(addDays(new Date(), 30));
+  const ordina = (l) => l.slice().sort((x, y) => (inRitardo(y) - inRitardo(x)) || fineDi(x).localeCompare(fineDi(y)));
+  let gruppi;
+  if (opz.per === "priorita") {
+    gruppi = [["alta", "Priorità alta", "#b4462f"], ["media", "Priorità media", "#a46a12"], ["bassa", "Priorità bassa", "#5e7e52"], ["none", "Senza priorità", "#8a8a82"]]
+      .map(([k, nome, colore]) => ({ k, nome, colore, items: attivita.filter(a => (a.priorita || "none") === k) }));
+  } else if (opz.per === "scadenza") {
+    gruppi = [
+      ["ritardo", "In ritardo", "#b54343", a => statoDi(a) !== "fatto" && fineDi(a) < oggi],
+      ["sett", "Entro 7 giorni", "#1f6fb0", a => statoDi(a) !== "fatto" && fineDi(a) >= oggi && fineDi(a) <= fraSette],
+      ["mese", "Entro 30 giorni", "#0e7490", a => statoDi(a) !== "fatto" && fineDi(a) > fraSette && fineDi(a) <= fraTrenta],
+      ["poi", "Più avanti", "#78716c", a => statoDi(a) !== "fatto" && fineDi(a) > fraTrenta],
+      ["fatte", "Completate", "#2d5e3e", a => statoDi(a) === "fatto"],
+    ].map(([k, nome, colore, f]) => ({ k, nome, colore, items: attivita.filter(f) }));
+  } else {
+    gruppi = [...bus.map(b => ({ k: b.id, nome: b.nome, colore: b.colore, b })), { k: "__none", nome: "Senza business unit", colore: "#8a8a82" }]
+      .map(g => ({ ...g, items: attivita.filter(a => (a.buId && buMap[a.buId] ? a.buId : "__none") === g.k) }));
+  }
+  gruppi = gruppi.filter(g => g.items.length).map(g => {
+    const aree = g.b ? (g.b.sottoaree || []) : [];
+    const pos = (a) => { const i = aree.findIndex(x => x.id === a.sottoareaId); return i < 0 ? -1 : i; };
+    return { ...g, items: ordina(g.items).sort((x, y) => pos(x) - pos(y)) };
+  });
+
+  // periodo del diagramma: dalle attività, senza andare troppo indietro nel passato
+  const conDate = attivita.filter(a => a.inizio);
+  let da = conDate.length ? conDate.map(a => a.inizio).sort()[0] : oggi;
+  let a2 = conDate.length ? conDate.map(fineDi).sort().slice(-1)[0] : oggi;
+  const limiteIndietro = toKey(addDays(new Date(), -14));
+  if (da < limiteIndietro) da = limiteIndietro;
+  let inizio = startOfWeek(fromKey(da));
+  let fine = addDays(startOfWeek(fromKey(a2 < toKey(inizio) ? toKey(inizio) : a2)), 6);
+  if (daysBetween(inizio, fine) < 27) fine = addDays(inizio, 27);
+  if (daysBetween(inizio, fine) > 365) fine = addDays(inizio, 365);
+  const tot = daysBetween(inizio, fine) + 1;
+  const pct = (k) => Math.max(0, Math.min(100, daysBetween(inizio, fromKey(k)) / tot * 100));
+  const settimane = []; for (let d = new Date(inizio); d <= fine; d = addDays(d, 7)) settimane.push(new Date(d));
+  const mesi = []; { let d = new Date(inizio); while (d <= fine) { const k = d.getFullYear() * 12 + d.getMonth(); const l = mesi[mesi.length - 1]; if (l && l.k === k) l.n++; else mesi.push({ k, n: 1, d: new Date(d) }); d = addDays(d, 1); } }
+  const iOggi = daysBetween(inizio, new Date());
+
+  const nomeDi = (id) => utMap[id] ? utMap[id].nome : "—";
+  const areaDi = (a) => { const b = a.buId && buMap[a.buId]; const sa = b && a.sottoareaId ? (b.sottoaree || []).find(x => x.id === a.sottoareaId) : null; return (b ? b.nome : "—") + (sa ? " › " + sa.nome : ""); };
+  const n = { tot: attivita.length, aperte: attivita.filter(a => statoDi(a) !== "fatto").length, rit: attivita.filter(inRitardo).length, appr: attivita.filter(a => faseDi(a) === "da_approvare").length, ok: attivita.filter(a => statoDi(a) === "fatto").length };
+  const adesso = new Date();
+
+  return (
+    <div id="print-root">
+      <div className="rp-head">
+        <div>
+          <div className="rp-ente">{ENTE}</div>
+          <h1>Report attività</h1>
+          <div className="rp-sub">Generato il {adesso.toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })} alle {adesso.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}{me && me.nome ? ` da ${me.nome}` : ""}</div>
+        </div>
+        <div className="rp-logo">P</div>
+      </div>
+      <div className="rp-filtri"><b>Filtri:</b> {filtriTesto || "nessuno"}</div>
+      <div className="rp-kpi">
+        <div><span>{n.tot}</span>attività</div>
+        <div><span>{n.aperte}</span>da fare</div>
+        <div className="late"><span>{n.rit}</span>in ritardo</div>
+        <div className="wait"><span>{n.appr}</span>da approvare</div>
+        <div className="ok"><span>{n.ok}</span>approvate</div>
+      </div>
+
+      {opz.gantt && conDate.length > 0 && (
+        <section className="rp-gantt">
+          <h2>Diagramma di Gantt <small>{fmtData(toKey(inizio))} {inizio.getFullYear()} – {fmtData(toKey(fine))} {fine.getFullYear()}</small></h2>
+          <div className="rg-head">
+            <div className="rg-lbl" />
+            <div className="rg-track">
+              <div className="rg-mesi">{mesi.map(m => <div key={m.k} style={{ width: (m.n / tot * 100) + "%" }}>{m.n / tot > 0.06 ? MESI[m.d.getMonth()] : ""}</div>)}</div>
+              <div className="rg-sett">{settimane.map(d => <div key={toKey(d)} style={{ left: (daysBetween(inizio, d) / tot * 100) + "%" }}>{d.getDate()}</div>)}</div>
+            </div>
+          </div>
+          {gruppi.map(g => (
+            <div key={g.k} className="rg-group">
+              <div className="rg-row rg-grow"><div className="rg-lbl" style={{ color: g.colore }}>{g.nome}</div><div className="rg-track" /></div>
+              {g.items.filter(a => a.inizio).map(a => {
+                const b = a.buId && buMap[a.buId]; const col = opz.per === "bu" ? g.colore : (b ? b.colore : "#8a8a82");
+                const l = pct(a.inizio < toKey(inizio) ? toKey(inizio) : a.inizio), r = Math.max(pct(toKey(addDays(fromKey(fineDi(a)), 1))), l + 0.6);
+                const [stl, stc] = statoReport(a);
+                return (
+                  <div key={a.id} className="rg-row">
+                    <div className="rg-lbl"><span className={"rg-st " + stc} />{a.titolo}</div>
+                    <div className="rg-track">
+                      {settimane.map(d => <i key={toKey(d)} className="rg-vl" style={{ left: (daysBetween(inizio, d) / tot * 100) + "%" }} />)}
+                      {iOggi >= 0 && iOggi < tot && <i className="rg-oggi" style={{ left: (iOggi / tot * 100) + "%" }} />}
+                      {a.milestone
+                        ? <span className="rg-ms" style={{ left: `calc(${l}% - 5px)`, background: col }} />
+                        : <span className={"rg-bar " + stc} style={{ left: l + "%", width: (r - l) + "%", background: hexA(col, 0.28), borderColor: col }}>
+                            <span style={{ width: (statoDi(a) === "fatto" ? 100 : (a.avanzamento || 0)) + "%", background: hexA(col, 0.7) }} />
+                          </span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+          <div className="rp-legenda"><span><i className="rg-st da_fare" />Da fare</span><span><i className="rg-st in_corso" />In corso</span><span><i className="rg-st wait" />Da approvare</span><span><i className="rg-st ok" />Approvata</span><span><i className="rg-st late" />In ritardo</span><span><i className="rg-oggi-l" />Oggi</span></div>
+        </section>
+      )}
+
+      <section className="rp-tab">
+        <h2>Elenco attività</h2>
+        <table>
+          <thead><tr><th style={{ width: "28%" }}>Attività</th><th>{opz.per === "bu" ? "Sottoarea" : "Business unit"}</th><th>Incaricati</th><th>Inizio</th><th>Scadenza</th><th>Stato</th><th>Priorità</th></tr></thead>
+          {gruppi.map(g => (
+            <tbody key={g.k}>
+              <tr className="rp-grp"><td colSpan={7} style={{ borderLeftColor: g.colore, color: g.colore }}>{g.nome} <small>· {g.items.length}</small></td></tr>
+              {g.items.map(a => {
+                const [stl, stc] = statoReport(a);
+                const b = a.buId && buMap[a.buId];
+                const sa = b && a.sottoareaId ? (b.sottoaree || []).find(x => x.id === a.sottoareaId) : null;
+                const subs = a.sottoattivita || [];
+                return (
+                  <React.Fragment key={a.id}>
+                    <tr className="rp-row">
+                      <td><b>{a.milestone ? "◆ " : ""}{a.titolo}</b>{a.luogo ? <div className="rp-dim">{a.luogo}</div> : null}{orarioDi(a) ? <div className="rp-dim">{orarioDi(a)}</div> : null}</td>
+                      <td>{opz.per === "bu" ? (sa ? sa.nome : "—") : areaDi(a)}</td>
+                      <td>{(a.responsabili || []).length ? (a.responsabili || []).map(id => <div key={id} className="rp-pers">{a.completamenti && a.completamenti[id] ? "● " : "○ "}{nomeDi(id)}{a.referente === id ? " ★" : ""}</div>) : <span className="rp-dim">—</span>}{a.referente && !(a.responsabili || []).includes(a.referente) ? <div className="rp-dim">resp.: {nomeDi(a.referente)} ★</div> : null}</td>
+                      <td>{fmtData(a.inizio)}</td>
+                      <td className={inRitardo(a) ? "late" : ""}>{fmtData(fineDi(a))}</td>
+                      <td><span className={"rp-badge " + stc}>{stl}</span>{a.approvato && a.approvato.nome ? <div className="rp-dim">da {a.approvato.nome}</div> : null}{statoDi(a) !== "fatto" && a.avanzamento ? <div className="rp-dim">{a.avanzamento}%</div> : null}</td>
+                      <td>{a.priorita ? PRIORITA[a.priorita] : "—"}</td>
+                    </tr>
+                    {opz.sotto && subs.length > 0 && (
+                      <tr className="rp-extra"><td colSpan={7}>
+                        <div className="rp-subs">{subs.map(x => <span key={x.id} className={x.done ? "done" : ""}>{x.done ? "☑" : "☐"} {x.text}{x.resp ? ` (${nomeDi(x.resp)})` : ""}{x.scadenza ? ` · ${fmtData(x.scadenza)}` : ""}</span>)}</div>
+                      </td></tr>
+                    )}
+                    {opz.note && String(a.note || "").trim() && <tr className="rp-extra"><td colSpan={7}><div className="rp-note">{a.note}</div></td></tr>}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          ))}
+        </table>
+        <div className="rp-legenda" style={{ marginTop: 6 }}><span>● ha segnato fatto</span><span>○ non ancora</span><span>★ responsabile dell'attività (approva)</span></div>
+      </section>
+    </div>
   );
 }
 
