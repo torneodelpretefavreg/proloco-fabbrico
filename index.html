@@ -244,7 +244,10 @@
   .pc-cell.oggi .pc-day{background:var(--brand);color:#fff}
   .pc-pill{display:flex;align-items:center;gap:5px;border:none;border-radius:5px;padding:2px 6px;font-size:11px;font-weight:600;text-align:left;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;border-left:3px solid}
   .pc-pill.cont{opacity:.7;font-weight:500}
-  .pc-pill.done{text-decoration:line-through;opacity:.5}
+  .pc-pill.done{opacity:.7;color:#4a4a4a!important}
+  .pc-card.svolto{opacity:.8}
+  .pc-card.svolto .t{color:#4a4a4a}
+  .pc-ok{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--ok);color:#fff;margin-right:5px;vertical-align:-2px}
   .pc-more{font-size:10.5px;color:var(--ink-3);padding-left:4px}
   .pc-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
   .pc-wcol{border-left:1px solid var(--rule);min-height:360px;padding:8px 6px;display:flex;flex-direction:column;gap:6px;cursor:copy}
@@ -643,7 +646,7 @@ const NOTIFY_URL = "https://proloco-notifiche.davide-lodi69.workers.dev/";
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.07-6";
+const APP_VERSION = "2026.11.08-1";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -1114,6 +1117,8 @@ function Shell({ uid }) {
   const [fPers, setFPers] = useState(() => { try { const v = JSON.parse(lsGet("plf-fpers") || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } });
   const [fStato, setFStato] = useState(() => lsGet("plf-fstato") || "aperte");
   const [cerca, setCerca] = useState("");
+  const [calSvolti, setCalSvoltiS] = useState(() => lsGet("plf-cal-svolti") !== "0");
+  const setCalSvolti = (v) => { setCalSvoltiS(v); lsSet("plf-cal-svolti", v ? "1" : "0"); };
   const [fPrio, setFPrio] = useState(() => { try { const v = JSON.parse(lsGet("plf-fprio") || "[]"); return Array.isArray(v) ? v : []; } catch (e) { return []; } });
   useEffect(() => { lsSet("plf-fprio", JSON.stringify(fPrio)); }, [fPrio]);
   useEffect(() => { lsSet("plf-fpers", JSON.stringify(fPers)); lsSet("plf-fstato", fStato); }, [fPers, fStato]);
@@ -1137,7 +1142,8 @@ function Shell({ uid }) {
       if (fPers.length && !fPers.some(id => id === "__none" ? !r.length
         : (r.includes(id) || a.referente === id || (a.sottoattivita || []).some(x => x.resp === id)))) return false;
       const st = statoDi(a);
-      if (fStato === "aperte" && st === "fatto") return false;
+      // nel calendario gli appuntamenti svolti restano visibili (salvo scelta diversa)
+      if (fStato === "aperte" && st === "fatto" && !(vista === "calendario" && calSvolti)) return false;
       if (fStato === "fatte" && st !== "fatto") return false;
       if (fStato === "da_approvare" && faseDi(a) !== "da_approvare") return false;
       if (fStato === "ritardo" && !inRitardo(a)) return false;
@@ -1145,7 +1151,7 @@ function Shell({ uid }) {
       if (vista !== "priorita" && fPrio.length && !fPrio.includes(a.priorita || "none")) return false;
       return true;
     });
-  }, [attivita, fBu, fPers, fStato, cerca, fPrio, vista, buMap, uid]);
+  }, [attivita, fBu, fPers, fStato, cerca, fPrio, vista, calSvolti, buMap, uid]);
 
   const firma = () => ({ modificatoDa: me.nome, modificatoDaUid: uid, modificatoIl: ora() });
   const salvaAttivita = async (d) => {
@@ -1249,7 +1255,7 @@ function Shell({ uid }) {
             cerca.trim() ? `Ricerca: "${cerca.trim()}"` : "",
           ].filter(Boolean).join(" · ")}
           onOpen={apri} onNew={nuova} onPatch={patchAtt} setFStato={setFStato} onSeedBu={() => setManage("bu")} />}
-        {vista === "calendario" && <CalendarView attivita={filtrate} buMap={buMap} utMap={utMap} onOpen={apri} onNew={nuova} />}
+        {vista === "calendario" && <CalendarView attivita={filtrate} buMap={buMap} utMap={utMap} onOpen={apri} onNew={nuova} calSvolti={calSvolti} setCalSvolti={setCalSvolti} fStato={fStato} />}
         {vista === "planner" && <PlannerView attivita={filtrate} bus={bus} buMap={buMap} utMap={utMap} uid={uid} isAdmin={isAdmin} fStato={fStato} setFStato={setFStato}
           onOpen={apri} onPatch={patchAtt} onToggle={toggleCompleto} onApprova={approva} puoApprovare={puoApprovare} onNew={nuova} />}
         {vista === "priorita" && <PriorityView attivita={filtrate} buMap={buMap} utMap={utMap} mobile={mobile} onOpen={apri} onPatch={patchAtt} onNew={nuova} />}
@@ -1940,7 +1946,7 @@ function Report({ attivita, bus, buMap, utMap, me, filtriTesto, opz }) {
 /* =====================================================================
    CALENDARIO
    ===================================================================== */
-function CalendarView({ attivita: tutteFiltrate, buMap, utMap, onOpen, onNew }) {
+function CalendarView({ attivita: tutteFiltrate, buMap, utMap, onOpen, onNew, calSvolti, setCalSvolti, fStato }) {
   const attivita = useMemo(() => tutteFiltrate.filter(inCalendario), [tutteFiltrate]);
   const nascoste = tutteFiltrate.length - attivita.length;
   const mobile = useMedia(MOBILE_Q);
@@ -1985,8 +1991,8 @@ function CalendarView({ attivita: tutteFiltrate, buMap, utMap, onOpen, onNew }) 
   const card = (a, giorno) => {
     const c = colore(a), st = statoDi(a);
     return (
-      <button key={a.id + giorno} className="pc-card" style={{ background: hexA(c, 0.12), borderLeftColor: c, opacity: st === "fatto" ? 0.6 : 1 }} onClick={(e) => { e.stopPropagation(); onOpen(a); }}>
-        <span className="t" style={{ textDecoration: st === "fatto" ? "line-through" : "none" }}>{a.milestone ? "◆ " : ""}{a.titolo}</span>
+      <button key={a.id + giorno} className={"pc-card" + (st === "fatto" ? " svolto" : "")} style={{ background: st === "fatto" ? "#f4f3ef" : hexA(c, 0.12), borderLeftColor: c }} onClick={(e) => { e.stopPropagation(); onOpen(a); }}>
+        <span className="t">{st === "fatto" && <span className="pc-ok"><Icon name="check" size={10} /></span>}{a.milestone ? "◆ " : ""}{a.titolo}</span>
         <span className="s">
           {orarioDi(a) && <span>{orarioDi(a)}</span>}
           {a.inizio !== fineDi(a) && <span>{fmtPeriodo(a)}</span>}
@@ -2014,7 +2020,7 @@ function CalendarView({ attivita: tutteFiltrate, buMap, utMap, onOpen, onNew }) 
                 <span className="pc-day">{d.getDate()}</span>
                 {l.slice(0, max).map(a => {
                   const c = colore(a), sg = segno(a, k), cont = sg === "↳ ";
-                  return <button key={a.id} className={"pc-pill" + (cont ? " cont" : "") + (statoDi(a) === "fatto" ? " done" : "")} style={{ background: hexA(c, 0.14), borderLeftColor: c, color: "#1a1a1a" }} title={`${a.titolo} · ${fmtPeriodo(a)}${orarioDi(a) ? " · " + orarioDi(a) : ""}${sg === "⚑ " ? " · scadenza" : sg === "▸ " ? " · inizio" : ""}`} onClick={e => { e.stopPropagation(); onOpen(a); }}>{sg}{a.ora && !sg ? a.ora + " " : ""}{a.titolo}</button>;
+                  return <button key={a.id} className={"pc-pill" + (cont ? " cont" : "") + (statoDi(a) === "fatto" ? " done" : "")} style={{ background: statoDi(a) === "fatto" ? "#f0eee8" : hexA(c, 0.14), borderLeftColor: c, color: "#1a1a1a" }} title={`${a.titolo} · ${fmtPeriodo(a)}${orarioDi(a) ? " · " + orarioDi(a) : ""}${sg === "⚑ " ? " · scadenza" : sg === "▸ " ? " · inizio" : ""}`} onClick={e => { e.stopPropagation(); onOpen(a); }}>{statoDi(a) === "fatto" ? "✓ " : ""}{sg}{a.ora && !sg ? a.ora + " " : ""}{a.titolo}</button>;
                 })}
                 {l.length > max && <span className="pc-more">+{l.length - max}</span>}
               </div>
@@ -2068,6 +2074,7 @@ function CalendarView({ attivita: tutteFiltrate, buMap, utMap, onOpen, onNew }) 
         <div className="pl-seg" style={{ marginLeft: "auto" }}>
           {[["mese", "Mese"], ["settimana", "Settimana"], ["elenco", "Elenco"]].map(([k, l]) => <button key={k} className={modo === k ? "on" : ""} onClick={() => setModo(k)}>{l}</button>)}
         </div>
+        {fStato === "aperte" && <button className={"pl-chip" + (calSvolti ? " on" : "")} onClick={() => setCalSvolti(!calSvolti)} title="Mostra anche gli appuntamenti già svolti e approvati"><Icon name="check" size={12} />Mostra anche gli svolti</button>}
       </div>
       <div onTouchStart={e => { swRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }}
         onTouchEnd={e => { const s0 = swRef.current; swRef.current = null; if (!s0) return; const dx = e.changedTouches[0].clientX - s0.x, dy = e.changedTouches[0].clientY - s0.y; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) sposta(dx < 0 ? 1 : -1); }}>{corpo}</div>
