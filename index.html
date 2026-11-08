@@ -646,7 +646,7 @@ const NOTIFY_URL = "https://proloco-notifiche.davide-lodi69.workers.dev/";
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.08-1";
+const APP_VERSION = "2026.11.09-1";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -1214,7 +1214,7 @@ function Shell({ uid }) {
   const nuova = (preset) => {
     const giorno = (preset && preset.inizio) || oggiKey();
     const buDef = (preset && "buId" in preset) ? preset.buId : (fBu.length === 1 && fBu[0] !== "__none" ? fBu[0] : (bus[0] ? bus[0].id : null));
-    setEditing({ id: null, titolo: "", buId: buDef, responsabili: [uid], inizio: giorno, fine: (preset && preset.fine) || toKey(addDays(fromKey(giorno), 6)), ora: "", milestone: false, luogo: "", stato: "da_fare", priorita: null, avanzamento: 0, note: "", sottoattivita: [], notifica: true, ...(preset || {}) });
+    setEditing({ id: null, titolo: "", buId: buDef, responsabili: [uid], inizio: giorno, fine: (preset && preset.fine) || giorno, ora: "", milestone: false, luogo: "", stato: "da_fare", priorita: null, avanzamento: 0, note: "", sottoattivita: [], notifica: true, ...(preset || {}) });
   };
   const apri = (a) => setEditing(pulisci({ ...a, fine: fineDi(a), sottoattivita: a.sottoattivita || [], responsabili: a.responsabili || [] }));
 
@@ -2565,10 +2565,23 @@ function ActivityModal({ draft, setDraft, bus, utenti, utMap, uid, isAdmin, live
   const subs = draft.sottoattivita || [];
   const subFatte = subs.filter(s => s.done).length;
   const togResp = (id) => set({ responsabili: draft.responsabili.includes(id) ? draft.responsabili.filter(x => x !== id) : [...draft.responsabili, id] });
+  // La fine segue l'inizio (stesso giorno) finché non la cambi a mano;
+  // per le attività già salvate su più giorni la durata viene mantenuta.
+  const [fineSegue, setFineSegue] = useState(() => !draft.id || (draft.fine || draft.inizio) === draft.inizio);
   const cambiaInizio = (v) => {
     if (!v) return;
+    if (fineSegue || draft.milestone) { set({ inizio: v, fine: v }); return; }
     const dur = Math.max(0, daysBetween(fromKey(draft.inizio), fromKey(draft.fine || draft.inizio)));
     set({ inizio: v, fine: toKey(addDays(fromKey(v), dur)) });
+  };
+  const cambiaFine = (v) => { if (!v) return; setFineSegue(v === draft.inizio); set({ fine: v < draft.inizio ? draft.inizio : v }); };
+  // Ora di fine: un'ora dopo l'inizio, finché non la cambi a mano
+  const piuUnOra = (h) => { if (!h) return ""; const [H, M] = h.split(":").map(Number); return H >= 23 ? "23:59" : String(H + 1).padStart(2, "0") + ":" + String(M || 0).padStart(2, "0"); };
+  const cambiaOra = (v) => {
+    if (!v) { set({ ora: "" }); return; }
+    const stessoGiorno = draft.milestone || (draft.fine || draft.inizio) === draft.inizio;
+    const segue = !draft.oraFine || draft.oraFine === piuUnOra(draft.ora) || (stessoGiorno && draft.oraFine <= v);
+    set(segue ? { ora: v, oraFine: piuUnOra(v) } : { ora: v });
   };
   const addSub = () => { const t = nuovaSub.trim(); if (!t) return; set({ sottoattivita: [...subs, { id: nid(), text: t, done: false }] }); setNuovaSub(""); };
   const valido = draft.titolo.trim() && draft.inizio;
@@ -2610,8 +2623,8 @@ function ActivityModal({ draft, setDraft, bus, utenti, utMap, uid, isAdmin, live
 
           <div className="pl-quando">
             <div><label className="pl-lbl">{draft.milestone ? "Data" : "Inizio"}</label><input className="pl-input" type="date" value={draft.inizio} onChange={e => cambiaInizio(e.target.value)} /></div>
-            <div><label className="pl-lbl">Ora inizio</label><input className="pl-input" type="time" value={draft.ora || ""} onChange={e => set({ ora: e.target.value })} /></div>
-            {!draft.milestone && <div><label className="pl-lbl">Fine / scadenza</label><input className="pl-input" type="date" value={draft.fine} min={draft.inizio} onChange={e => set({ fine: e.target.value })} /></div>}
+            <div><label className="pl-lbl">Ora inizio</label><input className="pl-input" type="time" value={draft.ora || ""} onChange={e => cambiaOra(e.target.value)} /></div>
+            {!draft.milestone && <div><label className="pl-lbl">Fine / scadenza</label><input className="pl-input" type="date" value={draft.fine} min={draft.inizio} onChange={e => cambiaFine(e.target.value)} /></div>}
             <div><label className="pl-lbl">Ora fine</label><input className="pl-input" type="time" value={draft.oraFine || ""} onChange={e => set({ oraFine: e.target.value })} /></div>
           </div>
           {(draft.ora || draft.oraFine) && <div className="pl-hint" style={{ marginTop: 6, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
