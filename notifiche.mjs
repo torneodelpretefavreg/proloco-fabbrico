@@ -4,6 +4,7 @@
 //
 // Cosa manda:
 //  - "Nuova attività per te" quando qualcuno viene aggiunto come incaricato
+//  - "Sotto-attività per te" quando qualcuno diventa responsabile di una sotto-attività (riserva: di solito lo fa subito Cloudflare)
 //  - "Da approvare" all'amministratore (e al responsabile) quando tutti hanno chiuso il loro cerchio
 //  - ogni mattina dalle 8: scadenze vicine e riepilogo (giornaliero o del lunedì), secondo le preferenze di ognuno
 //  - agli amministratori: nuove attività create da altri, ogni "fatto" segnato, approvazioni date da altri
@@ -53,8 +54,9 @@ async function main() {
   tokens.forEach(t => { if (t.uid && t.token) (tokPer[t.uid] = tokPer[t.uid] || []).push(t); });
   const admins = attivi.filter(u => u.ruolo === "admin").map(u => u.id);
 
-  const coda = {}; // uid -> { assegnate: [], altre: [], novita: [] }
-  const metti = (uid, tipo, msg) => { if (!utMap[uid] || utMap[uid].attivo === false) return; (coda[uid] = coda[uid] || { assegnate: [], altre: [], novita: [] })[tipo].push(msg); };
+  const coda = {}; // uid -> { assegnate: [], sotto: [], altre: [], novita: [] }
+  const metti = (uid, tipo, msg) => { if (!utMap[uid] || utMap[uid].attivo === false) return; (coda[uid] = coda[uid] || { assegnate: [], sotto: [], altre: [], novita: [] })[tipo].push(msg); };
+  const chiaveSub = (s) => s.id + ":" + s.resp;
   const nome = (uid, fallback) => (utMap[uid] && utMap[uid].nome) || fallback || "Qualcuno";
   const scritture = [];
 
@@ -71,6 +73,19 @@ async function main() {
       for (const u of nuovi) if (u !== chi && prefDi(u).assegnazioni !== false) metti(u, "assegnate", a);
     }
     scritture.push(a.ref.update({ notificati: [...new Set([...gia, ...resp])] }));
+  }
+
+  // 1b) nuovi responsabili di sotto-attività
+  // La prima volta che un'attività viene vista qui si segna solo il punto di partenza, senza avvisare.
+  for (const a of attivita) {
+    const conResp = (a.sottoattivita || []).filter(s => s && s.id && s.resp);
+    const chiavi = conResp.map(chiaveSub);
+    if (!Array.isArray(a.notificatiSub)) { scritture.push(a.ref.update({ notificatiSub: chiavi })); continue; }
+    const nuove = conResp.filter(s => !a.notificatiSub.includes(chiaveSub(s)));
+    if (!nuove.length) continue;
+    const chi = a.modificatoDaUid || a.creatoDaUid;
+    if (!fatta(a)) for (const s of nuove) if (!s.done && s.resp !== chi && prefDi(s.resp).assegnazioni !== false) metti(s.resp, "sotto", { a, s });
+    scritture.push(a.ref.update({ notificatiSub: [...new Set([...a.notificatiSub, ...chiavi])] }));
   }
 
   // 2) attività da approvare
@@ -112,6 +127,9 @@ async function main() {
     for (const u of attivi) {
       const p = prefDi(u.id);
       const mie = attivita.filter(a => (a.responsabili || []).includes(u.id) && !fatta(a) && !(a.completamenti && a.completamenti[u.id]));
+      // sotto-attività affidate a lui, ancora aperte, di attività non approvate
+      const subMie = [];
+      attivita.forEach(a => { if (!fatta(a)) (a.sottoattivita || []).forEach(s => { if (s && s.resp === u.id && !s.done) subMie.push({ a, s, fine: s.scadenza || fineDi(a) }); }); });
       if (p.scadenze !== false) {
         for (const a of mie) {
           const g = giorniTra(oggi, fineDi(a));
@@ -121,6 +139,16 @@ async function main() {
             metti(u.id, "altre", { title: g < 0 ? "Attività in ritardo" : "Scadenza vicina", body: `${a.titolo} ${quando}`, tag: "scad-" + a.id });
           }
         }
+        for (const x of subMie) {
+          // senza una data propria la sotto-attività scade con l'attività: se è già tra le sue, l'avviso c'è già
+          if (!x.s.scadenza && mie.includes(x.a)) continue;
+          const g = giorniTra(oggi, x.fine);
+          const anticipo = Number(p.giorniPrima);
+          if (g === anticipo || (g === 0 && anticipo !== 0) || g === -1) {
+            const quando = g < 0 ? "è scaduta ieri" : g === 0 ? "scade oggi" : g === 1 ? "scade domani" : `scade tra ${g} giorni (${fmt(x.fine)})`;
+            metti(u.id, "altre", { title: g < 0 ? "Sotto-attività in ritardo" : "Scadenza vicina", body: `${x.s.text} (${x.a.titolo}) ${quando}`, tag: "scad-sub-" + x.a.id + "-" + x.s.id });
+          }
+        }
       }
       const vuoleRiepilogo = p.riepilogo === "giornaliero" || (p.riepilogo === "settimanale" && giorno === "Mon");
       if (vuoleRiepilogo) {
@@ -128,9 +156,13 @@ async function main() {
         const daApprovare = admins.includes(u.id)
           ? attivita.filter(a => !fatta(a) && (a.responsabili || []).length && a.responsabili.every(id => a.completamenti && a.completamenti[id]))
           : [];
-        if (mie.length || daApprovare.length) {
+        if (mie.length || daApprovare.length || subMie.length) {
           const parti = [];
           if (mie.length) parti.push(`${mie.length} da fare${ritardo.length ? `, ${ritardo.length} in ritardo` : ""}: ${elenco(mie.map(a => a.titolo))}`);
+          if (subMie.length) {
+            const subRit = subMie.filter(x => x.fine < oggi).length;
+            parti.push(`${subMie.length} sotto-attività${subRit ? ` (${subRit} in ritardo)` : ""}: ${elenco(subMie.map(x => x.s.text))}`);
+          }
           if (daApprovare.length) parti.push(`${daApprovare.length} da approvare`);
           metti(u.id, "altre", { title: p.riepilogo === "giornaliero" ? "Il tuo programma di oggi" : "La tua settimana", body: parti.join(" · "), tag: "riepilogo" });
         }
@@ -148,6 +180,12 @@ async function main() {
       msgs.unshift({ title: "Nuova attività per te", body: `${a.titolo} · entro il ${fmt(fineDi(a))}`, tag: "ass-" + a.id });
     } else if (q.assegnate.length > 1) {
       msgs.unshift({ title: `${q.assegnate.length} nuove attività per te`, body: elenco(q.assegnate.map(a => a.titolo), 4), tag: "ass-multi" });
+    }
+    if (q.sotto.length === 1) {
+      const { a, s } = q.sotto[0];
+      msgs.unshift({ title: "Sotto-attività per te", body: `${s.text} · in ${a.titolo}${s.scadenza ? ` · entro il ${fmt(s.scadenza)}` : ""}`, tag: "sub-" + a.id + "-" + s.id });
+    } else if (q.sotto.length > 1) {
+      msgs.unshift({ title: `${q.sotto.length} sotto-attività per te`, body: elenco(q.sotto.map(x => x.s.text), 4), tag: "sub-multi" });
     }
     if (q.novita.length === 1) msgs.push({ title: "Novità dal team", body: q.novita[0], tag: "novita" });
     else if (q.novita.length > 1) msgs.push({ title: `${q.novita.length} novità dal team`, body: elenco(q.novita, 3).replace(/, /g, " · "), tag: "novita" });

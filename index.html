@@ -282,6 +282,9 @@
   .pp-item .t{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pp-item .d{font-size:11.5px;color:var(--ink-3);white-space:nowrap}
   .pp-item .d.late{color:var(--danger);font-weight:600}
+  .pp-subh{padding:8px 14px 4px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);border-top:1px solid #f3f1ec}
+  .pp-item.sub .t small{color:var(--ink-3);font-size:11.5px;margin-left:5px}
+  .pp-item.sub.done .t{text-decoration:line-through;color:var(--ink-3)}
   .pp-load{display:flex;gap:2px;padding:10px 14px 12px;align-items:flex-end;height:58px;border-bottom:1px solid #f3f1ec}
   .pp-load .b{flex:1;background:var(--brand-soft-2);border-radius:3px 3px 0 0;position:relative;min-height:2px}
   .pp-load .b.cur{background:var(--brand)}
@@ -646,7 +649,7 @@ const NOTIFY_URL = "https://proloco-notifiche.davide-lodi69.workers.dev/";
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.09-1";
+const APP_VERSION = "2026.11.09-2";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -1154,6 +1157,10 @@ function Shell({ uid }) {
   }, [attivita, fBu, fPers, fStato, cerca, fPrio, vista, calSvolti, buMap, uid]);
 
   const firma = () => ({ modificatoDa: me.nome, modificatoDaUid: uid, modificatoIl: ora() });
+  const subNuove = (prima, dopo) => {
+    const vecchie = new Set((prima || []).filter(s => s.resp).map(s => s.id + ":" + s.resp));
+    return (dopo || []).filter(s => s.resp && !s.done && !vecchie.has(s.id + ":" + s.resp)).map(s => s.id);
+  };
   const salvaAttivita = async (d) => {
     const live = d.id ? attivita.find(x => x.id === d.id) : null;
     const st = live && statoDi(live) === "fatto" ? "fatto" : (d.stato || "da_fare");
@@ -1170,10 +1177,11 @@ function Shell({ uid }) {
       if (d.id) {
         await store.update("attivita", d.id, p);
         const nuovi = p.responsabili.filter(x => !((live && live.responsabili) || []).includes(x));
-        if (nuovi.length) avvisaSubito("assegnazione", d.id, { nuovi });
+        const nuoviSub = subNuove(live && live.sottoattivita, p.sottoattivita);
+        if (nuovi.length || nuoviSub.length) avvisaSubito("assegnazione", d.id, { nuovi, nuoviSub });
       } else {
-        const nuovoId = await store.add("attivita", { ...p, creatoDa: me.nome, creatoDaUid: uid, creatoIl: ora() });
-        avvisaSubito("creata", nuovoId, { nuovi: p.responsabili });
+        const nuovoId = await store.add("attivita", { ...p, notificatiSub: [], creatoDa: me.nome, creatoDaUid: uid, creatoIl: ora() });
+        avvisaSubito("creata", nuovoId, { nuovi: p.responsabili, nuoviSub: subNuove([], p.sottoattivita) });
       }
       setEditing(null); avviso(d.id ? "Attività aggiornata" : "Attività creata");
     } catch (e) { avviso("Errore: " + (e.code || e.message), "error"); }
@@ -2447,8 +2455,30 @@ function PeopleView({ attivita, utenti, uid, isAdmin, buMap, utMap, promemoria, 
       </div>
     );
   };
+  // sotto-attività affidate a una persona (escluse quelle di attività già approvate, salvo "mostra completate")
+  const subDi = (id) => {
+    const out = [];
+    attivita.forEach(a => (a.sottoattivita || []).forEach(s => { if (s.resp === id && (mostraFatte || (!s.done && statoDi(a) !== "fatto"))) out.push({ a, s }); }));
+    const dataSub = (x) => x.s.scadenza || fineDi(x.a);
+    return out.sort((x, y) => (x.s.done - y.s.done) || dataSub(x).localeCompare(dataSub(y)));
+  };
+  const toggleSubDi = (a, sid) => onPatch(a.id, { sottoattivita: (a.sottoattivita || []).map(x => x.id === sid ? { ...x, done: !x.done } : x) });
+  const rigaSub = ({ a, s }) => {
+    const b = a.buId && buMap[a.buId], data = s.scadenza || fineDi(a), tardi = !s.done && data < oggiKey();
+    return (
+      <div key={a.id + "-" + s.id} className={"pp-item sub" + (s.done ? " done" : "")} onClick={() => onOpen(a)}>
+        <button className={"pl-check" + (s.done ? " on" : "")} style={{ width: 17, height: 17, flexShrink: 0 }} title={s.done ? "Segna da fare" : "Segna fatta"}
+          onClick={e => { e.stopPropagation(); toggleSubDi(a, s.id); }}>{s.done && <Icon name="check" size={10} style={{ color: "#fff" }} />}</button>
+        <span className="dot" style={{ background: b ? b.colore : "#8a8a82" }} />
+        <span className="t">{s.text}<small>in {a.titolo}</small></span>
+        <span className={"d" + (tardi ? " late" : "")}>{(tardi ? "scad. " : s.scadenza ? "entro " : "") + fmtData(data)}</span>
+      </div>
+    );
+  };
   const blocco = (lista, titolo, isMe, u) => {
     const aperte = lista.filter(a => statoDi(a) !== "fatto");
+    const subs = u ? subDi(u.id) : [];
+    const subAperte = subs.filter(x => !x.s.done).length;
     const late = aperte.filter(inRitardo).length, presto = aperte.filter(a => !inRitardo(a) && fineDi(a) <= tra7).length;
     const visibili = (mostraFatte ? lista : aperte).slice().sort((x, y) => (inRitardo(y) - inRitardo(x)) || fineDi(x).localeCompare(fineDi(y)));
     const carico = settimane.map(s => { const sk = toKey(s), ek = toKey(addDays(s, 6)); return aperte.filter(a => a.inizio <= ek && fineDi(a) >= sk).length; });
@@ -2465,6 +2495,7 @@ function PeopleView({ attivita, utenti, uid, isAdmin, buMap, utMap, promemoria, 
             {late > 0 && <span className="pl-pill st-ritardo">{late} in ritardo</span>}
             {u && aperte.some(a => a.completamenti && a.completamenti[u.id]) && <span className="pl-pill st-in_corso">{aperte.filter(a => a.completamenti && a.completamenti[u.id]).length} segnate fatte</span>}
             {presto > 0 && <span className="pl-pill st-in_corso">{presto} entro 7 gg</span>}
+            {subAperte > 0 && <span className="pl-pill st-da_fare">{subAperte} sotto-attività</span>}
           </div>
         </div>
         {u && aperte.length > 0 && <>
@@ -2473,7 +2504,11 @@ function PeopleView({ attivita, utenti, uid, isAdmin, buMap, utMap, promemoria, 
           </div>
           <div className="pp-loadlbl"><span>questa settimana</span><span>fra 8 settimane</span></div>
         </>}
-        {visibili.length ? visibili.map(a => riga(a, u)) : <div className="pl-empty" style={{ padding: 18 }}>Niente da fare 🎉</div>}
+        {visibili.length ? visibili.map(a => riga(a, u)) : !subs.length && <div className="pl-empty" style={{ padding: 18 }}>Niente da fare 🎉</div>}
+        {subs.length > 0 && <>
+          <div className="pp-subh">Sotto-attività affidate</div>
+          {subs.map(rigaSub)}
+        </>}
       </div>
     );
   };
@@ -2911,7 +2946,13 @@ function UtentiTab({ utenti, uid, me, avviso, attivita, promemoria }) {
       await store.set("accessi", user, { email, uid: nuovoId });
       await store.update("utenti", u.id, { attivo: false, sostituitoDa: nuovoId });
       const lavori = [];
-      attivita.filter(a => (a.responsabili || []).includes(u.id)).forEach(a => lavori.push(store.update("attivita", a.id, { responsabili: a.responsabili.map(x => x === u.id ? nuovoId : x) })));
+      attivita.filter(a => (a.responsabili || []).includes(u.id) || a.referente === u.id || (a.sottoattivita || []).some(s => s.resp === u.id)).forEach(a => {
+        const c = { responsabili: (a.responsabili || []).map(x => x === u.id ? nuovoId : x) };
+        if (a.referente === u.id) c.referente = nuovoId;
+        if ((a.sottoattivita || []).some(s => s.resp === u.id)) c.sottoattivita = a.sottoattivita.map(s => s.resp === u.id ? { ...s, resp: nuovoId } : s);
+        if (a.completamenti && a.completamenti[u.id]) { const m = { ...a.completamenti }; m[nuovoId] = m[u.id]; delete m[u.id]; c.completamenti = m; }
+        lavori.push(store.update("attivita", a.id, c));
+      });
       (promemoria || []).filter(p => p.assegnatoA === u.id || p.creatoDa === u.id).forEach(p => lavori.push(store.update("promemoria", p.id, { assegnatoA: p.assegnatoA === u.id ? nuovoId : p.assegnatoA, creatoDa: p.creatoDa === u.id ? nuovoId : p.creatoDa })));
       await Promise.all(lavori);
       setCreato({ titolo: "Nuova password pronta", nome: u.nome, user, pw }); setNuovaPw(null);

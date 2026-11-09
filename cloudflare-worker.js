@@ -65,6 +65,15 @@ async function gestisci(env, uid, body) {
     const nuovi = [...new Set((body.nuovi || []).filter(x => resp.includes(x) && x !== uid && !gia.includes(x)))];
     nuovi.forEach(u => { if (prefDi(u).assegnazioni !== false) msgs.push({ a: u, title: "Nuova attività per te", body: `${att.titolo} · entro il ${fmt(fine)}`, tag: "ass-" + body.id }); });
     patch.notificati = [...new Set([...gia, ...resp])];
+    // sotto-attività: avviso chi ne è appena diventato responsabile
+    const subs = (att.sottoattivita || []).filter(s => s && s.id && s.resp);
+    const chiave = (s) => s.id + ":" + s.resp;
+    const giaSub = Array.isArray(att.notificatiSub) ? att.notificatiSub : [];
+    const richieste = new Set(body.nuoviSub || []);
+    const approvata = !!(att.approvato && att.approvato.il) || att.stato === "fatto";
+    if (!approvata) subs.filter(s => richieste.has(s.id) && !s.done && s.resp !== uid && !giaSub.includes(chiave(s)) && !nuovi.includes(s.resp))
+      .forEach(s => { if (prefDi(s.resp).assegnazioni !== false) msgs.push({ a: s.resp, title: "Sotto-attività per te", body: `${s.text} · in ${att.titolo}${s.scadenza ? " · entro il " + fmt(s.scadenza) : ""}`, tag: "sub-" + body.id + "-" + s.id }); });
+    patch.notificatiSub = [...new Set([...giaSub, ...subs.map(chiave)])];
     if (ev === "creata") admins.filter(a => a !== uid && prefDi(a).adminAttivita !== false)
       .forEach(a => msgs.push({ a, title: "Novità dal team", body: `${io.nome} ha creato: ${att.titolo}`, tag: "nov-" + body.id }));
   }
