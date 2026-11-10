@@ -61,6 +61,7 @@
   .lock p{color:var(--muted-text);font-size:.94rem;margin-top:10px}
   .lock form{margin-top:26px;display:flex;flex-direction:column;gap:12px}
   .lock-err{color:var(--danger);font-size:.86rem;min-height:1.1em;line-height:1.4}
+  .bio-btn{width:100%;justify-content:center;gap:8px;margin-top:10px;display:inline-flex;align-items:center}
 
   input,textarea,select{
     width:100%;background:var(--bg-2);border:1px solid var(--line);
@@ -420,6 +421,10 @@
         <div class="lock-err" id="vkErr"></div>
         <button class="btn primary" type="submit" id="vkBtn">Apri</button>
       </form>
+      <button class="btn bio-btn" type="button" id="btnBioOpen" style="display:none">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 3H5a2 2 0 0 0-2 2v2M17 3h2a2 2 0 0 1 2 2v2M7 21H5a2 2 0 0 1-2-2v-2M17 21h2a2 2 0 0 0 2-2v-2"/><path d="M9 9v1.5M15 9v1.5M12 9v4.5h-1M9.5 16.5c1.4 1 3.6 1 5 0"/></svg>
+        <span id="bioOpenLabel">Apri con Face ID</span>
+      </button>
     </div>
     <div class="toolbar" id="vaultTools">
       <div class="search">
@@ -429,6 +434,7 @@
                data-lpignore="true" data-1p-ignore data-form-type="other">
       </div>
       <div class="count" id="vcount"></div>
+      <button class="btn" id="btnBioToggle" style="display:none"></button>
       <button class="btn primary" id="btnAddEntry">+ Aggiungi password</button>
     </div>
     <div class="vault-list" id="vaultList"></div>
@@ -793,6 +799,137 @@ $("btnLock").addEventListener("click", async function(){
 /* ─────────── archivio password: chiave condivisa del direttivo ─────────── */
 function vaultIsNew(){ return !vaultRec || !vaultRec.data; }
 
+/* ─────────── Face ID / impronta per l'archivio ───────────
+   La chiave dell'archivio resta su questo dispositivo, cifrata.
+   Modo "prf": la cifratura nasce dal Face ID stesso (WebAuthn PRF), quindi
+   senza il volto/l'impronta non si apre nemmeno leggendo la memoria del browser.
+   Modo "local" (dispositivi senza PRF): cifrata con una chiave non esportabile
+   del browser, e il sistema deve confermare Face ID/impronta prima di usarla. */
+const BIO_KEY = () => "proloco_bio_v1_" + (me ? me.uid : "x");
+const bioRec = () => readJSON(BIO_KEY(), null);
+const bioName = /iPhone|iPad|Macintosh/.test(navigator.userAgent) ? "Face ID" : "impronta";
+let bioAvail = false;
+(async function(){
+  try{ bioAvail = !!(window.PublicKeyCredential && SUB && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); }
+  catch(e){ bioAvail = false; }
+  if(typeof renderVault === "function" && me) renderVault();
+})();
+
+function idb(mode, fn){
+  return new Promise(function(res, rej){
+    const o = indexedDB.open("proloco_hub", 1);
+    o.onupgradeneeded = function(){ o.result.createObjectStore("chiavi"); };
+    o.onerror = function(){ rej(o.error); };
+    o.onsuccess = function(){
+      const tx = o.result.transaction("chiavi", mode), st = tx.objectStore("chiavi");
+      const r = fn(st);
+      tx.oncomplete = function(){ res(r && "result" in r ? r.result : undefined); };
+      tx.onerror = function(){ rej(tx.error); };
+    };
+  });
+}
+async function prfKey(bytes){
+  const base = await SUB.importKey("raw", bytes, "HKDF", false, ["deriveKey"]);
+  return SUB.deriveKey({name:"HKDF", hash:"SHA-256", salt:ENC.encode("proloco-hub-vault"), info:new Uint8Array(0)},
+    base, {name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+}
+async function bioAssert(rec){
+  const opts = { challenge:rand(32), userVerification:"required", timeout:60000,
+    allowCredentials:[{type:"public-key", id:b64d(rec.id), transports:["internal","hybrid"]}] };
+  if(rec.mode === "prf") opts.extensions = { prf:{ eval:{ first:b64d(rec.prfSalt) } } };
+  const a = await navigator.credentials.get({publicKey:opts});
+  if((new Uint8Array(a.response.authenticatorData)[32] & 4) === 0) throw new Error("uv");
+  return a;
+}
+
+async function bioEnable(){
+  if(!masterPw) return;
+  const prfSalt = rand(32);
+  let cred;
+  try{
+    cred = await navigator.credentials.create({ publicKey:{
+      challenge:rand(32), rp:{ name:"Hub Pro Loco" },
+      user:{ id:rand(16), name:"hub-proloco", displayName:"Hub Pro Loco · " + (me ? me.nome : "") },
+      pubKeyCredParams:[{type:"public-key", alg:-7},{type:"public-key", alg:-257}],
+      authenticatorSelection:{ authenticatorAttachment:"platform", userVerification:"required", residentKey:"preferred" },
+      extensions:{ prf:{ eval:{ first:prfSalt } } },
+      timeout:60000,
+    }});
+  }catch(e){ toast(bioName + " annullato"); return; }
+  const rec = { id:b64e(cred.rawId), prfSalt:b64e(prfSalt) };
+  const ext = cred.getClientExtensionResults ? cred.getClientExtensionResults() : {};
+  let key = null;
+  try{
+    if(ext.prf && ext.prf.results && ext.prf.results.first){
+      key = await prfKey(ext.prf.results.first); rec.mode = "prf";
+    }else if(ext.prf && ext.prf.enabled){
+      rec.mode = "prf";
+      const a = await bioAssert(rec);
+      const r = a.getClientExtensionResults().prf;
+      if(r && r.results && r.results.first) key = await prfKey(r.results.first);
+    }
+  }catch(e){ key = null; }
+  if(!key){
+    rec.mode = "local";
+    key = await SUB.generateKey({name:"AES-GCM", length:256}, false, ["encrypt","decrypt"]);
+    try{ await idb("readwrite", function(st){ return st.put(key, BIO_KEY()); }); }
+    catch(e){ toast("Questo browser non permette di salvare la chiave: " + bioName + " non attivato"); return; }
+  }
+  const iv = rand(12);
+  rec.iv = b64e(iv);
+  rec.ct = b64e(await SUB.encrypt({name:"AES-GCM", iv}, key, ENC.encode(masterPw)));
+  localStorage.setItem(BIO_KEY(), JSON.stringify(rec));
+  renderVault();
+  toast(bioName + " attivato su questo dispositivo");
+}
+
+async function bioDisable(silent){
+  localStorage.removeItem(BIO_KEY());
+  try{ await idb("readwrite", function(st){ return st.delete(BIO_KEY()); }); }catch(e){}
+  renderVault();
+  if(!silent) toast(bioName + " disattivato su questo dispositivo");
+}
+
+async function bioOpen(){
+  const rec = bioRec(), err = $("vkErr");
+  if(!rec) return;
+  err.textContent = "";
+  let key;
+  try{
+    const a = await bioAssert(rec);
+    if(rec.mode === "prf"){
+      const r = a.getClientExtensionResults().prf;
+      if(!r || !r.results || !r.results.first) throw new Error("prf");
+      key = await prfKey(r.results.first);
+    }else{
+      key = await idb("readonly", function(st){ return st.get(BIO_KEY()); });
+      if(!key) throw new Error("nokey");
+    }
+  }catch(e){
+    if(e && (e.message === "nokey" || e.message === "prf")){
+      await bioDisable(true);
+      err.textContent = bioName + " non è più valido su questo dispositivo: entra con la chiave e riattivalo.";
+    }else{
+      err.textContent = bioName + " non riuscito. Riprova o usa la chiave.";
+    }
+    return;
+  }
+  let pw;
+  try{ pw = DEC.decode(await SUB.decrypt({name:"AES-GCM", iv:b64d(rec.iv)}, key, b64d(rec.ct))); }
+  catch(e){ await bioDisable(true); err.textContent = "Dati di " + bioName + " non leggibili: entra con la chiave e riattivalo."; return; }
+  try{ vault = await openVault(pw, vaultRec); masterPw = pw; }
+  catch(e){
+    await bioDisable(true);
+    err.textContent = "La chiave dell'archivio è cambiata: inseriscila e riattiva " + bioName + ".";
+    return;
+  }
+  sessionStorage.setItem(S_PW, masterPw);
+  renderVault();
+}
+
+$("btnBioOpen").addEventListener("click", bioOpen);
+$("btnBioToggle").addEventListener("click", function(){ bioRec() ? bioDisable(false) : bioEnable(); });
+
 $("vaultForm").addEventListener("submit", async function(e){
   e.preventDefault();
   const k = $("vkPw").value, err = $("vkErr");
@@ -811,6 +948,7 @@ $("vaultForm").addEventListener("submit", async function(e){
   sessionStorage.setItem(S_PW, masterPw);
   $("vkPw").value = ""; $("vkPw2").value = "";
   renderVault();
+  if(bioAvail && !bioRec()) toast("Puoi attivare " + bioName + " per aprire l'archivio senza chiave");
 });
 
 /* ─────────── sincronizzazione (Firestore: hub/apps, hub/vault) ─────────── */
@@ -1195,8 +1333,13 @@ function renderVault(){
       : "Inserisci la chiave dell'archivio per vedere le password della Pro Loco.";
     $("vkPw2").style.display = nuovo ? "" : "none";
     $("vkBtn").textContent = nuovo ? "Crea archivio" : "Apri";
+    const puoBio = !nuovo && bioAvail && !!bioRec();
+    $("btnBioOpen").style.display = puoBio ? "" : "none";
+    $("bioOpenLabel").textContent = "Apri con " + bioName;
     return;
   }
+  $("btnBioToggle").style.display = bioAvail ? "" : "none";
+  $("btnBioToggle").textContent = bioRec() ? bioName + " attivo · disattiva" : "Attiva " + bioName;
   const q = $("vsearch").value.trim().toLowerCase();
   const list = vault.filter(function(e){
     const a = appById(e.appId);
@@ -1416,6 +1559,7 @@ $("btnChangePw").addEventListener("click", async function(){
   const res = await saveVault();     // ricifra l'archivio con la nuova chiave
   if(!res.ok){ masterPw = prev; toast(res.msg); return; }
   sessionStorage.setItem(S_PW, newPw);
+  if(bioRec()) await bioDisable(true);   // conteneva la chiave vecchia
   $("sOld").value = ""; $("sNew").value = "";
   closeModals(); toast("Chiave aggiornata: comunicala al direttivo");
 });
