@@ -120,7 +120,7 @@
   .st-in_corso{background:var(--brand-soft);color:var(--brand-dark)}
   .st-fatto{background:var(--ok-soft);color:var(--ok)}
   .st-ritardo{background:var(--danger-soft);color:var(--danger)}
-  .pr-alta{background:#f7e0d8;color:#b4462f}.pr-media{background:var(--warn-soft);color:var(--warn)}.pr-bassa{background:#eef4e8;color:#5e7e52}
+  .pr-top3{background:#f6e1ee;color:#9b2c6e}.pr-alta{background:#f7e0d8;color:#b4462f}.pr-media{background:var(--warn-soft);color:var(--warn)}.pr-bassa{background:#eef4e8;color:#5e7e52}
   .pl-check{width:18px;height:18px;border-radius:5px;border:2px solid var(--rule-2);background:#fff;display:grid;place-items:center;flex-shrink:0;padding:0}
   .pl-check.on{background:var(--ok);border-color:var(--ok)}
   .pl-toggle{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--rule-2);border-radius:8px;padding:9px 12px;cursor:pointer;margin-top:6px;user-select:none}
@@ -506,11 +506,12 @@
   .pn-foot{display:flex;justify-content:flex-end;margin-top:10px}
 
   /* ---------- PRIORITÀ ---------- */
-  .pq-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+  .pq-board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:start}
   .pq-col{background:#f0eee7;border-radius:10px;padding:0 8px 8px;min-height:140px;transition:background .12s}
   .pq-col.over{background:var(--brand-soft-2)}
   .pq-head{display:flex;align-items:center;gap:7px;padding:10px 4px 9px;border-top:3px solid;margin:0 -8px 4px;padding-left:12px;padding-right:10px;border-radius:10px 10px 0 0;font-size:13.5px}
   .pq-flag{display:inline-flex}
+  .pq-head{flex-wrap:wrap;row-gap:4px}.pq-head b{white-space:nowrap}
   .pq-list{display:flex;flex-direction:column;gap:8px}
   .pq-card{background:var(--panel);border:1px solid var(--rule);border-radius:9px;padding:10px 11px;cursor:pointer;box-shadow:0 1px 2px rgba(20,20,20,.05)}
   .pq-card:hover{box-shadow:0 4px 14px rgba(20,20,20,.1)}
@@ -649,7 +650,7 @@ const NOTIFY_URL = "https://proloco-notifiche.davide-lodi69.workers.dev/";
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.09-2";
+const APP_VERSION = "2026.11.10-1";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -719,7 +720,7 @@ const faseDi = (a) => {
   const r = a.responsabili || [];
   return r.length && chiusiDi(a).length === r.length ? "da_approvare" : "in_lavoro";
 };
-const PRIORITA = { alta: "Alta", media: "Media", bassa: "Bassa" };
+const PRIORITA = { top3: "Top 3", alta: "Alta", media: "Media", bassa: "Bassa" };
 const MOBILE_Q = "(max-width:760px)";
 
 function useMedia(q) {
@@ -1295,7 +1296,7 @@ function Filtri({ bus, utenti, fBu, setFBu, fPers, setFPers, uid, fStato, setFSt
   const priorita = conPrio ? (
     <div className="pl-chips pl-chips-prio">
       <button className={"pl-chip" + (!fPrio.length ? " on" : "")} onClick={() => setFPrio([])}><Icon name="flag" size={12} />Tutte le priorità</button>
-      {[["alta", "Alta", "#b4462f"], ["media", "Media", "#a46a12"], ["bassa", "Bassa", "#5e7e52"], ["none", "Senza priorità", "#8a8a82"]].map(([k, l, c]) => {
+      {[["top3", "Top 3", "#9b2c6e"], ["alta", "Alta", "#b4462f"], ["media", "Media", "#a46a12"], ["bassa", "Bassa", "#5e7e52"], ["none", "Senza priorità", "#8a8a82"]].map(([k, l, c]) => {
         const on = fPrio.includes(k);
         return <button key={k} className={"pl-chip" + (on ? " on" : "")} style={on ? { background: c, borderColor: c } : null} onClick={() => togPr(k)}><span style={{ color: on ? "#fff" : c, display: "inline-flex" }}><Icon name="flag" size={12} /></span>{l}</button>;
       })}
@@ -1474,7 +1475,7 @@ function GanttView({ attivita, tutte, bus, buMap, fBu, utMap, isAdmin, mobile, f
               <Icon name={STATI[st].ic} size={12} />
             </button>
             {!corto && <div className="pg-lbl-main" onClick={() => onOpen(a)}>
-              <div className={"pg-lbl-t" + (st === "fatto" ? " done" : "")} title={a.titolo}>{(a.priorita === "alta" || a.priorita === "media") && <span className="pg-prio" title={`Priorità ${a.priorita}`} style={{ color: a.priorita === "alta" ? "#b4462f" : "#a46a12" }}><Icon name="flag" size={12} /></span>}{a.milestone ? "◆ " : ""}{a.titolo}</div>
+              <div className={"pg-lbl-t" + (st === "fatto" ? " done" : "")} title={a.titolo}>{(a.priorita === "top3" || a.priorita === "alta" || a.priorita === "media") && <span className="pg-prio" title={a.priorita === "top3" ? "Top 3" : `Priorità ${a.priorita}`} style={{ color: a.priorita === "top3" ? "#9b2c6e" : a.priorita === "alta" ? "#b4462f" : "#a46a12" }}><Icon name="flag" size={12} /></span>}{a.milestone ? "◆ " : ""}{a.titolo}</div>
               <div className="pg-lbl-s"><span className={late ? "late" : ""}>{fmtPeriodo(a)}{late ? " · in ritardo" : ""}</span>{!mobile && (a.responsabili || []).length === 0 && <span style={{ fontStyle: "italic" }}>senza responsabile</span>}</div>
             </div>}
             {!corto && subs.length > 0 && <button className={"pg-subbtn" + (aperta ? " on" : "")} title={aperta ? "Nascondi sotto-attività" : "Mostra sotto-attività"} onClick={() => togEspansa(a.id)}>{!mobile && `${subs.filter(x => x.done).length}/${subs.length}`}<Icon name={aperta ? "up" : "down"} size={mobile ? 12 : 10} /></button>}
@@ -1812,7 +1813,7 @@ function Report({ attivita, bus, buMap, utMap, me, filtriTesto, opz }) {
   const ordina = (l) => l.slice().sort((x, y) => (inRitardo(y) - inRitardo(x)) || fineDi(x).localeCompare(fineDi(y)));
   let gruppi;
   if (opz.per === "priorita") {
-    gruppi = [["alta", "Priorità alta", "#b4462f"], ["media", "Priorità media", "#a46a12"], ["bassa", "Priorità bassa", "#5e7e52"], ["none", "Senza priorità", "#8a8a82"]]
+    gruppi = [["top3", "Top 3", "#9b2c6e"], ["alta", "Priorità alta", "#b4462f"], ["media", "Priorità media", "#a46a12"], ["bassa", "Priorità bassa", "#5e7e52"], ["none", "Senza priorità", "#8a8a82"]]
       .map(([k, nome, colore]) => ({ k, nome, colore, items: attivita.filter(a => (a.priorita || "none") === k) }));
   } else if (opz.per === "scadenza") {
     gruppi = [
@@ -2295,7 +2296,7 @@ function PlannerView({ attivita, bus, buMap, utMap, uid, isAdmin, fStato, setFSt
       .map(g => ({ ...g, items: attivita.filter(a => (a.buId && buMap[a.buId] ? a.buId : "__none") === g.key) }))
       .filter(g => g.items.length);
   } else if (per === "priorita") {
-    gruppi = [["alta", "Priorità alta", "#b4462f"], ["media", "Priorità media", "#a46a12"], ["bassa", "Priorità bassa", "#5e7e52"], ["none", "Senza priorità", "#8a8a82"]]
+    gruppi = [["top3", "Top 3", "#9b2c6e"], ["alta", "Priorità alta", "#b4462f"], ["media", "Priorità media", "#a46a12"], ["bassa", "Priorità bassa", "#5e7e52"], ["none", "Senza priorità", "#8a8a82"]]
       .map(([key, nome, colore]) => ({ key, nome, colore, items: attivita.filter(a => (a.priorita || "none") === key) }))
       .filter(g => g.items.length);
   } else {
@@ -2354,7 +2355,7 @@ function PlannerView({ attivita, bus, buMap, utMap, uid, isAdmin, fStato, setFSt
 /* =====================================================================
    PRIORITÀ
    ===================================================================== */
-const COL_PRIO = [["alta", "Alta", "#b4462f"], ["media", "Media", "#a46a12"], ["bassa", "Bassa", "#5e7e52"], [null, "Senza priorità", "#8a8a82"]];
+const COL_PRIO = [["top3", "Top 3", "#9b2c6e"], ["alta", "Alta", "#b4462f"], ["media", "Media", "#a46a12"], ["bassa", "Bassa", "#5e7e52"], [null, "Senza priorità", "#8a8a82"]];
 function scadenzaInfo(a) {
   if (statoDi(a) === "fatto") return { cls: "ok", lbl: "completata" };
   const g = daysBetween(new Date(), fromKey(fineDi(a)));
@@ -2387,7 +2388,7 @@ function PriorityView({ attivita, buMap, utMap, mobile, onOpen, onPatch, onNew }
           {subs.length > 0 && <span className="pq-sub"><Icon name="check" size={11} />{fatte}/{subs.length}</span>}
           <span className="pq-move" onClick={e => e.stopPropagation()}>
             {COL_PRIO.filter(c => c[0]).map(([k, l, col]) => (
-              <button key={k} title={`Priorità ${l.toLowerCase()}`} className={a.priorita === k ? "on" : ""} style={a.priorita === k ? { background: col, borderColor: col } : null} onClick={() => cambia(a, a.priorita === k ? null : k)}>{l[0]}</button>
+              <button key={k} title={`Priorità ${l.toLowerCase()}`} className={a.priorita === k ? "on" : ""} style={a.priorita === k ? { background: col, borderColor: col } : null} onClick={() => cambia(a, a.priorita === k ? null : k)}>{k === "top3" ? "3" : l[0]}</button>
             ))}
           </span>
         </div>
@@ -2397,7 +2398,7 @@ function PriorityView({ attivita, buMap, utMap, mobile, onOpen, onPatch, onNew }
   return (
     <>
       <div className="pg-fuori" style={{ marginTop: 0, marginBottom: 10 }}>
-        {mobile ? "Tocca A, M o B su una scheda per cambiarne la priorità." : "Trascina una scheda in un'altra colonna, oppure usa A · M · B, per cambiarne la priorità."} In alto le attività in ritardo, poi quelle che scadono prima.
+        {mobile ? "Tocca 3, A, M o B su una scheda per cambiarne la priorità (3 = Top 3)." : "Trascina una scheda in un'altra colonna, oppure usa 3 · A · M · B, per cambiarne la priorità (3 = Top 3)."} In alto le attività in ritardo, poi quelle che scadono prima.
       </div>
       <div className="pq-board">
         {COL_PRIO.map(([k, l, col]) => {
@@ -2414,6 +2415,7 @@ function PriorityView({ attivita, buMap, utMap, mobile, onOpen, onPatch, onNew }
                 <b>{l}</b>
                 <span className="pg-grp-c">{items.length}</span>
                 {late > 0 && <span className="pl-pill st-ritardo">{late} in ritardo</span>}
+                {k === "top3" && items.filter(a => statoDi(a) !== "fatto").length > 3 && <span className="pl-pill st-ritardo" title="La Top 3 dovrebbe contenere al massimo 3 attività aperte">più di 3</span>}
                 <button className="pl-icon" style={{ marginLeft: "auto", width: 28, height: 28 }} title={`Nuova attività con priorità ${l.toLowerCase()}`} onClick={() => onNew({ priorita: k })}><Icon name="plus" size={13} /></button>
               </header>
               <div className="pq-list">
@@ -2447,7 +2449,7 @@ function PeopleView({ attivita, utenti, uid, isAdmin, buMap, utMap, promemoria, 
           : u ? <AvatarCerchio u={u} chiuso={mio} size={18} onClick={puo ? () => onToggle(a, u.id) : undefined} />
           : <span style={{ width: 26 }} />}
         <span className="dot" style={{ background: b ? b.colore : "#8a8a82" }} />
-        <span className="t" style={st === "fatto" ? { textDecoration: "line-through", color: "var(--ink-3)" } : null}>{a.priorita === "alta" && <span className="pg-prio" style={{ color: "#b4462f" }}><Icon name="flag" size={12} /></span>}{a.titolo}</span>
+        <span className="t" style={st === "fatto" ? { textDecoration: "line-through", color: "var(--ink-3)" } : null}>{(a.priorita === "top3" || a.priorita === "alta") && <span className="pg-prio" style={{ color: a.priorita === "top3" ? "#9b2c6e" : "#b4462f" }}><Icon name="flag" size={12} /></span>}{a.titolo}</span>
         {fase === "da_approvare" && <span className="pl-pill st-attesa">da approvare</span>}
         {fase === "in_lavoro" && (a.responsabili || []).length > 1 && <span className="pl-pill st-da_fare">{chiusiDi(a).length}/{a.responsabili.length}</span>}
         {st === "in_corso" && fase === "in_lavoro" && a.avanzamento > 0 && <span className="pl-pill st-in_corso">{a.avanzamento}%</span>}
