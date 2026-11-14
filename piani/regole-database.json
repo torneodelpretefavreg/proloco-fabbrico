@@ -1,0 +1,18 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "proloco": {
+      ".read": "auth != null && (root.child('proloco/utenti').child(auth.uid).child('ruolo').val() === 'admin' || root.child('proloco/utenti').child(auth.uid).child('ruolo').val() === 'editor' || root.child('proloco/utenti').child(auth.uid).child('ruolo').val() === 'lettore')",
+      "utenti": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && (root.child('proloco/utenti').child(auth.uid).child('ruolo').val() === 'admin' || (auth.uid === $uid && !data.exists() && (!root.child('proloco/utenti').exists() || newData.child('ruolo').val() === 'attesa')))"
+        }
+      },
+      "$ramo": {
+        ".write": "auth != null && (root.child('proloco/utenti').child(auth.uid).child('ruolo').val() === 'admin' || root.child('proloco/utenti').child(auth.uid).child('ruolo').val() === 'editor')"
+      }
+    }
+  }
+}
