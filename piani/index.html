@@ -31,7 +31,7 @@ window.FIREBASE_CONFIG = {
 };
 window.DB_ROOT = "proloco";        // ramo del Realtime Database (lo stesso nome usato nelle regole)
 window.APP_NOME = "Pro Loco Fabbrico";      // nome mostrato in alto e nella pagina di accesso: mettici quello della tua pro loco
-window.APP_VER = "14 nov 2026 (2) · tema blu · piani con calendario dei contenuti, fogli di calcolo, utenti con ruoli";
+window.APP_VER = "14 nov 2026 (3) · tema blu, piani vuoti in partenza · piani con calendario dei contenuti, fogli di calcolo, utenti con ruoli";
 window.AUTH_EMAIL = "";            // email precompilata al login (facoltativa)
 </script>
 
@@ -5867,11 +5867,11 @@ function SectionModal({sezione, onSave, onDelete, onClose, count, radici, parent
 /* ═══════════ nuovo documento ═══════════ */
 function NewDocModal({onCreate, onClose}){
   const [tipo,setTipo] = useState('piano');
-  const [tpl,setTpl] = useState('evento');
+  const [tpl,setTpl] = useState('vuoto');
   const [titolo,setTitolo] = useState('');
   const [dataRif,setDataRif] = useState('');
   const modelli = tipo==='riunione' ? TEMPLATES : tipo==='piano' ? MODELLI_PIANO : tipo==='foglio' ? MODELLI_FOGLIO : null;
-  const cambiaTipo = (t) => { setTipo(t); setTpl(t==='piano' ? 'evento' : 'vuoto'); };
+  const cambiaTipo = (t) => { setTipo(t); setTpl('vuoto'); };
   const crea = () => {
     if(tipo==='piano' && tpl!=='vuoto' && !dataRif){ alert('Scegli la data di riferimento: le uscite del modello vengono messe in calendario a partire da lì.'); return; }
     onCreate(tipo, modelli ? tpl : null, titolo.trim(), dataRif);
