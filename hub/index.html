@@ -619,7 +619,11 @@ const EXTRA_APPS = [
   { icon:"🎄", name:"Vigilia di Natale",
     desc:"Area e conti della Vigilia di Natale.",
     url:"https://torneodelpretefavreg.github.io/vigilia/",
-    tags:["Eventi","Conti"], group:"Pro Loco Fabbrico", locked:true },
+    tags:["Eventi","Conti"], group:"Pro Loco Fabbrico", locked:true },,
+  { icon:"📝", name:"Piani e appunti",
+    desc:"Piani, riunioni e appunti: calendario dei contenuti e fogli di calcolo.",
+    url:"https://torneodelpretefavreg.github.io/proloco-fabbrico/piani/",
+    tags:["Appunti","Riunioni"], group:"Pro Loco Fabbrico", locked:true }
 ];
 
 const K_APPS  = "proloco_apps_v1";
@@ -961,7 +965,7 @@ function startSync(){
     const v = snap.exists ? snap.data() : null;
     const localRec = readJSON(K_APPS, null);
 
-    if(v && v.list && (v.mig || 0) < 4 && !cached){
+    if(v && v.list && (v.mig || 0) < 5 && !cached){
       // aggiornamento una tantum: la Cassa passa alla nuova app multi-evento,
       // poi aggiungo Cassa e Vigilia se mancano
       // e la card della Cassa prende nome, descrizione ed etichette della nuova CassaPro
@@ -1028,7 +1032,7 @@ function startSync(){
 }
 
 function saveApps(){
-  const rec = {list:apps, ts:Date.now(), mig:4};
+  const rec = {list:apps, ts:Date.now(), mig:5};
   localStorage.setItem(K_APPS, JSON.stringify(rec));
   if(ref) ref.doc("apps").set(clean(rec)).catch(function(err){
     toast("Programmi non salvati sul database: " + (err && err.message ? err.message : "errore"));
