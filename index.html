@@ -463,6 +463,33 @@
   .rp-row:has(+ .rp-extra) td{border-bottom:none}
   .rp-subs{display:flex;flex-wrap:wrap;gap:3px 14px;font-size:7.8pt;color:#4a4a4a;padding-left:10px}
   .rp-subs .done{color:#8a8a82;text-decoration:line-through}
+  .ce-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;padding:6px;border:1px solid var(--rule);border-radius:10px;background:var(--panel-2)}
+  .ce-nav b{font-size:14.5px}
+  .rc-grid{border:1px solid #d9d6cd;border-radius:6px;overflow:hidden}
+  .rc-head{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:#1f6fb0;color:#fff;font-size:8pt;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .rc-head div{padding:4px 6px}
+  .rc-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid #d9d6cd;page-break-inside:avoid}
+  .rc-cell{min-height:92px;padding:3px 4px 5px;border-left:1px solid #e8e6df;display:flex;flex-direction:column;gap:3px}
+  .rc-cell:first-child{border-left:none}
+  .rc-cell.we{background:#faf9f6}
+  .rc-cell.out{background:#f1efea}
+  .rc-cell.out .rc-n{color:#c4c1b8}
+  .rc-n{font-size:8.5pt;font-weight:700;color:#4a4a4a;text-transform:capitalize}
+  .rc-ev{border-left:3px solid;border-radius:3px;padding:2px 4px;font-size:7.5pt;line-height:1.25;word-break:break-word}
+  .rc-ev b{display:block;font-weight:600;color:#1a1a1a}
+  .rc-ev span{display:block;color:#6b675e;font-size:6.8pt}
+  .rc-ev.done b{color:#6b675e}
+  .rc-list{display:flex;flex-direction:column}
+  .rc-day{display:flex;gap:12px;border-top:1px solid #e8e6df;padding:6px 0;page-break-inside:avoid}
+  .rc-date{width:58px;flex-shrink:0;text-align:center}
+  .rc-date b{display:block;font-family:'Fraunces',serif;font-size:18pt;line-height:1;color:#1f6fb0}
+  .rc-date span{font-size:7.5pt;color:#8a8a82;text-transform:uppercase;letter-spacing:.04em}
+  .rc-day table{flex:1;border-collapse:collapse;font-size:8.5pt}
+  .rc-day td{padding:3px 5px;vertical-align:top;border-bottom:1px solid #f1efea}
+  .rc-day tr:last-child td{border-bottom:none}
+  .rc-ora{width:92px;color:#4a4a4a;font-weight:600;white-space:nowrap}
+  .rc-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+  .rc-bu{width:150px;color:#6b675e}.rc-chi{width:190px}.rc-st{width:90px;text-align:right}
   .rp-note{font-size:7.8pt;color:#4a4a4a;background:#fbfaf6;border-radius:4px;padding:3px 7px;margin-left:10px;white-space:pre-wrap}
 
   /* ---------- PLANNER ---------- */
@@ -650,7 +677,7 @@ const NOTIFY_URL = "https://proloco-notifiche.davide-lodi69.workers.dev/";
 const VAPID_KEY = "BPYLNk7LJoBDFeQRNNoVXqBBULoXztMNhzbbtqSmQMuxG07cTyOKERDK30COlNYdfEOAdCR91JtD3PTMANhsuZI";
 const ENTE = "Pro Loco Fabbrico";
 // versione dell'app: ad ogni pubblicazione va aggiornata insieme a version.json
-const APP_VERSION = "2026.11.10-1";
+const APP_VERSION = "2026.11.15-1";
 
 /* ===================================================================== */
 const CONFIGURATO = !!firebaseConfig.apiKey && !/INCOLLA/i.test(firebaseConfig.apiKey);
@@ -1229,6 +1256,13 @@ function Shell({ uid }) {
 
   if (!utentiRaw || !buRaw || !attRaw || !promRaw) return <div className="pl-center">Carico i dati…</div>;
 
+  const filtriTesto = [
+    fBu.length ? "Business unit: " + fBu.map(id => id === "__none" ? "senza BU" : (buMap[id] ? buMap[id].nome : "")).filter(Boolean).join(", ") : "Tutte le business unit",
+    fPers.length ? "Persone: " + fPers.map(id => id === "__none" ? "senza responsabile" : (utMap[id] ? utMap[id].nome : "")).filter(Boolean).join(", ") : "",
+    fPrio.length ? "Priorità: " + fPrio.map(k => k === "none" ? "senza" : PRIORITA[k].toLowerCase()).join(", ") : "",
+    { aperte: "Da fare e in corso", tutte: "Tutte (anche completate)", da_approvare: "Da approvare", ritardo: "In ritardo", fatte: "Completate" }[fStato] || "",
+    cerca.trim() ? `Ricerca: "${cerca.trim()}"` : "",
+  ].filter(Boolean).join(" · ");
   const promApertiMiei = (promRaw || []).filter(p => !p.done && p.assegnatoA === uid).length;
   const sottotitolo = { gantt: "Gantt delle attività", planner: "Planner delle attività", calendario: "Calendario", priorita: "Attività per priorità", persone: "Responsabili e carichi di lavoro", promemoria: "Promemoria" }[vista];
 
@@ -1256,15 +1290,9 @@ function Shell({ uid }) {
             fPrio={fPrio} setFPrio={setFPrio} conPrio={vista !== "priorita"} />
         )}
         {vista === "gantt" && <GanttView attivita={filtrate} tutte={attivita} bus={bus} buMap={buMap} fBu={fBu} utMap={utMap} isAdmin={isAdmin} mobile={mobile} fStato={fStato} me={me}
-          filtriTesto={[
-            fBu.length ? "Business unit: " + fBu.map(id => id === "__none" ? "senza BU" : (buMap[id] ? buMap[id].nome : "")).filter(Boolean).join(", ") : "Tutte le business unit",
-            fPers.length ? "Persone: " + fPers.map(id => id === "__none" ? "senza responsabile" : (utMap[id] ? utMap[id].nome : "")).filter(Boolean).join(", ") : "",
-            fPrio.length ? "Priorità: " + fPrio.map(k => k === "none" ? "senza" : PRIORITA[k].toLowerCase()).join(", ") : "",
-            { aperte: "Da fare e in corso", tutte: "Tutte (anche completate)", da_approvare: "Da approvare", ritardo: "In ritardo", fatte: "Completate" }[fStato] || "",
-            cerca.trim() ? `Ricerca: "${cerca.trim()}"` : "",
-          ].filter(Boolean).join(" · ")}
+          filtriTesto={filtriTesto}
           onOpen={apri} onNew={nuova} onPatch={patchAtt} setFStato={setFStato} onSeedBu={() => setManage("bu")} />}
-        {vista === "calendario" && <CalendarView attivita={filtrate} buMap={buMap} utMap={utMap} onOpen={apri} onNew={nuova} calSvolti={calSvolti} setCalSvolti={setCalSvolti} fStato={fStato} />}
+        {vista === "calendario" && <CalendarView attivita={filtrate} buMap={buMap} utMap={utMap} onOpen={apri} onNew={nuova} calSvolti={calSvolti} setCalSvolti={setCalSvolti} fStato={fStato} me={me} filtriTesto={filtriTesto} />}
         {vista === "planner" && <PlannerView attivita={filtrate} bus={bus} buMap={buMap} utMap={utMap} uid={uid} isAdmin={isAdmin} fStato={fStato} setFStato={setFStato}
           onOpen={apri} onPatch={patchAtt} onToggle={toggleCompleto} onApprova={approva} puoApprovare={puoApprovare} onNew={nuova} />}
         {vista === "priorita" && <PriorityView attivita={filtrate} buMap={buMap} utMap={utMap} mobile={mobile} onOpen={apri} onPatch={patchAtt} onNew={nuova} />}
@@ -1728,7 +1756,7 @@ function caricaHtml2pdf() {
   return html2pdfPromise;
 }
 const LARGHEZZA_REPORT = 1060; // px ≈ A4 orizzontale meno i margini
-function AnteprimaReport({ children, onClose, onIndietro }) {
+function AnteprimaReport({ children, onClose, onIndietro, nome = "Report-attivita", titolo = "Report attività" }) {
   const [stato, setStato] = useState("prepara"); // prepara | pronto | errore
   const [err, setErr] = useState("");
   const [zoom, setZoom] = useState(1);
@@ -1736,12 +1764,12 @@ function AnteprimaReport({ children, onClose, onIndietro }) {
   const sheetRef = useRef(null);
   const blobRef = useRef(null);
   const mobileOS = /iphone|ipad|android/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const nomeFile = `Report-attivita-ProLoco-Fabbrico-${oggiKey()}.pdf`;
+  const nomeFile = `${nome}-ProLoco-Fabbrico-${oggiKey()}.pdf`;
   const salva = async () => {
     const blob = blobRef.current; if (!blob) return;
     const file = new File([blob], nomeFile, { type: "application/pdf" });
     if (mobileOS && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: "Report attività" }); return; } catch (e) { if (e && e.name === "AbortError") return; }
+      try { await navigator.share({ files: [file], title: titolo }); return; } catch (e) { if (e && e.name === "AbortError") return; }
     }
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = nomeFile; document.body.appendChild(a); a.click(); a.remove();
@@ -1772,7 +1800,7 @@ function AnteprimaReport({ children, onClose, onIndietro }) {
         image: { type: "jpeg", quality: 0.95 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: LARGHEZZA_REPORT + 40 },
         jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-        pagebreak: { mode: ["css", "legacy"], avoid: ["tr", ".rg-row", ".rp-kpi", ".rp-head"] },
+        pagebreak: { mode: ["css", "legacy"], avoid: ["tr", ".rg-row", ".rp-kpi", ".rp-head", ".rc-week", ".rc-day"] },
       }).from(el).outputPdf("blob");
       setStato("pronto");
       if (!mobileOS) salva(); // sul computer parte subito il download
@@ -1953,9 +1981,235 @@ function Report({ attivita, bus, buMap, utMap, me, filtriTesto, opz }) {
 }
 
 /* =====================================================================
+   ESPORTA CALENDARIO (PDF o file .ics)
+   ===================================================================== */
+// giorni in cui un'attività compare: ogni giorno se dura fino a 7 giorni, altrimenti inizio e scadenza
+function giorniCalendario(attivita, da, a) {
+  const m = {};
+  const metti = (k, x, sg) => { if (k >= da && k <= a) (m[k] = m[k] || []).push({ a: x, sg }); };
+  attivita.forEach(x => {
+    if (!x.inizio) return;
+    const f = fineDi(x), durata = daysBetween(fromKey(x.inizio), fromKey(f)) + 1;
+    if (durata > 7) { metti(x.inizio, x, "▸ "); metti(f, x, "⚑ "); return; }
+    let d = fromKey(x.inizio < da ? da : x.inizio); const e = fromKey(f < a ? f : a);
+    while (d <= e) { const k = toKey(d); metti(k, x, k !== x.inizio ? "↳ " : ""); d = addDays(d, 1); }
+  });
+  Object.values(m).forEach(l => l.sort((x, y) => (x.a.ora || "99").localeCompare(y.a.ora || "99") || x.a.titolo.localeCompare(y.a.titolo)));
+  return m;
+}
+function periodoCal(per, rif, daC, aC) {
+  if (per === "settimana") { const s = startOfWeek(rif); return [toKey(s), toKey(addDays(s, 6))]; }
+  if (per === "mese") return [toKey(new Date(rif.getFullYear(), rif.getMonth(), 1)), toKey(new Date(rif.getFullYear(), rif.getMonth() + 1, 0))];
+  return daC <= aC ? [daC, aC] : [aC, daC];
+}
+function titoloPeriodo(per, da, a) {
+  const d = fromKey(da), e = fromKey(a);
+  if (per === "mese") return `${MESI[d.getMonth()][0].toUpperCase() + MESI[d.getMonth()].slice(1)} ${d.getFullYear()}`;
+  return `${d.getDate()} ${MESI[d.getMonth()]}${d.getFullYear() !== e.getFullYear() ? " " + d.getFullYear() : ""} – ${e.getDate()} ${MESI[e.getMonth()]} ${e.getFullYear()}`;
+}
+
+// file .ics: si apre con il calendario del telefono o del computer
+function creaIcs(attivita, buMap, utMap) {
+  const esc = (s) => String(s || "").replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+  const piega = (riga) => { const out = []; let r = riga; while (r.length > 73) { out.push(r.slice(0, 73)); r = " " + r.slice(73); } out.push(r); return out.join("\r\n"); };
+  const data = (k) => k.replace(/-/g, "");
+  const ora = (k, h) => data(k) + "T" + h.replace(":", "") + "00";
+  const unOraDopo = (h) => { const [H, M] = h.split(":").map(Number); return H >= 23 ? "23:59" : String(H + 1).padStart(2, "0") + ":" + String(M || 0).padStart(2, "0"); };
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+  const righe = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Pro Loco Fabbrico//Attivita//IT", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:" + esc(ENTE), "X-WR-TIMEZONE:Europe/Rome",
+    "BEGIN:VTIMEZONE", "TZID:Europe/Rome",
+    "BEGIN:DAYLIGHT", "TZOFFSETFROM:+0100", "TZOFFSETTO:+0200", "TZNAME:CEST", "DTSTART:19700329T020000", "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU", "END:DAYLIGHT",
+    "BEGIN:STANDARD", "TZOFFSETFROM:+0200", "TZOFFSETTO:+0100", "TZNAME:CET", "DTSTART:19701025T030000", "RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU", "END:STANDARD",
+    "END:VTIMEZONE"];
+  attivita.forEach(x => {
+    if (!x.inizio) return;
+    const f = fineDi(x), b = x.buId && buMap[x.buId];
+    const sa = b && x.sottoareaId ? (b.sottoaree || []).find(s => s.id === x.sottoareaId) : null;
+    const chi = (x.responsabili || []).map(id => utMap[id] ? utMap[id].nome : "").filter(Boolean);
+    const desc = [b ? "Business unit: " + b.nome + (sa ? " › " + sa.nome : "") : "", chi.length ? "Incaricati: " + chi.join(", ") : "", "Stato: " + statoReport(x)[0], x.note ? "\n" + x.note : ""].filter(Boolean).join("\n");
+    righe.push("BEGIN:VEVENT", "UID:" + x.id + "@proloco-fabbrico", "DTSTAMP:" + stamp);
+    if (x.ora) {
+      righe.push("DTSTART;TZID=Europe/Rome:" + ora(x.inizio, x.ora));
+      righe.push("DTEND;TZID=Europe/Rome:" + ora(f, x.oraFine && (f !== x.inizio || x.oraFine > x.ora) ? x.oraFine : unOraDopo(x.ora)));
+    } else {
+      righe.push("DTSTART;VALUE=DATE:" + data(x.inizio), "DTEND;VALUE=DATE:" + data(toKey(addDays(fromKey(f), 1))));
+    }
+    righe.push("SUMMARY:" + esc((statoDi(x) === "fatto" ? "✓ " : "") + x.titolo));
+    if (x.luogo) righe.push("LOCATION:" + esc(x.luogo));
+    if (desc) righe.push("DESCRIPTION:" + esc(desc));
+    righe.push("END:VEVENT");
+  });
+  righe.push("END:VCALENDAR");
+  return righe.map(piega).join("\r\n") + "\r\n";
+}
+
+function ReportCalendario({ attivita, buMap, utMap, me, filtriTesto, opz }) {
+  const { da, a, per, stile } = opz;
+  const perGiorno = giorniCalendario(attivita, da, a);
+  const adesso = new Date();
+  const colore = (x) => (x.buId && buMap[x.buId] ? buMap[x.buId].colore : "#8a8a82");
+  const nomi = (x) => (x.responsabili || []).map(id => utMap[id] ? utMap[id].nome.split(" ")[0] : "").filter(Boolean).join(", ");
+  const nEventi = attivita.length;
+  const voce = ({ a: x, sg }) => {
+    const c = colore(x), fatto = statoDi(x) === "fatto";
+    return (
+      <div key={x.id} className={"rc-ev" + (fatto ? " done" : "")} style={{ borderLeftColor: c, background: fatto ? "#f4f3ef" : hexA(c, 0.12) }}>
+        <b>{fatto ? "✓ " : ""}{sg}{x.ora && sg !== "↳ " ? x.ora + " " : ""}{x.milestone ? "◆ " : ""}{x.titolo}</b>
+        {(x.luogo || nomi(x)) && <span>{[x.luogo, nomi(x)].filter(Boolean).join(" · ")}</span>}
+      </div>
+    );
+  };
+  let corpo;
+  if (stile === "griglia") {
+    const s = startOfWeek(fromKey(da)), e = addDays(startOfWeek(fromKey(a)), 6);
+    const sett = []; for (let d = new Date(s); d <= e; d = addDays(d, 7)) sett.push(new Date(d));
+    corpo = (
+      <div className="rc-grid">
+        <div className="rc-head">{GIORNI.map(g => <div key={g}>{g}</div>)}</div>
+        {sett.map(w => (
+          <div key={toKey(w)} className="rc-week">
+            {Array.from({ length: 7 }, (_, i) => addDays(w, i)).map(d => {
+              const k = toKey(d), fuori = k < da || k > a, l = perGiorno[k] || [];
+              return (
+                <div key={k} className={"rc-cell" + (fuori ? " out" : "") + (wd(d) >= 5 ? " we" : "")} style={per === "settimana" ? { minHeight: 300 } : null}>
+                  <div className="rc-n">{d.getDate()}{d.getDate() === 1 || k === da ? " " + MESI[d.getMonth()].slice(0, 3) : ""}</div>
+                  {!fuori && l.map(voce)}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  } else {
+    const giorni = Object.keys(perGiorno).sort();
+    corpo = (
+      <div className="rc-list">
+        {!giorni.length && <div className="rp-dim" style={{ padding: 20, textAlign: "center" }}>Nessun appuntamento in questo periodo.</div>}
+        {giorni.map(k => (
+          <div key={k} className="rc-day">
+            <div className="rc-date"><b>{fromKey(k).getDate()}</b><span>{GIORNI[wd(fromKey(k))]} · {MESI[fromKey(k).getMonth()].slice(0, 3)}</span></div>
+            <table><tbody>
+              {perGiorno[k].map(({ a: x, sg }) => {
+                const b = x.buId && buMap[x.buId], [stl, stc] = statoReport(x);
+                return (
+                  <tr key={x.id}>
+                    <td className="rc-ora">{sg === "↳ " ? "↳" : orarioDi(x) || "tutto il giorno"}</td>
+                    <td><span className="rc-dot" style={{ background: colore(x) }} /><b>{sg === "⚑ " ? "Scadenza: " : sg === "▸ " ? "Inizio: " : ""}{x.milestone ? "◆ " : ""}{x.titolo}</b>{x.inizio !== fineDi(x) && <span className="rp-dim"> · {fmtPeriodo(x)}</span>}{x.luogo && <div className="rp-dim">{x.luogo}</div>}</td>
+                    <td className="rc-bu">{b ? b.nome : "—"}</td>
+                    <td className="rc-chi">{nomi(x) || <span className="rp-dim">—</span>}</td>
+                    <td className="rc-st"><span className={"rp-badge " + stc}>{stl}</span></td>
+                  </tr>
+                );
+              })}
+            </tbody></table>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div id="print-root">
+      <div className="rp-head">
+        <div>
+          <div className="rp-ente">{ENTE}</div>
+          <h1>Calendario · {titoloPeriodo(per, da, a)}</h1>
+          <div className="rp-sub">{nEventi} {nEventi === 1 ? "appuntamento" : "appuntamenti"} · generato il {adesso.toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })} alle {adesso.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}{me && me.nome ? ` da ${me.nome}` : ""}</div>
+        </div>
+        <div className="rp-logo">P</div>
+      </div>
+      <div className="rp-filtri"><b>Filtri:</b> {filtriTesto || "nessuno"}</div>
+      {corpo}
+      <div className="rp-legenda" style={{ marginTop: 6 }}><span>↳ continua dal giorno prima</span><span>▸ inizio e ⚑ scadenza delle attività più lunghe di una settimana</span><span>✓ svolto</span></div>
+    </div>
+  );
+}
+
+function EsportaCalendario({ attivita, buMap, utMap, me, filtriTesto, modo, cursor, onClose }) {
+  const ricorda = (() => { try { return JSON.parse(lsGet("plf-calexp") || "{}"); } catch (e) { return {}; } })();
+  const [per, setPer] = useState(modo === "settimana" ? "settimana" : modo === "mese" ? "mese" : (ricorda.per || "mese"));
+  const [rif, setRif] = useState(() => new Date(cursor));
+  const [daC, setDaC] = useState(() => toKey(cursor));
+  const [aC, setAC] = useState(() => toKey(addDays(cursor, 30)));
+  const [stile, setStileS] = useState(ricorda.stile || (modo === "elenco" ? "elenco" : "griglia"));
+  const [formato, setFormatoS] = useState(ricorda.formato || "pdf");
+  const [anteprima, setAnteprima] = useState(false);
+  const salvaScelte = (p) => lsSet("plf-calexp", JSON.stringify({ per, stile, formato, ...p }));
+  const setStile = (v) => { setStileS(v); salvaScelte({ stile: v }); };
+  const setFormato = (v) => { setFormatoS(v); salvaScelte({ formato: v }); };
+  const scegliPer = (v) => { setPer(v); salvaScelte({ per: v }); };
+  const [da, a] = periodoCal(per, rif, daC, aC);
+  const nel = attivita.filter(x => x.inizio && x.inizio <= a && fineDi(x) >= da);
+  const troppo = per === "custom" && daysBetween(fromKey(da), fromKey(a)) > 366;
+  const sposta = (n) => setRif(per === "mese" ? new Date(rif.getFullYear(), rif.getMonth() + n, 1) : addDays(rif, 7 * n));
+  const mobileOS = /iphone|ipad|android/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const nomeBase = `Calendario-${da}${da !== a ? "_" + a : ""}`;
+  const scaricaIcs = async () => {
+    const blob = new Blob([creaIcs(nel, buMap, utMap)], { type: "text/calendar;charset=utf-8" });
+    const nomeFile = `${nomeBase}-ProLoco-Fabbrico.ics`;
+    const file = new File([blob], nomeFile, { type: "text/calendar" });
+    if (mobileOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: "Calendario Pro Loco" }); onClose(); return; } catch (e) { if (e && e.name === "AbortError") return; }
+    }
+    const url = URL.createObjectURL(blob);
+    const el = document.createElement("a"); el.href = url; el.download = nomeFile; document.body.appendChild(el); el.click(); el.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    onClose();
+  };
+  if (anteprima) return ReactDOM.createPortal(
+    <AnteprimaReport onClose={onClose} onIndietro={() => setAnteprima(false)} nome={nomeBase} titolo="Calendario">
+      <ReportCalendario attivita={nel} buMap={buMap} utMap={utMap} me={me} filtriTesto={filtriTesto} opz={{ da, a, per, stile }} />
+    </AnteprimaReport>, document.body);
+  return ReactDOM.createPortal(
+    <div className="pl-overlay" onClick={onClose}>
+      <div className="pl-modal" style={{ width: "min(480px,100%)" }} onClick={e => e.stopPropagation()}>
+        <div className="pl-mhead"><h3>Esporta calendario</h3><button className="pl-icon" onClick={onClose}><Icon name="x" size={16} /></button></div>
+        <div className="pl-mbody">
+          <label className="pl-lbl" style={{ marginTop: 10 }}>Periodo</label>
+          <div className="pl-seg" style={{ display: "flex" }}>
+            {[["settimana", "Settimana"], ["mese", "Mese"], ["custom", "Personalizzato"]].map(([k, l]) => <button key={k} style={{ flex: 1, justifyContent: "center" }} className={per === k ? "on" : ""} onClick={() => scegliPer(k)}>{l}</button>)}
+          </div>
+          {per !== "custom" ? (
+            <div className="ce-nav">
+              <button className="pl-icon" onClick={() => sposta(-1)} title="Precedente"><Icon name="left" size={16} /></button>
+              <b>{titoloPeriodo(per, da, a)}</b>
+              <button className="pl-icon" onClick={() => sposta(1)} title="Successivo"><Icon name="right" size={16} /></button>
+            </div>
+          ) : (
+            <div className="pl-row2" style={{ marginTop: 8 }}>
+              <div><label className="pl-lbl">Dal</label><input className="pl-input" type="date" value={daC} onChange={e => e.target.value && setDaC(e.target.value)} /></div>
+              <div><label className="pl-lbl">Al</label><input className="pl-input" type="date" value={aC} min={daC} onChange={e => e.target.value && setAC(e.target.value)} /></div>
+            </div>
+          )}
+          <label className="pl-lbl">Formato</label>
+          <div className="pl-seg" style={{ display: "flex" }}>
+            {[["pdf", "PDF"], ["ics", "Calendario del telefono"]].map(([k, l]) => <button key={k} style={{ flex: 1, justifyContent: "center" }} className={formato === k ? "on" : ""} onClick={() => setFormato(k)}>{l}</button>)}
+          </div>
+          {formato === "pdf" ? (
+            <>
+              <label className="pl-lbl">Aspetto</label>
+              <div className="pl-seg" style={{ display: "flex" }}>
+                {[["griglia", "Calendario"], ["elenco", "Elenco giorno per giorno"]].map(([k, l]) => <button key={k} style={{ flex: 1, justifyContent: "center" }} className={stile === k ? "on" : ""} onClick={() => setStile(k)}>{l}</button>)}
+              </div>
+            </>
+          ) : (
+            <p className="pl-hint" style={{ marginTop: 10 }}>Crea un file .ics da aprire con il calendario di iPhone, Android, Google o Outlook: gli appuntamenti vengono aggiunti lì. È una copia: se poi cambi qualcosa nell'app, va esportato di nuovo.</p>
+          )}
+          <p className="pl-hint" style={{ marginTop: 12 }}><b>{nel.length}</b> {nel.length === 1 ? "appuntamento" : "appuntamenti"} nel periodo, con i filtri attuali: {filtriTesto || "nessun filtro"}.</p>
+          {troppo && <div className="pl-err">Scegli un periodo di al massimo un anno.</div>}
+        </div>
+        <div className="pl-mfoot"><div className="dx">
+          <button className="pl-btn ghost" onClick={onClose}>Annulla</button>
+          <button className="pl-btn" disabled={troppo || (formato === "ics" && !nel.length)} onClick={() => formato === "pdf" ? setAnteprima(true) : scaricaIcs()}><Icon name="down" size={14} />{formato === "pdf" ? "Esporta PDF" : "Esporta .ics"}</button>
+        </div></div>
+      </div>
+    </div>, document.body);
+}
+
+/* =====================================================================
    CALENDARIO
    ===================================================================== */
-function CalendarView({ attivita: tutteFiltrate, buMap, utMap, onOpen, onNew, calSvolti, setCalSvolti, fStato }) {
+function CalendarView({ attivita: tutteFiltrate, buMap, utMap, onOpen, onNew, calSvolti, setCalSvolti, fStato, me, filtriTesto }) {
   const attivita = useMemo(() => tutteFiltrate.filter(inCalendario), [tutteFiltrate]);
   const nascoste = tutteFiltrate.length - attivita.length;
   const mobile = useMedia(MOBILE_Q);
@@ -1993,6 +2247,7 @@ function CalendarView({ attivita: tutteFiltrate, buMap, utMap, onOpen, onNew, ca
     else setCursor(addDays(cursor, 30 * n));
   };
   const settStart = startOfWeek(cursor);
+  const [esporta, setEsporta] = useState(false);
   const etichetta = modo === "mese" ? `${MESI[cursor.getMonth()]} ${cursor.getFullYear()}`
     : modo === "settimana" ? `${fmtData(toKey(settStart))} – ${fmtData(toKey(addDays(settStart, 6)))} ${addDays(settStart, 6).getFullYear()}`
     : `Dal ${fmtDataLunga(toKey(cursor))}`;
@@ -2084,7 +2339,9 @@ function CalendarView({ attivita: tutteFiltrate, buMap, utMap, onOpen, onNew, ca
           {[["mese", "Mese"], ["settimana", "Settimana"], ["elenco", "Elenco"]].map(([k, l]) => <button key={k} className={modo === k ? "on" : ""} onClick={() => setModo(k)}>{l}</button>)}
         </div>
         {fStato === "aperte" && <button className={"pl-chip" + (calSvolti ? " on" : "")} onClick={() => setCalSvolti(!calSvolti)} title="Mostra anche gli appuntamenti già svolti e approvati"><Icon name="check" size={12} />Mostra anche gli svolti</button>}
+        <button className="pl-btn ghost sm" onClick={() => setEsporta(true)} title="Esporta il calendario in PDF o nel calendario del telefono"><Icon name="down" size={14} />Esporta</button>
       </div>
+      {esporta && <EsportaCalendario attivita={attivita} buMap={buMap} utMap={utMap} me={me} filtriTesto={filtriTesto} modo={modo} cursor={cursor} onClose={() => setEsporta(false)} />}
       <div onTouchStart={e => { swRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }}
         onTouchEnd={e => { const s0 = swRef.current; swRef.current = null; if (!s0) return; const dx = e.changedTouches[0].clientX - s0.x, dy = e.changedTouches[0].clientY - s0.y; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) sposta(dx < 0 ? 1 : -1); }}>{corpo}</div>
       <div className="pg-fuori">Tocca un giorno per creare un'attività in quella data{mobile ? ", scorri di lato per cambiare periodo" : ""}.{modo !== "settimana" && " Le attività più lunghe di una settimana compaiono solo all'inizio (▸) e alla scadenza (⚑)."}
