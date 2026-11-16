@@ -31,7 +31,7 @@ window.FIREBASE_CONFIG = {
 };
 window.DB_ROOT = "proloco";        // ramo del Realtime Database (lo stesso nome usato nelle regole)
 window.APP_NOME = "Pro Loco Fabbrico";      // nome mostrato in alto e nella pagina di accesso: mettici quello della tua pro loco
-window.APP_VER = "14 nov 2026 (3) · tema blu, piani vuoti in partenza · piani con calendario dei contenuti, fogli di calcolo, utenti con ruoli";
+window.APP_VER = "17 nov 2026 · fogli Excel a tutta pagina, collegamenti tra documenti, gruppi con sottotitoli";
 window.AUTH_EMAIL = "";            // email precompilata al login (facoltativa)
 </script>
 
@@ -198,7 +198,7 @@ input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
 .card .t{font-weight:500;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card .m{font-size:12px;color:var(--muted);display:flex;gap:7px;align-items:center;flex-wrap:wrap}
 .tag{font-size:11px;padding:1px 6px;border-radius:20px;border:1px solid var(--line)}
-.tag.meet{background:var(--accent-soft);border-color:#c9ded2;color:#165689}
+.tag.meet{background:var(--accent-soft);border-color:#c5d8ea;color:#165689}
 .lav{margin-top:4px}
 .lav-tools{display:flex;flex-wrap:wrap;gap:3px;align-items:center;padding:6px 0 8px;position:sticky;top:46px;z-index:8;
   background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line-soft);margin-bottom:10px}
@@ -333,7 +333,7 @@ input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
 .img-cornice{position:absolute;z-index:6;pointer-events:none;outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
 .img-ctx button.on{background:#165689;color:#fff}
 .img-ctx .img-ctx-et{font-size:11px;color:var(--muted);margin:0 2px 0 4px}
-.img-ctx .sep{width:1px;align-self:stretch;background:#c9ded2;margin:0 3px}
+.img-ctx .sep{width:1px;align-self:stretch;background:#c5d8ea;margin:0 3px}
 .img-ctx button.del{background:#f7e5e3;color:#a33c34}
 .rit-area{position:relative;display:inline-block;max-width:100%;touch-action:none;user-select:none;-webkit-user-select:none;line-height:0}
 .rit-area img{max-width:100%;max-height:62vh;display:block}
@@ -447,18 +447,42 @@ input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
 .rt figcaption{font-family:var(--sans);font-size:12.5px;color:var(--muted);margin-top:5px}
 .rt-wrap{position:relative}
 .rt-ctx{position:absolute;z-index:7;display:flex;gap:3px;align-items:center;padding:4px;background:var(--paper);
-  border:1px solid #c9ded2;border-radius:var(--radius);box-shadow:0 3px 12px rgba(23,33,29,.14);
+  border:1px solid #c5d8ea;border-radius:var(--radius);box-shadow:0 3px 12px rgba(23,33,29,.14);
   font-size:12.5px;color:#165689;white-space:nowrap}
 .rt-ctx button{border:1px solid transparent;background:var(--accent-soft);border-radius:4px;padding:4px 9px;
   font-size:12.5px;color:#165689;line-height:1.2}
 .rt-ctx button:hover{background:#165689;color:#fff}
 .rt-ctx{flex-wrap:wrap;max-width:100%}
+/* ═══ fogli Excel a tutta pagina ═══ */
+.xl-pagina{position:fixed;inset:0;z-index:40;background:var(--paper);display:flex;flex-direction:column}
+.xl-barra{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);flex-wrap:wrap;flex:0 0 auto}
+.xl-barra .spacer{flex:1}
+.xl-titolo{font-family:var(--serif);font-size:18px;border:0;background:transparent;min-width:120px;flex:0 1 380px;padding:4px 6px;border-radius:4px;color:var(--ink)}
+.xl-titolo:focus{outline:none;background:var(--accent-soft)}
+.xl-area{flex:1 1 auto;position:relative;min-height:0}
+.xl-area > .fortune-container, .xl-area .fortune-container{position:absolute !important;inset:0;height:auto !important}
+.xl-avviso{position:absolute;top:52px;left:50%;transform:translateX(-50%);z-index:60;background:#17211d;color:#fff;padding:7px 14px;border-radius:6px;font-size:13px}
+.xl-gira{display:none}
+@media (max-width:760px) and (orientation:portrait){
+  .xl-gira{display:flex;align-items:center;justify-content:center;gap:8px;background:#fdf3e2;color:#7a5418;font-size:12.5px;padding:5px 8px;flex:0 0 auto}
+  .xl-gira button{border:0;background:transparent;color:inherit;font-size:13px}
+}
+@media (max-height:500px) and (orientation:landscape){
+  .xl-barra{padding:3px 8px;gap:6px}
+  .xl-titolo{font-size:15px;padding:2px 4px}
+  .xl-barra .btn{padding:3px 8px;font-size:12px}
+}
+.tag.xl{background:#e2f0e6;color:#1d6b3c}
+.rt a.link-doc{display:inline-block;padding:0 7px;margin:0 1px;border-radius:5px;background:#e6eff8;color:#165689;text-decoration:none;
+  border:1px solid #c5d8ea;cursor:pointer;font-size:.95em;line-height:1.5;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:baseline}
+.rt a.link-doc:hover{background:#d5e4f3}
+.rt a.link-doc.manca{background:#f5ecec;color:#9a4b45;border-color:#e6cfcd;text-decoration:line-through}
 .rt-ctx.tbl-dock{position:fixed;top:auto;bottom:10px;z-index:30;box-shadow:0 6px 24px rgba(23,33,29,.22)}
 .rt-ctx.tbl-mini{width:auto !important;flex-wrap:nowrap}
 .rt-ctx .tbl-mini-btn{background:transparent;color:var(--muted);padding:4px 6px}
 .rt-ctx.tbl-mini .tbl-mini-btn{background:var(--accent-soft);color:#165689;font-weight:500}
 .num-pop{position:absolute;z-index:9;display:flex;gap:3px;align-items:center;padding:3px 4px;background:var(--paper);
-  border:1px solid #c9ded2;border-radius:6px;box-shadow:0 3px 10px rgba(23,33,29,.14);font-size:12px;white-space:nowrap}
+  border:1px solid #c5d8ea;border-radius:6px;box-shadow:0 3px 10px rgba(23,33,29,.14);font-size:12px;white-space:nowrap}
 .num-pop .num-ico{font-family:var(--sans);font-weight:600;color:#165689;padding:0 5px;border-right:1px solid #d5e3da;margin-right:2px}
 .num-pop button{border:1px solid transparent;background:none;border-radius:4px;padding:3px 8px;font-size:12px;color:#165689;line-height:1.2}
 .num-pop button:hover{background:var(--accent-soft)}
@@ -1068,6 +1092,7 @@ const emptyDoc = (sezioneId, tipo, tpl, dataRif) => {
     creato: nowISO(), aggiornato: nowISO()
   };
   if(tipo==='disegno') d.disegno = {tratti:[], h:1414, sfondo:'bianco'};
+  if(tipo==='excel') d.excel = '';
   if(tipo==='piano'){
     const m = MODELLI_PIANO[tpl] || MODELLI_PIANO.vuoto;
     d.data = dataRif || '';
@@ -1158,6 +1183,9 @@ function docToHtml(doc, sezione){
     if(doc.azioni && doc.azioni.length){
       h += azioniHtml(doc.azioni);
     }
+  } else if(doc.tipo==='excel'){
+    h += excelHtml(doc.excel);
+    if(doc.corpo && stripHtml(doc.corpo)) h += '<div>'+apriGruppi(doc.corpo)+'</div>';
   } else if(doc.tipo==='piano'){
     const meta=[];
     if(doc.data) meta.push(['Data evento / lancio', fmtDate(doc.data)]);
@@ -1671,6 +1699,30 @@ function normalizzaNumero(txt){
   if(!/^\d*\.?\d+$/.test(t)) return null;
   return (neg ? '-' : '') + t;
 }
+/* ═══ collegamenti tra documenti ═══
+   <a data-doc="id" class="link-doc"> dentro il testo: il titolo si aggiorna da solo quando apri il documento */
+const ICONA_TIPO = {excel:'📊', riunione:'👥', disegno:'✏️', nota:'📄', piano:'🗓️', foglio:'🔢'};
+const htmlLinkDoc = (d, testo) => {
+  const e = x => String(x || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const proprio = testo && testo.trim() ? ' data-testo="1"' : '';
+  const et = testo && testo.trim() ? testo.trim() : (d.titolo || 'Senza titolo');
+  return `<a href="#doc=${e(d.id)}" data-doc="${e(d.id)}" class="link-doc"${proprio} contenteditable="false">${ICONA_TIPO[d.tipo] || '📄'} ${e(et)}</a>`;
+};
+const aggiornaLinkDoc = (radice) => {
+  if(!radice || typeof window.qInfoDoc !== 'function') return false;
+  let cambiato = false;
+  radice.querySelectorAll('a[data-doc]').forEach(a=>{
+    const d = window.qInfoDoc(a.getAttribute('data-doc'));
+    const via = !d || d.cestinato;
+    if(a.classList.contains('manca') !== via){ a.classList.toggle('manca', via); cambiato = true; }
+    if(!d || a.getAttribute('data-testo')) return;
+    const giusto = (ICONA_TIPO[d.tipo] || '📄') + ' ' + (d.titolo || 'Senza titolo');
+    if(a.textContent !== giusto){ a.textContent = giusto; cambiato = true; }
+    if(a.getAttribute('contenteditable') !== 'false'){ a.setAttribute('contenteditable','false'); cambiato = true; }
+  });
+  return cambiato;
+};
+
 function leggiNumero(txt){
   const t = normalizzaNumero(txt);
   if(t === null) return null;
@@ -1879,7 +1931,8 @@ function RichText({value, onChange, placeholder, docKey, ro}){
     setTimeout(()=>{ try{
       if(docNelDom.current !== docKey) return;
       const a = pulisciStiliDoppi(), b = srotolaContenitori(), c = sistemaGruppi(), d = sistemaVociSciolte(), f = rigaSottoGruppi();
-      if(a || b || c || d || f) emit(true);
+      const g = aggiornaLinkDoc(ref.current);
+      if(a || b || c || d || f || g) emit(true);
     }catch(err){} }, 50);
     puliscoSel(); setModo('sel'); applicaModo('sel'); setInTable(false); setTblBox(null);
     /* la cronologia di ogni foglio resta da parte quando si cambia documento: rientrando si può
@@ -2763,9 +2816,26 @@ function RichText({value, onChange, placeholder, docKey, ro}){
     while((n = w.nextNode())){ if(!n.textContent.trim()) continue; if(!eGrassetto(getComputedStyle(n.parentElement).fontWeight)){ tutto = false; break; } }
     return tutto && el.textContent.trim() === el.textContent.trim().toUpperCase();
   };
+  /* quanto "pesa" un titolo: la dimensione più grande del suo testo (H1-H4 contano di più) */
+  const pesoTitolo = (el) => {
+    let max = 0;
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n;
+    while((n = w.nextNode())){ if(!n.textContent.trim()) continue; max = Math.max(max, parseFloat(getComputedStyle(n.parentElement).fontSize) || 0); }
+    if(/^H[1-4]$/.test(el.tagName)) max += 10 - parseInt(el.tagName[1], 10);
+    return max;
+  };
   const raggruppaPerTitoli = (bl) => {
     const titoli = bl.filter(eTitolo);
     if(titoli.length < 2) return false;
+    /* la selezione parte da un titolo più grande degli altri (es. "TO DO LIST" e sotto "DATA ENTRY"):
+       è un gruppo solo, i titoli più piccoli restano dentro come sottotitoli */
+    if(titoli[0] === bl.find(x=>!eBloccoVuoto(x))){
+      const p0 = pesoTitolo(titoli[0]);
+      const altri = Math.max(...titoli.slice(1).map(pesoTitolo));
+      if(p0 > altri + 0.5) return false;
+      const nome = titoli[0].textContent.replace(/\s+/g,' ').trim();
+      if(!confirm('Nella selezione ci sono ' + titoli.length + ' titoli.\n\nOK = un gruppo per ogni titolo\nAnnulla = tutto in un gruppo solo, sotto "' + nome + '"')) return false;
+    }
     const ultimo = bl[bl.length - 1];
     let fatti = 0;
     titoli.forEach((t, i)=>{
@@ -5029,6 +5099,15 @@ function RichText({value, onChange, placeholder, docKey, ro}){
     setBusy('');
   };
 
+  /* collegamento a un altro documento (anche a un foglio Excel): si sceglie dall'elenco */
+  const addLinkDoc = () => {
+    salvaRange();
+    window.dispatchEvent(new CustomEvent('q-scegli-doc', {detail:{ quando: (d) => {
+      ref.current.focus(); ripristinaRange();
+      const testo = (window.getSelection() && window.getSelection().toString()) || '';
+      cmd('insertHTML', htmlLinkDoc(d, testo) + '&nbsp;');
+    }}}));
+  };
   const addLink = () => {
     const sel = window.getSelection();
     const testo = sel && sel.toString();
@@ -5275,6 +5354,7 @@ function RichText({value, onChange, placeholder, docKey, ro}){
             <button onClick={pickImage} title="Inserisci foto">🖼</button>
             <button onClick={()=>apriSchizzo()} title="Disegna nel testo (doppio clic su un disegno per modificarlo)">✏️</button>
             <button onClick={addLink} title="Collegamento (anche a un video)">🔗</button>
+            <button onClick={addLinkDoc} title="Collegamento a un altro documento, anche a un foglio Excel">📎 Documento</button>
           </>)}
         </div>
         )}
@@ -5401,6 +5481,9 @@ function RichText({value, onChange, placeholder, docKey, ro}){
                             : 'Copia il formato: una cella sola, oppure un blocco da ripetere su più righe'}>🖌</button>
           <span className="sep"></span>
           <button onClick={raggruppa} title="Raggruppa la tabella con il titolo che sta sopra">⊟</button>
+          <button onClick={()=>{ const c = cellaAttiva(); const t = c && c.closest('table');
+              if(t) window.dispatchEvent(new CustomEvent('q-excel-da-tabella', {detail:{html: t.outerHTML}})); }}
+            title="Crea un foglio Excel nuovo con questa tabella (la tabella qui resta com'è)">→ Excel</button>
           <button onClick={unisciCelle} title="Unisci le celle selezionate (anche su più righe)">⇥⇤</button>
           <button onClick={dividiCella} title="Dividi la cella unita">⇤⇥</button>
           <button onClick={aCapoInCella} title="A capo dentro la cella (o Maiusc+Invio)">⏎</button>
@@ -5511,6 +5594,18 @@ function RichText({value, onChange, placeholder, docKey, ro}){
           if(td && ref.current.contains(td) && (e.ctrlKey || modo === 'sel')) e.preventDefault();
         }}
         onClick={e=>{
+          // collegamento a un documento: un tocco lo apre
+          const ld = e.target.closest && e.target.closest('a[data-doc]');
+          if(ld && ref.current.contains(ld)){
+            e.preventDefault();
+            window.dispatchEvent(new CustomEvent('q-apri-doc', {detail:{id: ld.getAttribute('data-doc'), da: docKey}}));
+            return;
+          }
+          // collegamento normale: con Ctrl/Cmd (o sul telefono con un tocco) si apre in un'altra scheda
+          const ln = e.target.closest && e.target.closest('a[href]');
+          if(ln && ref.current.contains(ln) && (e.ctrlKey || e.metaKey || telefono) && /^https?:/i.test(ln.getAttribute('href') || '')){
+            e.preventDefault(); window.open(ln.href, '_blank', 'noopener'); return;
+          }
           const t = e.target.closest && e.target.closest('.grp-t');
           if(t && e.nativeEvent.offsetX < 24){
             t.parentNode.classList.toggle('chiuso');
@@ -5876,7 +5971,7 @@ function NewDocModal({onCreate, onClose}){
     if(tipo==='piano' && tpl!=='vuoto' && !dataRif){ alert('Scegli la data di riferimento: le uscite del modello vengono messe in calendario a partire da lì.'); return; }
     onCreate(tipo, modelli ? tpl : null, titolo.trim(), dataRif);
   };
-  const esempio = {piano:'Es. Sagra d\'autunno — piano di comunicazione', foglio:'Es. Bilancio festa patronale', riunione:'Es. Direttivo di novembre',
+  const esempio = {excel:'Es. Conti della sagra',  piano:'Es. Sagra d\'autunno — piano di comunicazione', foglio:'Es. Bilancio festa patronale', riunione:'Es. Direttivo di novembre',
     disegno:'Es. Piantina degli stand', nota:'Es. Idee per il mercatino di Natale'};
   return (
     <div className="overlay" onMouseDown={e=>{if(e.target===e.currentTarget) onClose();}}>
@@ -5891,7 +5986,8 @@ function NewDocModal({onCreate, onClose}){
           <label>Tipo</label>
           <select value={tipo} onChange={e=>cambiaTipo(e.target.value)}>
             <option value="piano">Piano — strategia, calendario dei contenuti, attività</option>
-            <option value="foglio">Foglio di calcolo — tabelle con numeri e formule</option>
+            <option value="excel">Excel — foglio di calcolo a tutta pagina</option>
+            <option value="foglio">Foglio semplice — tabella con formule dentro il documento, con modelli pronti</option>
             <option value="riunione">Riunione — ordine del giorno, decisioni, attività</option>
             <option value="nota">Appunto — testo libero</option>
             <option value="disegno">Disegno — schizzi a mano libera (mouse, dito, penna)</option>
@@ -6239,7 +6335,7 @@ function StoricoModal({doc, onRipristina, onClose}){
     const d = new Date(iso);
     return d.toLocaleDateString('it-IT') + ' alle ' + d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
   };
-  const anteprima = (v) => stripHtml(v.corpo).slice(0,110) || '(nessun testo)';
+  const anteprima = (v) => (stripHtml(v.corpo) || (v.excel ? excelTesto(v.excel) : '')).slice(0,110) || '(nessun testo)';
 
   return (
     <div className="overlay" onMouseDown={e=>{if(e.target===e.currentTarget) onClose();}}>
@@ -6259,7 +6355,7 @@ function StoricoModal({doc, onRipristina, onClose}){
                 <div style={{fontSize:13}}>{quando(v.salvataIl || v.aggiornato)}</div>
                 <div className="src" style={{overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{anteprima(v)}</div>
               </div>
-              <span className="p">{Math.round((v.corpo||'').length/1024*10)/10} KB</span>
+              <span className="p">{Math.round(((v.corpo||'').length + (v.excel||'').length)/1024*10)/10} KB</span>
               <button className="btn sm" onClick={()=>{
                 if(confirm('Riportare il documento a questa versione? Quella attuale verrà a sua volta archiviata.')) onRipristina(v);
               }}>Ripristina</button>
@@ -6267,6 +6363,38 @@ function StoricoModal({doc, onRipristina, onClose}){
           ))}
         </div>
         <div className="modal-foot"><button className="btn" onClick={onClose}>Chiudi</button></div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════ scegli il documento in cui mettere un pezzo di foglio Excel ═══════════ */
+function ScegliDocModal({documenti, sezioni, esclusoId, onScegli, onClose, titolo, spiega, pulsante, tutti}){
+  const [q, setQ] = useState('');
+  const lista = Object.values(documenti)
+    .filter(d=>d.id !== esclusoId && (tutti || d.tipo !== 'excel') && !d.cestinato && !d.archiviato)
+    .filter(d=>!q.trim() || (d.titolo || '').toLowerCase().includes(q.trim().toLowerCase()))
+    .sort((a,b)=>(b.aggiornato || '').localeCompare(a.aggiornato || ''))
+    .slice(0, 60);
+  return (
+    <div className="overlay" onMouseDown={e=>{if(e.target===e.currentTarget) onClose();}}>
+      <div className="modal" style={{maxWidth:480}}>
+        <h3>{titolo || 'In quale documento la metto?'}</h3>
+        <p className="spazio-sub" style={{marginTop:-6}}>{spiega || 'Le celle scelte vanno in fondo al documento come tabella (la prima riga fa da intestazione).'}</p>
+        <input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Cerca un documento…" style={{width:'100%', marginBottom:8}}/>
+        <div style={{maxHeight:'46vh', overflowY:'auto'}}>
+          {lista.map(d=>(
+            <div className="top-doc" key={d.id} style={{cursor:'pointer'}} onClick={()=>onScegli(d.id)}>
+              <div style={{flex:1, minWidth:0}}>
+                <div style={{fontSize:13.5}}>{tutti ? (ICONA_TIPO[d.tipo] || '📄') + ' ' : ''}{d.titolo || 'Senza titolo'}</div>
+                <div className="src">{sezioni[d.sezioneId] ? sezioni[d.sezioneId].nome : ''}{d.tipo === 'excel' ? ' · Excel' : ''}</div>
+              </div>
+              <button className="btn sm">{pulsante || 'Metti qui'}</button>
+            </div>
+          ))}
+          {!lista.length && <div className="empty">Nessun documento trovato.</div>}
+        </div>
+        <div className="modal-foot"><button className="btn" onClick={onClose}>Annulla</button></div>
       </div>
     </div>
   );
@@ -6428,6 +6556,261 @@ function disegnoRitaglio(dis){
 }
 
 let lavAttiva = null;                    // l'ultima lavagna toccata: Ctrl+Z vale per lei
+
+/* ═══════════ fogli Excel ═══════════
+   Un documento di tipo "excel" è un foglio di calcolo a tutta pagina (libreria FortuneSheet, gratuita, licenza MIT).
+   La libreria si scarica solo la prima volta che apri un foglio Excel: gli altri documenti restano leggeri.
+   Il contenuto si salva nel campo "excel" del documento come testo JSON (solo le celle piene). */
+const FS_VER = '1.0.4';
+const FS_BASE = 'https://unpkg.com/@fortune-sheet/react@' + FS_VER + '/dist/';
+const EXCEL_RIGHE = 100, EXCEL_COL = 26;            // dimensione di un foglio nuovo
+const EXCEL_MAX_RIGHE = 1000, EXCEL_MAX_COL = 60;   // oltre non si salva: niente fogli da un milione di righe
+let fsPromessa = null;
+const caricaFortune = () => {
+  if(window.react && window.react.Workbook) return Promise.resolve(window.react);
+  if(fsPromessa) return fsPromessa;
+  fsPromessa = new Promise((ok, ko)=>{
+    if(!document.querySelector('link[data-fs]')){
+      const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = FS_BASE + 'index.umd.min.css'; l.setAttribute('data-fs','1');
+      document.head.appendChild(l);
+    }
+    const metti = (src) => {
+      const s = document.createElement('script'); s.src = src; s.async = true;
+      s.onload = () => { if(window.react && window.react.Workbook) ok(window.react); else { fsPromessa = null; ko(new Error('libreria non valida')); } };
+      s.onerror = () => { fsPromessa = null; s.remove(); ko(new Error('rete')); };
+      document.head.appendChild(s);
+    };
+    // la scarico come testo per cambiare il carattere predefinito (Arial al posto di Times New Roman)
+    fetch(FS_BASE + 'index.umd.min.js').then(r=>{ if(!r.ok) throw new Error('http'); return r.text(); }).then(t=>{
+      t = t.split('fontarray:["Times New Roman","Arial"').join('fontarray:["Arial","Times New Roman"')
+           .split('fontjson:{"times new roman":0,arial:1').join('fontjson:{"times new roman":1,arial:0');
+      metti(URL.createObjectURL(new Blob([t], {type:'text/javascript'})));
+    }).catch(()=>metti(FS_BASE + 'index.umd.min.js'));
+  });
+  return fsPromessa;
+};
+const foglioExcelVuoto = (n) => ({ name: 'Foglio' + n, id: uid(), order: n - 1, status: n === 1 ? 1 : 0,
+  row: EXCEL_RIGHE, column: EXCEL_COL, celldata: [], config: {} });
+const excelDaTesto = (s) => {
+  let a = null;
+  try{ a = JSON.parse(s || ''); }catch(e){}
+  if(!Array.isArray(a) || !a.length) a = [foglioExcelVuoto(1)];
+  a.forEach(sh=>{ if(!sh.luckysheet_select_save) sh.luckysheet_select_save = [{row:[0,0], column:[0,0]}]; });   // si parte da A1
+  return a;
+};
+const EXCEL_CHIAVI = ['name','id','order','color','status','hide','config','frozen','zoomRatio','defaultRowHeight','defaultColWidth',
+  'showGridLines','filter','filter_select','luckysheet_conditionformat_save','luckysheet_alternateformat_save','dataVerification','hyperlink','images','calcChain'];
+const excelCompatta = (sheets) => (sheets || []).map(sh=>{
+  const out = {};
+  EXCEL_CHIAVI.forEach(k=>{ if(sh[k] !== undefined && sh[k] !== null) out[k] = sh[k]; });
+  out.row = Math.min(sh.row || (sh.data ? sh.data.length : EXCEL_RIGHE) || EXCEL_RIGHE, EXCEL_MAX_RIGHE);
+  out.column = Math.min(sh.column || (sh.data && sh.data[0] ? sh.data[0].length : EXCEL_COL) || EXCEL_COL, EXCEL_MAX_COL);
+  const cd = [];
+  if(Array.isArray(sh.data)){
+    sh.data.forEach((riga, r)=>{ if(!riga || r >= out.row) return;
+      riga.forEach((v, c)=>{ if(v !== null && v !== undefined && c < out.column) cd.push({r, c, v}); }); });
+  } else if(Array.isArray(sh.celldata)){
+    sh.celldata.forEach(x=>{ if(x && x.r < out.row && x.c < out.column) cd.push(x); });
+  }
+  out.celldata = cd;
+  return out;
+});
+/* testo del foglio (per la ricerca e le anteprime) */
+const excelTesto = (s) => {
+  try{ return excelDaTesto(s).map(sh=>(sh.celldata||[]).map(x=>x.v && (x.v.m != null ? x.v.m : x.v.v)).filter(v=>v !== undefined && v !== null && v !== '').join(' ')).join(' '); }
+  catch(e){ return ''; }
+};
+/* il foglio come tabella HTML: per Word, PDF e stampa (un blocco per ogni foglio con qualcosa dentro) */
+const excelHtml = (s) => {
+  const e = x => String(x == null ? '' : x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return excelDaTesto(s).filter(sh=>!sh.hide && (sh.celldata||[]).length).map((sh, i, tutti)=>{
+    let maxR = 0, maxC = 0; const m = {};
+    sh.celldata.forEach(x=>{ if(!x.v) return; const val = x.v.m != null ? x.v.m : x.v.v;
+      if((val === undefined || val === null || val === '') && !x.v.bg && !x.v.mc) return;
+      m[x.r + '_' + x.c] = x.v; maxR = Math.max(maxR, x.r); maxC = Math.max(maxC, x.c); });
+    const unite = (sh.config && sh.config.merge) || {};
+    const coperte = {};
+    Object.values(unite).forEach(u=>{ for(let r=u.r; r<u.r+u.rs; r++) for(let c=u.c; c<u.c+u.cs; c++) if(r!==u.r || c!==u.c) coperte[r+'_'+c] = 1;
+      maxR = Math.max(maxR, u.r + u.rs - 1); maxC = Math.max(maxC, u.c + u.cs - 1); });
+    let h = (tutti.length > 1 ? `<h3>${e(sh.name)}</h3>` : '') + '<table class="grid">';
+    for(let r=0; r<=maxR; r++){
+      h += '<tr>';
+      for(let c=0; c<=maxC; c++){
+        if(coperte[r+'_'+c]) continue;
+        const v = m[r+'_'+c] || {};
+        const u = unite[r+'_'+c];
+        const st = [];
+        if(v.bg) st.push('background:' + v.bg);
+        if(v.fc) st.push('color:' + v.fc);
+        if(v.bl) st.push('font-weight:bold');
+        if(v.it) st.push('font-style:italic');
+        if(v.ht == 0) st.push('text-align:center'); else if(v.ht == 2) st.push('text-align:right');
+        else if(v.ct && v.ct.t === 'n') st.push('text-align:right');
+        const val = v.m != null ? v.m : (v.v != null ? v.v : '');
+        h += `<td${u ? ` rowspan="${u.rs}" colspan="${u.cs}"` : ''}${st.length ? ` style="${st.join(';')}"` : ''}>${e(val)}</td>`;
+      }
+      h += '</tr>';
+    }
+    return h + '</table>';
+  }).join('');
+};
+/* pezzo di foglio → tabella pulita per i documenti normali (la prima riga fa da intestazione) */
+const tabellaDaHtmlExcel = (html) => {
+  const box = document.createElement('div'); box.innerHTML = html || '';
+  const tab = box.querySelector('table'); if(!tab) return '';
+  const tieni = ['background-color','background','color','font-weight','font-style','text-decoration','text-align'];
+  const righe = Array.from(tab.querySelectorAll('tr'));
+  if(!righe.length) return '';
+  const cella = (td, tag) => {
+    const el = document.createElement(tag);
+    const st = [];
+    tieni.forEach(p=>{ const v = td.style.getPropertyValue(p); if(v && !(p.indexOf('background') === 0 && /^(transparent|rgba?\(255, 255, 255(, 1)?\)|#fff(fff)?|white)$/i.test(v.trim()))) st.push(p + ':' + v); });
+    if(st.length) el.setAttribute('style', st.join(';'));
+    if(td.rowSpan > 1) el.rowSpan = td.rowSpan;
+    if(td.colSpan > 1) el.colSpan = td.colSpan;
+    el.innerHTML = td.innerHTML.trim() || '<br>';
+    return el;
+  };
+  const nuova = document.createElement('table');
+  const th = document.createElement('thead'), tb = document.createElement('tbody');
+  righe.forEach((tr, i)=>{
+    const r = document.createElement('tr');
+    Array.from(tr.children).forEach(td=>r.appendChild(cella(td, i === 0 ? 'th' : 'td')));
+    (i === 0 ? th : tb).appendChild(r);
+  });
+  nuova.appendChild(th); if(tb.children.length) nuova.appendChild(tb);
+  return nuova.outerHTML;
+};
+/* tabella di un documento normale → dati per un foglio Excel nuovo */
+const excelDaTabella = (tabHtml) => {
+  const box = document.createElement('div'); box.innerHTML = tabHtml || '';
+  const tab = box.querySelector('table'); if(!tab) return null;
+  const sh = foglioExcelVuoto(1);
+  const occ = {}; const merge = {};
+  const colori = (v) => { if(!v) return null; const m = v.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/); if(m) return '#' + [m[1],m[2],m[3]].map(x=>(+x).toString(16).padStart(2,'0')).join(''); return v; };
+  Array.from(tab.querySelectorAll('tr')).forEach((tr, r)=>{
+    let c = 0;
+    Array.from(tr.children).forEach(td=>{
+      while(occ[r+'_'+c]) c++;
+      const rs = td.rowSpan || 1, cs = td.colSpan || 1;
+      for(let i=0;i<rs;i++) for(let j=0;j<cs;j++) occ[(r+i)+'_'+(c+j)] = 1;
+      const testo = td.innerText !== undefined ? td.innerText.replace(/\n+$/,'') : td.textContent;
+      const v = {};
+      const n = typeof leggiNumero === 'function' ? leggiNumero(testo) : null;
+      if(n !== null && n !== undefined && /\d/.test(testo) && !/%/.test(testo)){ v.v = n; v.m = testo.trim(); v.ct = {fa:'General', t:'n'}; }
+      else if(testo.trim()){ v.v = testo.trim(); v.m = testo.trim(); v.ct = {fa:'General', t:'g'}; }
+      const grassi = Array.from(td.querySelectorAll('b,strong')).map(x=>x.textContent).join('').trim();
+      if(td.tagName === 'TH' || /bold|[6-9]00/.test(td.style.fontWeight) || (grassi && grassi === testo.trim())) v.bl = 1;
+      if(td.style.fontStyle === 'italic') v.it = 1;
+      const bg = colori(td.style.backgroundColor); if(bg) v.bg = bg;
+      const fc = colori(td.style.color); if(fc) v.fc = fc;
+      if(td.style.textAlign === 'center') v.ht = 0; else if(td.style.textAlign === 'right') v.ht = 2;
+      if(rs > 1 || cs > 1){ v.mc = {r, c, rs, cs}; merge[r+'_'+c] = {r, c, rs, cs}; }
+      if(Object.keys(v).length) sh.celldata.push({r, c, v});
+      if(rs > 1 || cs > 1) for(let i=0;i<rs;i++) for(let j=0;j<cs;j++) if(i || j) sh.celldata.push({r:r+i, c:c+j, v:{mc:{r, c}}});
+      c += cs;
+    });
+  });
+  if(Object.keys(merge).length) sh.config.merge = merge;
+  return JSON.stringify([sh]);
+};
+
+function ExcelFoglio({doc, onSalva, onTitolo, onChiudi, onCopiaInDoc, onMenu, salvato, indietro}){
+  const [lib, setLib] = useState(()=> window.react && window.react.Workbook ? window.react : null);
+  const [errore, setErrore] = useState('');
+  const [rev, setRev] = useState(0);
+  const [avviso, setAvviso] = useState('');
+  const [giraVia, setGiraVia] = useState(false);
+  const wbRef = useRef(null);
+  const ultimo = useRef(doc.excel || '');     // l'ultima versione che ho salvato io (o caricato)
+  const inAttesa = useRef(null);
+  const timer = useRef(null);
+  const docId = doc.id;
+  const salvaRef = useRef(onSalva); salvaRef.current = onSalva;
+
+  const carica = () => { setErrore(''); caricaFortune().then(l=>setLib(l)).catch(()=>setErrore('Non riesco a scaricare il foglio di calcolo: controlla la connessione e riprova.')); };
+  useEffect(()=>{ if(!lib) carica(); },[]);
+
+  const salva = () => {
+    clearTimeout(timer.current);
+    const s = inAttesa.current; inAttesa.current = null;
+    if(s == null || s === ultimo.current) return;
+    ultimo.current = s;
+    salvaRef.current(docId, s);
+  };
+  // è arrivata una versione diversa da quella che ho io (ripristino, altro dispositivo): ricarico il foglio
+  useEffect(()=>{
+    const v = doc.excel || '';
+    if(v !== ultimo.current && inAttesa.current == null){ ultimo.current = v; setRev(r=>r+1); }
+  },[doc.excel]);
+  useEffect(()=>{
+    const via = () => salva();
+    const nascosta = () => { if(document.visibilityState === 'hidden') salva(); };
+    window.addEventListener('pagehide', via); document.addEventListener('visibilitychange', nascosta);
+    return ()=>{ salva(); window.removeEventListener('pagehide', via); document.removeEventListener('visibilitychange', nascosta); };
+  },[]);
+
+  const dati = useMemo(()=>excelDaTesto(ultimo.current), [rev, docId]);
+  const onChange = (sheets) => {
+    let s; try{ s = JSON.stringify(excelCompatta(sheets)); }catch(e){ return; }
+    if(s === ultimo.current){ inAttesa.current = null; clearTimeout(timer.current); return; }
+    inAttesa.current = s;
+    clearTimeout(timer.current); timer.current = setTimeout(salva, 900);
+  };
+
+  const pezzoScelto = () => {
+    const api = wbRef.current; if(!api) return null;
+    let sel = null; try{ sel = api.getSelection(); }catch(e){}
+    if(!sel || !sel.length){ setAvviso('Seleziona prima le celle da copiare.'); return null; }
+    let html = null; try{ html = api.getHtmlByRange(sel); }catch(e){}
+    if(!html){ setAvviso('Non sono riuscito a leggere le celle scelte.'); return null; }
+    return {html, sel};
+  };
+  const copia = async () => {
+    const p = pezzoScelto(); if(!p) return;
+    const tab = tabellaDaHtmlExcel(p.html);
+    const box = document.createElement('div'); box.innerHTML = tab;
+    const testo = Array.from(box.querySelectorAll('tr')).map(tr=>Array.from(tr.children).map(td=>td.textContent).join('\t')).join('\n');
+    try{
+      if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
+        await navigator.clipboard.write([new ClipboardItem({'text/html': new Blob([tab], {type:'text/html'}), 'text/plain': new Blob([testo], {type:'text/plain'})})]);
+      } else await navigator.clipboard.writeText(testo);
+      setAvviso('Copiato: incollalo in un documento con Ctrl/Cmd+V.');
+    }catch(e){ setAvviso('Il browser non mi lascia copiare: usa "In un documento…".'); }
+  };
+  const inDocumento = () => { const p = pezzoScelto(); if(!p) return; onCopiaInDoc(tabellaDaHtmlExcel(p.html)); };
+  useEffect(()=>{ if(!avviso) return; const t = setTimeout(()=>setAvviso(''), 3500); return ()=>clearTimeout(t); },[avviso]);
+
+  const Workbook = lib && lib.Workbook;
+  return (
+    <div className="xl-pagina">
+      <div className="xl-barra">
+        <button className="btn ghost sm" onClick={()=>{ salva(); onChiudi(); }} title={indietro ? 'Torna al documento da cui sei arrivato' : 'Chiudi il foglio'}
+          style={indietro ? {maxWidth:220, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'} : undefined}>{indietro || '← Indietro'}</button>
+        <input className="xl-titolo" value={doc.titolo || ''} placeholder="Titolo del foglio" onChange={e=>onTitolo(e.target.value)}/>
+        <span className="saved">{salvato}</span>
+        <span className="spacer"></span>
+        <button className="btn sm" onClick={copia} title="Copia le celle scelte, da incollare in un documento o in una mail">⧉ Copia</button>
+        <button className="btn sm" onClick={inDocumento} title="Metti le celle scelte in fondo a un altro documento, come tabella">→ In un documento…</button>
+        {onMenu}
+      </div>
+      {avviso && <div className="xl-avviso">{avviso}</div>}
+      {!giraVia && <div className="xl-gira">Per lavorare meglio gira il telefono in orizzontale <button onClick={()=>setGiraVia(true)}>✕</button></div>}
+      <div className="xl-area">
+        {errore ? (
+          <div className="empty" style={{paddingTop:'14vh'}}><strong>Foglio non disponibile</strong>{errore}
+            <div style={{marginTop:12}}><button className="btn" onClick={carica}>Riprova</button></div></div>
+        ) : !Workbook ? (
+          <div className="empty" style={{paddingTop:'14vh'}}>Apro il foglio di calcolo…</div>
+        ) : (
+          <Workbook key={docId + ':' + rev} ref={wbRef} data={dati} onChange={onChange}
+            row={EXCEL_RIGHE} column={EXCEL_COL} addRows={50} lang="en" currency="€"
+            showFormulaBar showSheetTabs/>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function Lavagna({value, onChange, docKey, compatta, apiRef}){
   const leggi = (v) => ({ tratti: (v && Array.isArray(v.tratti)) ? v.tratti.filter(t=>t && (t.p || t.t === 'testo')) : [],
@@ -8231,6 +8614,9 @@ function App(){
   const [fmt,setFmt] = useState(FORMATO_DEF);
   const [modalFmt,setModalFmt] = useState(false);
   const [modalStorico,setModalStorico] = useState(false);
+  const [copiaExcel,setCopiaExcel] = useState(null);     // tabella presa da un foglio Excel, da mettere in un documento
+  const [sceltaLink,setSceltaLink] = useState(null);     // {quando}: sto scegliendo il documento da collegare
+  const [provenienza,setProvenienza] = useState(null);   // documento da cui sono arrivato con un collegamento
   const [anteprima,setAnteprima] = useState(false);
   const [odgCopiato,setOdgCopiato] = useState('');
 
@@ -8327,8 +8713,8 @@ function App(){
       const prima = p[id];
       // se il documento si accorcia molto o viene eliminato, conservo com'era
       if(prima){
-        const vecchio = (prima.corpo||'').length;
-        const nuovoLen = obj ? (obj.corpo||'').length : 0;
+        const vecchio = (prima.corpo||'').length + (prima.excel||'').length;
+        const nuovoLen = obj ? (obj.corpo||'').length + (obj.excel||'').length : 0;
         const passato = Date.now() - (ultimoBackup.current[id] || 0);
         if(!obj || (vecchio > 200 && nuovoLen < vecchio * 0.7) || passato > 1800000){
           archivia(prima);
@@ -8398,6 +8784,7 @@ function App(){
       const s=q.toLowerCase();
       l = l.filter(d=>(d.titolo||'').toLowerCase().includes(s)
         || stripHtml(d.corpo).toLowerCase().includes(s)
+        || (d.tipo === 'excel' && excelTesto(d.excel).toLowerCase().includes(s))
         || (d.partecipanti||'').toLowerCase().includes(s)
         || (d.agenda||[]).some(p=>(p.titolo+' '+p.note).toLowerCase().includes(s))
         || (d.contenuti||[]).some(c=>((c.titolo||'')+' '+(c.note||'')+' '+(c.canale||'')).toLowerCase().includes(s))
@@ -8566,6 +8953,54 @@ function App(){
     clearTimeout(bodyTimer.current);
     bodyTimer.current = setTimeout(salvaCorpo, 700);
   };
+
+  /* collegamenti tra documenti */
+  window.qInfoDoc = (id) => documentiRef.current[id] || null;
+  const versoLink = useRef(null);
+  useEffect(()=>{
+    const scegli = (e) => { if(e.detail && e.detail.quando) setSceltaLink({quando: e.detail.quando}); };
+    const apri = (e) => {
+      const id = e.detail && e.detail.id; const d = id && documentiRef.current[id];
+      if(!d){ alert('Il documento collegato non c\'è più.'); return; }
+      if(d.cestinato && !confirm('Il documento collegato è nel cestino. Aprirlo lo stesso?')) return;
+      versoLink.current = id;
+      setProvenienza(e.detail.da || null);
+      setSelDoc(id); setMobileView('doc');
+    };
+    window.addEventListener('q-scegli-doc', scegli); window.addEventListener('q-apri-doc', apri);
+    return ()=>{ window.removeEventListener('q-scegli-doc', scegli); window.removeEventListener('q-apri-doc', apri); };
+  },[]);
+  // se cambio documento in un altro modo, il "torna a…" non serve più
+  useEffect(()=>{ if(selDoc !== versoLink.current){ setProvenienza(null); versoLink.current = null; } },[selDoc]);
+  const tornaIndietro = () => {
+    const p = provenienza && documentiRef.current[provenienza] ? provenienza : null;
+    if(p){ versoLink.current = null; setSelDoc(p); setMobileView('doc'); }
+    return !!p;
+  };
+
+  /* il foglio Excel: salvato sul documento da cui arriva */
+  const onExcel = (id, s) => {
+    const d = documentiRef.current[id];
+    if(!d || d.excel === s) return;
+    saveDoc(id, {...d, excel: s, aggiornato: nowISO()});
+  };
+  /* da una tabella di un documento normale nasce un foglio Excel nuovo, nella stessa sezione */
+  const daTabellaRef = useRef(null);
+  daTabellaRef.current = (html) => {
+    const da = selDoc ? documentiRef.current[selDoc] : null;
+    const sid = da ? da.sezioneId : (selSez && sezioni[selSez] ? selSez : (sezList[0] && sezList[0].id));
+    if(!sid) return;
+    const x = excelDaTabella(html); if(!x) return;
+    const d = emptyDoc(sid, 'excel', null);
+    d.titolo = (da && da.titolo ? da.titolo + ' — ' : '') + 'tabella';
+    d.excel = x;
+    saveDoc(d.id, d); setSelDoc(d.id); setMobileView('doc');
+  };
+  useEffect(()=>{
+    const h = (e) => { if(daTabellaRef.current && e.detail) daTabellaRef.current(e.detail.html); };
+    window.addEventListener('q-excel-da-tabella', h);
+    return ()=>window.removeEventListener('q-excel-da-tabella', h);
+  },[]);
 
   /* il disegno: salvato sul foglio da cui arriva, come il testo */
   const onDisegno = (dis, id) => {
@@ -8785,6 +9220,35 @@ function App(){
       </div>
     );
 
+    if(doc.tipo === 'excel') return (
+      <ExcelFoglio doc={doc} salvato={salvato} onSalva={onExcel}
+        onTitolo={t=>patchDoc({titolo:t})}
+        indietro={provenienza && documenti[provenienza] ? '← ' + (documenti[provenienza].titolo || 'Indietro') : null}
+        onChiudi={()=>{ if(!tornaIndietro()){ setSelDoc(null); setMobileView('nav'); } }}
+        onCopiaInDoc={tab=>setCopiaExcel(tab)}
+        onMenu={
+          <div className="doc-menu" onClick={e=>e.stopPropagation()}>
+            <button className="btn ghost sm" onClick={e=>{e.stopPropagation(); setMenuOpen(o=>!o);}} title="Altro">⋯</button>
+            {menuOpen && (
+              <div className="doc-menu-pop">
+                <button onClick={()=>{setMenuOpen(false); setModalStorico(true);}}>Versioni precedenti…</button>
+                <button onClick={()=>{setMenuOpen(false); exportWord((doc.titolo||'foglio'), doc.titolo||'Foglio', applicaStampa(docToHtml(doc, sezioni[doc.sezioneId]), doc.stampa), fmt);}}>Esporta Word</button>
+                <button disabled={pdfBusy} onClick={async()=>{ setMenuOpen(false); setPdfBusy(true);
+                  await exportPdf(doc.titolo||'Foglio', applicaStampa(docToHtml(doc, sezioni[doc.sezioneId]), doc.stampa), doc.titolo||'foglio', fmt); setPdfBusy(false); }}>Esporta PDF</button>
+                <button onClick={()=>{setMenuOpen(false); duplicaDoc();}}>Duplica</button>
+                <button onClick={()=>{setMenuOpen(false); if(confirm('Trasformarlo in un appunto? Il foglio resta salvato e torna se lo rimetti di tipo Excel.')) patchDoc({tipo:'nota'});}}>Trasforma in appunto</button>
+                {doc.cestinato
+                  ? <button onClick={()=>{setMenuOpen(false); ripristinaDoc(doc.id);}}>Ripristina</button>
+                  : <button onClick={()=>{setMenuOpen(false); archiviaDoc(doc.id, !doc.archiviato);}}>
+                      {doc.archiviato? 'Togli dall\'archivio' : 'Archivia'}</button>}
+                <button className="danger" onClick={()=>{setMenuOpen(false); eliminaDoc();}}>
+                  {doc.cestinato? 'Elimina per sempre' : 'Elimina'}</button>
+              </div>
+            )}
+          </div>
+        }/>
+    );
+
     const isMeet = doc.tipo==='riunione';
     const isPiano = doc.tipo==='piano', isFoglio = doc.tipo==='foglio';
     const inner = () => applicaStampa(docToHtml(doc, sezioni[doc.sezioneId]), doc.stampa);
@@ -8794,6 +9258,10 @@ function App(){
       <>
         <div className="doc-bar">
           <button className="btn ghost sm mobile-back" onClick={()=>setMobileView('nav')}>← Elenco</button>
+          {provenienza && documenti[provenienza] && (
+            <button className="btn ghost sm" onClick={tornaIndietro} title="Torna al documento da cui sei arrivato"
+              style={{maxWidth:220, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>← {documenti[provenienza].titolo || 'Indietro'}</button>
+          )}
           {isMeet && (
             <select className="btn sm" value={doc.stato} onChange={e=>patchDoc({stato:e.target.value})}>
               <option>da preparare</option><option>preparata</option><option>svolta</option>
@@ -8884,10 +9352,11 @@ function App(){
                 patchDoc(p);
               }}>
                 <option value="piano">Piano</option>
-                <option value="foglio">Foglio di calcolo</option>
+                <option value="foglio">Foglio semplice</option>
                 <option value="riunione">Riunione</option>
                 <option value="nota">Appunto</option>
                 <option value="disegno">Disegno</option>
+                <option value="excel">Excel</option>
               </select>
             </div>
             <div className="f"><label>{isPiano ? 'Data evento / lancio' : 'Data'}</label>
@@ -9293,6 +9762,7 @@ function App(){
                       <div className="m">
                         {d.data && <span>{fmtDate(d.data)}</span>}
                         {d.tipo==='riunione' && <span className="tag meet">{d.stato||'riunione'}</span>}
+                        {d.tipo==='excel' && <span className="tag xl">Excel</span>}
                         {d.tipo==='disegno' && <span className="tag draw">disegno</span>}
                         {d.tipo==='piano' && <span className="tag piano">piano{(d.contenuti||[]).length ? ' · ' + (d.contenuti||[]).length + ' uscite' : ''}</span>}
                         {d.tipo==='foglio' && <span className="tag foglio">foglio</span>}
@@ -9343,6 +9813,7 @@ function App(){
                 <div className="m">
                   {d.data && <span>{fmtDate(d.data)}</span>}
                   {d.tipo==='riunione' && <span className="tag meet">{d.stato||'riunione'}</span>}
+                        {d.tipo==='excel' && <span className="tag xl">Excel</span>}
                         {d.tipo==='disegno' && <span className="tag draw">disegno</span>}
                         {d.tipo==='piano' && <span className="tag piano">piano{(d.contenuti||[]).length ? ' · ' + (d.contenuti||[]).length + ' uscite' : ''}</span>}
                         {d.tipo==='foglio' && <span className="tag foglio">foglio</span>}
@@ -9427,12 +9898,29 @@ function App(){
       {anteprima && doc && <AnteprimaStampa doc={doc} sezione={sezioni[doc.sezioneId]} fmt={fmt}
         onClose={()=>setAnteprima(false)}
         onSave={(st, resta)=>{ patchDoc({stampa: st}); if(!resta) setAnteprima(false); }}/>}
+      {sceltaLink && (
+        <ScegliDocModal tutti documenti={documenti} sezioni={sezioni} esclusoId={doc && doc.id}
+          titolo="Collega un documento" pulsante="Collega"
+          spiega="Nel testo compare un pulsantino con il titolo: un tocco e si apre (anche i fogli Excel)."
+          onClose={()=>setSceltaLink(null)}
+          onScegli={(id)=>{ const d = documentiRef.current[id]; const f = sceltaLink.quando; setSceltaLink(null); if(d) setTimeout(()=>f(d), 30); }}/>
+      )}
+      {copiaExcel && (
+        <ScegliDocModal documenti={documenti} sezioni={sezioni} esclusoId={doc && doc.id}
+          onClose={()=>setCopiaExcel(null)}
+          onScegli={(id)=>{
+            const d = documentiRef.current[id]; if(!d) return;
+            saveDoc(id, {...d, corpo: (d.corpo || '') + copiaExcel + '<p><br></p>', aggiornato: nowISO()});
+            setCopiaExcel(null);
+            alert('Tabella aggiunta in fondo a "' + (d.titolo || 'documento senza titolo') + '".');
+          }}/>
+      )}
       {modalStorico && doc && (
         <StoricoModal doc={doc} onClose={()=>setModalStorico(false)}
           onRipristina={(v)=>{
             saveDoc(doc.id, {...doc, corpo: v.corpo, titolo: v.titolo || doc.titolo,
               agenda: v.agenda || doc.agenda, decisioni: v.decisioni || doc.decisioni,
-              azioni: v.azioni || doc.azioni, aggiornato: nowISO()});
+              azioni: v.azioni || doc.azioni, excel: v.excel !== undefined ? v.excel : (doc.excel || null), aggiornato: nowISO()});
             setModalStorico(false);
             setSelDoc(null); setTimeout(()=>setSelDoc(doc.id), 60);   // ricarico l'editor
           }}/>
