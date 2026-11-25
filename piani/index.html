@@ -1551,11 +1551,17 @@ body{margin:0;padding:0}
 .barra-stampa span{flex:1}
 .barra-stampa button{font:inherit;font-weight:600;border:0;border-radius:7px;padding:9px 14px;background:#fff;color:#165689;white-space:nowrap}
 @media screen{ .pagina-stampa{max-width:178mm;margin:0 auto;padding:0 14px 40px} }
-@media print{ .barra-stampa{display:none} }
+.aiuto{display:none;margin:0 14px 16px;padding:12px 14px;border-radius:8px;background:#fdf3e2;color:#5c4210;font:14px -apple-system,Helvetica,Arial,sans-serif;line-height:1.4}
+.senza-stampa .aiuto{display:block}
+@media print{ .barra-stampa,.aiuto{display:none!important} }
 </style></head><body>
-<div class="barra-stampa"><span>Per il PDF: tocca <b>Stampa</b>, poi <b>Condividi</b> in alto e <b>Salva su File</b>.</span><button onclick="window.print()">Stampa</button></div>
+<div class="barra-stampa"><span>Per il PDF: tasto <b>Condividi</b> ⬆ del browser → <b>Stampa</b>, poi di nuovo <b>Condividi</b> → <b>Salva su File</b>.</span><button onclick="prova()">Stampa</button></div>
+<div class="aiuto">Da qui il pulsante non può aprire la stampa (succede quando l'app è installata sulla Home).<br>Usa il tasto <b>Condividi ⬆</b> in basso o in alto e scegli <b>Stampa</b>: nell'anteprima, di nuovo <b>Condividi</b> → <b>Salva su File</b> ti dà il PDF.</div>
 <div class="pagina-stampa">${inner}</div>
-<script>window.addEventListener('load',function(){setTimeout(function(){try{window.print()}catch(x){}},500)});<\/script>
+<script>var aperta=false;window.addEventListener('beforeprint',function(){aperta=true});
+try{window.matchMedia('print').addListener(function(m){if(m.matches)aperta=true})}catch(x){}
+function prova(){aperta=false;try{window.print()}catch(x){}setTimeout(function(){if(!aperta)document.body.classList.add('senza-stampa')},1500)}
+window.addEventListener('load',function(){setTimeout(prova,500)});<\/script>
 </body></html>`;
   const url = URL.createObjectURL(new Blob([html], {type:'text/html'}));
   const w = window.open(url, '_blank');
