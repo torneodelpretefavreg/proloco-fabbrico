@@ -34,7 +34,7 @@ window.FIREBASE_CONFIG = {
 };
 window.DB_ROOT = "proloco";        // ramo del Realtime Database (lo stesso nome usato nelle regole)
 window.APP_NOME = "Pro Loco Fabbrico";      // nome mostrato in alto e nella pagina di accesso: mettici quello della tua pro loco
-window.APP_VER = "25 nov 2026 (3) · PDF su iPhone e iPad fatto da Safari: niente testo ingrandito o tagliato";
+window.APP_VER = "25 nov 2026 (4) · stampa su iPhone: pulsante Copia testo";
 window.AUTH_EMAIL = "";            // email precompilata al login (facoltativa)
 </script>
 
@@ -1550,16 +1550,30 @@ body{margin:0;padding:0}
   padding:10px 14px;display:flex;gap:10px;align-items:center;margin:0 0 16px}
 .barra-stampa span{flex:1}
 .barra-stampa button{font:inherit;font-weight:600;border:0;border-radius:7px;padding:9px 14px;background:#fff;color:#165689;white-space:nowrap}
+.barra-stampa button + button{margin-left:-2px}
 @media screen{ .pagina-stampa{max-width:178mm;margin:0 auto;padding:0 14px 40px} }
 .aiuto{display:none;margin:0 14px 16px;padding:12px 14px;border-radius:8px;background:#fdf3e2;color:#5c4210;font:14px -apple-system,Helvetica,Arial,sans-serif;line-height:1.4}
 .senza-stampa .aiuto{display:block}
 @media print{ .barra-stampa,.aiuto{display:none!important} }
 </style></head><body>
-<div class="barra-stampa"><span>Per il PDF: tasto <b>Condividi</b> ⬆ del browser → <b>Stampa</b>, poi di nuovo <b>Condividi</b> → <b>Salva su File</b>.</span><button onclick="prova()">Stampa</button></div>
+<div class="barra-stampa"><span>Per il PDF: tasto <b>Condividi</b> ⬆ del browser → <b>Stampa</b>, poi di nuovo <b>Condividi</b> → <b>Salva su File</b>.</span><button onclick="copia(this)">Copia testo</button><button onclick="prova()">Stampa</button></div>
 <div class="aiuto">Da qui il pulsante non può aprire la stampa (succede quando l'app è installata sulla Home).<br>Usa il tasto <b>Condividi ⬆</b> in basso o in alto e scegli <b>Stampa</b>: nell'anteprima, di nuovo <b>Condividi</b> → <b>Salva su File</b> ti dà il PDF.</div>
 <div class="pagina-stampa">${inner}</div>
 <script>var aperta=false;window.addEventListener('beforeprint',function(){aperta=true});
 try{window.matchMedia('print').addListener(function(m){if(m.matches)aperta=true})}catch(x){}
+var NL=String.fromCharCode(10);
+function celle(tr){var o=[];tr.querySelectorAll('th,td').forEach(function(c){var t=c.textContent.split('■').join('').replace(new RegExp('['+String.fromCharCode(32,9,10,13,160)+']+','g'),' ').trim();if(t)o.push(t)});return o.join(' · ')}
+function testo(){var c=document.querySelector('.pagina-stampa').cloneNode(true);
+var conElenco=!!c.querySelector('table.cal-elenco');c.querySelectorAll('table.cal-griglia').forEach(function(t){if(conElenco){t.parentNode.removeChild(t);return}var mese=(t.querySelector('.cg-mese')||{}).textContent||'';var nome=mese.split(' ')[0];var r=[mese.toUpperCase()];
+t.querySelectorAll('td.cg-g').forEach(function(td){if(td.classList.contains('fuori'))return;var n=(td.querySelector('.cg-n')||{}).textContent||'';n=n.replace('★','').trim();
+td.querySelectorAll('.cg-v').forEach(function(v){r.push(n+' '+nome+' — '+(v.getAttribute('data-t')||v.textContent.replace('■','').trim()))})});
+if(r.length<2)r.push('nessuna uscita');var p=document.createElement('p');p.textContent=r.join(NL);p.style.whiteSpace='pre-wrap';t.parentNode.replaceChild(p,t)});
+c.querySelectorAll('p.cal-legenda').forEach(function(x){x.parentNode.removeChild(x)});c.querySelectorAll('table').forEach(function(t){t.querySelectorAll('br').forEach(function(br){br.parentNode.replaceChild(document.createTextNode(' '),br)});var r=[];t.querySelectorAll('tr').forEach(function(tr){var x=celle(tr);if(x)r.push(x)});var p=document.createElement('p');p.textContent=r.join(NL);p.style.whiteSpace='pre-wrap';t.parentNode.replaceChild(p,t)});
+c.style.position='absolute';c.style.left='-9999px';c.style.width='600px';document.body.appendChild(c);var s=c.innerText;c.parentNode.removeChild(c);
+return s.replace(new RegExp(NL+'{3,}','g'),NL+NL).trim()}
+function copia(b){var s=testo();var ok=function(){b.textContent='✓ Copiato';setTimeout(function(){b.textContent='Copia testo'},2500)};
+var vecchio=function(){var t=document.createElement('textarea');t.value=s;t.setAttribute('readonly','');t.style.position='fixed';t.style.top='0';t.style.opacity='0';document.body.appendChild(t);t.focus();t.setSelectionRange(0,s.length);try{document.execCommand('copy');ok()}catch(x){alert('Non riesco a copiare: tieni premuto sul testo e scegli Seleziona tutto.')}document.body.removeChild(t)};
+if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(s).then(ok,vecchio)}else vecchio()}
 function prova(){aperta=false;try{window.print()}catch(x){}setTimeout(function(){if(!aperta)document.body.classList.add('senza-stampa')},1500)}
 window.addEventListener('load',function(){setTimeout(prova,500)});<\/script>
 </body></html>`;
@@ -7518,7 +7532,7 @@ function grigliaMeseHtml(mese, perGiorno, evento, oggi){
       let dentro = `<div class="cg-n">${d.getDate()}${iso === evento && !fuori ? ' ★' : ''}</div>`;
       voci.slice(0, 4).forEach(c=>{
         const fatto = c.stato === 'pubblicato';
-        dentro += `<div class="cg-v${fatto ? ' fatto' : ''}"><span style="color:${coloreCanale(c.canale)}">■</span> `
+        dentro += `<div class="cg-v${fatto ? ' fatto' : ''}" data-t="${escHtml((c.ora ? c.ora + ' ' : '') + (c.titolo || '(senza titolo)'))}"><span style="color:${coloreCanale(c.canale)}">■</span> `
           + `${c.ora ? '<b>' + escHtml(c.ora) + '</b> ' : ''}${escHtml(accorcia(c.titolo || '(senza titolo)', 44))}</div>`;
       });
       if(voci.length > 4) dentro += `<div class="cg-piu">+${voci.length - 4} ${voci.length - 4 === 1 ? 'altro' : 'altri'}</div>`;
