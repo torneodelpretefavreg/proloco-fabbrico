@@ -34,7 +34,7 @@ window.FIREBASE_CONFIG = {
 };
 window.DB_ROOT = "proloco";        // ramo del Realtime Database (lo stesso nome usato nelle regole)
 window.APP_NOME = "Pro Loco Fabbrico";      // nome mostrato in alto e nella pagina di accesso: mettici quello della tua pro loco
-window.APP_VER = "25 nov 2026 · cartelle dentro le cartelle, menu ⋯ con sposta, archivia, elimina";
+window.APP_VER = "25 nov 2026 (2) · export dei piani: calendario a griglia, elenco per mese, scelta di cosa includere";
 window.AUTH_EMAIL = "";            // email precompilata al login (facoltativa)
 </script>
 
@@ -1255,42 +1255,61 @@ function printCss(o){
   const b = o.size;
   const r = n => (b*n).toFixed(1);
   return `
-body{font-family:${f.corpo};font-size:${b}pt;line-height:1.45;color:#17211d;margin:0}
-.kicker{font-family:${f.etich};font-size:${r(0.78)}pt;color:#7b8a83;margin:0 0 4pt;letter-spacing:.04em}
+body{font-family:${f.corpo};font-size:${b}pt;line-height:1.45;color:#16202b;margin:0}
+.kicker{font-family:${f.etich};font-size:${r(0.78)}pt;color:#78879a;margin:0 0 4pt;letter-spacing:.04em}
 h1{font-family:${f.corpo};font-size:${r(1.85)}pt;margin:0 0 9pt;line-height:1.2}
-h2{font-family:${f.corpo};font-size:${r(1.22)}pt;margin:16pt 0 5pt;border-bottom:1px solid #d5dcd7;padding-bottom:3pt}
+h2{font-family:${f.corpo};font-size:${r(1.22)}pt;margin:16pt 0 5pt;border-bottom:1px solid #d3dbe5;padding-bottom:3pt}
 h3{font-family:${f.corpo};font-size:${r(1.08)}pt;margin:11pt 0 4pt}
 table.meta{border-collapse:collapse;margin:9pt 0 13pt;width:100%}
 table.meta td{padding:3pt 8pt 3pt 0;vertical-align:top;font-size:${r(0.92)}pt;border:0}
-table.meta td.k{color:#7b8a83;width:110pt;font-family:${f.etich};font-size:${r(0.83)}pt}
+table.meta td.k{color:#78879a;width:110pt;font-family:${f.etich};font-size:${r(0.83)}pt}
 table.grid{border-collapse:collapse;width:100%;margin:7pt 0;font-size:${r(0.92)}pt}
-table.grid th{background:#e9ede9;text-align:left;padding:5pt 7pt;border:1px solid #d5dcd7;font-family:${f.etich};font-size:${r(0.83)}pt}
-table.grid td{padding:5pt 7pt;border:1px solid #d5dcd7;vertical-align:top}
-table.grid td.macro-cell{background:#f2f5f2}
+table.grid th{background:#e8edf3;text-align:left;padding:5pt 7pt;border:1px solid #d3dbe5;font-family:${f.etich};font-size:${r(0.83)}pt}
+table.grid td{padding:5pt 7pt;border:1px solid #d3dbe5;vertical-align:top}
+table.grid td.macro-cell{background:#eaf2f9}
 table{border-collapse:collapse;width:100%;max-width:100%;table-layout:fixed}
-td,th{border:1px solid #d5dcd7;padding:5pt 7pt;vertical-align:top;font-family:${f.etich};font-size:${r(0.88)}pt;
+td,th{border:1px solid #d3dbe5;padding:5pt 7pt;vertical-align:top;font-family:${f.etich};font-size:${r(0.88)}pt;
   word-wrap:break-word}
-th{background:#e9ede9;text-align:left;font-weight:bold}
+th{background:#e8edf3;text-align:left;font-weight:bold}
 img{max-width:100%;height:auto}
 figure{margin:9pt 0;text-align:center;page-break-inside:avoid}
 figure.img-sx{text-align:left} figure.img-sx img{margin:0} figure.img-dx{text-align:right} figure.img-dx img{margin:0 0 0 auto}
 figure.img-flt-sx{float:left;width:45%;margin:3pt 12pt 6pt 0} figure.img-flt-dx{float:right;width:45%;margin:3pt 0 6pt 12pt}
 figure.img-flt-sx img,figure.img-flt-dx img{width:100%}
-figcaption{font-family:${f.etich};font-size:${r(0.78)}pt;color:#7b8a83;margin-top:3pt}
+figcaption{font-family:${f.etich};font-size:${r(0.78)}pt;color:#78879a;margin-top:3pt}
 ol,ul{padding-left:16pt;margin:5pt 0}
 ul ul{list-style-type:circle} ul ul ul{list-style-type:square}
 ol ol{list-style-type:lower-alpha} ol ol ol{list-style-type:lower-roman}
 li{margin:3pt 0}
 ul.cklist{list-style:none;padding-left:6pt}
 ul.cklist li{margin:3pt 0}
-.note{font-size:${r(0.92)}pt;color:#41504a;margin:3pt 0 5pt}
-blockquote{border-left:2px solid #2f6f4e;margin:7pt 0;padding-left:10pt;color:#41504a;font-style:italic}
+.note{font-size:${r(0.92)}pt;color:#3f4c5a;margin:3pt 0 5pt}
+blockquote{border-left:2px solid #1f6fb0;margin:7pt 0;padding-left:10pt;color:#3f4c5a;font-style:italic}
 .grp{margin:0}
 .grp-t{margin:0 0 4pt}
 .grp-c{margin:0;padding:0}
 .doc-sep{page-break-after:always}
 .st-pb{page-break-before:always;break-before:page}
 .st-ins{page-break-inside:avoid;break-inside:avoid}
+
+table.cal-griglia{table-layout:fixed;width:100%;margin:4pt 0 12pt;border-collapse:collapse}
+table.cal-griglia td.cg-mese{border:0;padding:0 0 4pt;font-family:${f.corpo};font-size:${r(1.1)}pt;font-weight:bold;text-transform:capitalize;background:#fff}
+table.cal-griglia th{background:#e8edf3;color:#3f4c5a;font-family:${f.etich};font-size:${r(0.68)}pt;font-weight:normal;text-align:center;padding:2pt;text-transform:uppercase;letter-spacing:.05em;border:1px solid #d3dbe5}
+table.cal-griglia td.cg-g{height:62pt;padding:2pt 3pt;vertical-align:top;font-family:${f.etich};font-size:${r(0.64)}pt;line-height:1.25;border:1px solid #d3dbe5;overflow:hidden}
+table.cal-griglia td.fuori{background:#f4f6f9;color:#b3bdc9}
+table.cal-griglia td.evento{background:#fdf3e2}
+table.cal-griglia .cg-n{font-weight:bold;font-size:${r(0.72)}pt;color:#3f4c5a;margin:0 0 1pt}
+table.cal-griglia td.fuori .cg-n{color:#b3bdc9;font-weight:normal}
+table.cal-griglia .cg-v{margin:0 0 1.5pt}
+table.cal-griglia .cg-v.fatto{color:#8a96a5;text-decoration:line-through}
+table.cal-griglia .cg-piu{color:#78879a;font-style:italic}
+p.cal-riep{font-family:${f.etich};font-size:${r(0.82)}pt;color:#3f4c5a;margin:0 0 3pt}
+p.cal-legenda{font-family:${f.etich};font-size:${r(0.78)}pt;color:#3f4c5a;margin:0 0 6pt}
+p.cal-legenda > span{margin-right:10pt;white-space:nowrap}
+table.cal-elenco td{font-size:${r(0.82)}pt}
+table.cal-elenco td.cal-sep{background:#eaf2f9;font-size:${r(0.86)}pt}
+table.cal-elenco tr.cal-fatto td{color:#6b7787}
+table.cal-elenco .cal-ora{color:#78879a}
 `;
 }
 
@@ -1307,17 +1326,17 @@ function pdfDomCss(o){
   const b = o.size * 1.34;          // da punti a pixel, così PDF e Word coincidono
   const r = n => (b*n).toFixed(1);
   return `
-.pdfdoc{width:100%;background:#fff;font-family:${f.corpo};font-size:${b.toFixed(1)}px;line-height:1.45;color:#17211d}
-.pdfdoc .kicker{font-family:${f.etich};font-size:${r(0.78)}px;color:#7b8a83;margin:0 0 5px;letter-spacing:.04em}
-.pdfdoc h1{font-family:${f.corpo};font-size:${r(1.85)}px;margin:0 0 10px;line-height:1.2;color:#17211d}
-.pdfdoc h2{font-family:${f.corpo};font-size:${r(1.22)}px;margin:20px 0 7px;border-bottom:1px solid #d5dcd7;padding-bottom:4px;color:#17211d}
-.pdfdoc h3{font-family:${f.corpo};font-size:${r(1.08)}px;margin:14px 0 5px;color:#17211d}
+.pdfdoc{width:100%;background:#fff;font-family:${f.corpo};font-size:${b.toFixed(1)}px;line-height:1.45;color:#16202b}
+.pdfdoc .kicker{font-family:${f.etich};font-size:${r(0.78)}px;color:#78879a;margin:0 0 5px;letter-spacing:.04em}
+.pdfdoc h1{font-family:${f.corpo};font-size:${r(1.85)}px;margin:0 0 10px;line-height:1.2;color:#16202b}
+.pdfdoc h2{font-family:${f.corpo};font-size:${r(1.22)}px;margin:20px 0 7px;border-bottom:1px solid #d3dbe5;padding-bottom:4px;color:#16202b}
+.pdfdoc h3{font-family:${f.corpo};font-size:${r(1.08)}px;margin:14px 0 5px;color:#16202b}
 .pdfdoc table.meta{border-collapse:collapse;margin:10px 0 15px;width:100%}
 .pdfdoc table.meta td{padding:4px 10px 4px 0;vertical-align:top;font-size:${r(0.92)}px;border:0}
-.pdfdoc table.meta td.k{color:#7b8a83;width:145px;font-family:${f.etich};font-size:${r(0.83)}px}
+.pdfdoc table.meta td.k{color:#78879a;width:145px;font-family:${f.etich};font-size:${r(0.83)}px}
 .pdfdoc table{border-collapse:collapse;width:100%!important;max-width:100%;table-layout:fixed;
   margin:9px 0;font-family:${f.etich};font-size:${r(0.9)}px;page-break-inside:auto}
-.pdfdoc td,.pdfdoc th{border:1px solid #d5dcd7;padding:6px 9px;vertical-align:top;
+.pdfdoc td,.pdfdoc th{border:1px solid #d3dbe5;padding:6px 9px;vertical-align:top;
   width:auto!important;overflow-wrap:break-word;word-break:normal;hyphens:auto}
 .pdfdoc tr{page-break-inside:avoid}
 /* più colonne ci sono, più il testo si stringe per starci */
@@ -1327,26 +1346,46 @@ function pdfDomCss(o){
 .pdfdoc table.col8 td,.pdfdoc table.col8 th{padding:3px 4px}
 .pdfdoc table.col10{font-size:${r(0.62)}px}
 .pdfdoc table.col10 td,.pdfdoc table.col10 th{padding:2px 3px}
-.pdfdoc th{background:#e9ede9;text-align:left;font-weight:bold}
-.pdfdoc td.macro-cell{background:#f2f5f2}
+.pdfdoc th{background:#e8edf3;text-align:left;font-weight:bold}
+.pdfdoc td.macro-cell{background:#eaf2f9}
 .pdfdoc ol,.pdfdoc ul{padding-left:22px;margin:7px 0}
 .pdfdoc ul ul{list-style-type:circle} .pdfdoc ul ul ul{list-style-type:square}
 .pdfdoc ol ol{list-style-type:lower-alpha} .pdfdoc ol ol ol{list-style-type:lower-roman}
 .pdfdoc li{margin:5px 0}
 .pdfdoc ul.cklist{list-style:none;padding-left:8px}
-.pdfdoc .note{font-size:${r(0.92)}px;color:#41504a;margin:3px 0 7px}
-.pdfdoc blockquote{border-left:2px solid #2f6f4e;margin:9px 0;padding-left:13px;color:#41504a;font-style:italic}
+.pdfdoc .note{font-size:${r(0.92)}px;color:#3f4c5a;margin:3px 0 7px}
+.pdfdoc blockquote{border-left:2px solid #1f6fb0;margin:9px 0;padding-left:13px;color:#3f4c5a;font-style:italic}
 .pdfdoc img{max-width:100%;height:auto}
 .pdfdoc figure{margin:12px 0;text-align:center}
 .pdfdoc figure.img-sx{text-align:left} .pdfdoc figure.img-sx img{margin:0} .pdfdoc figure.img-dx{text-align:right} .pdfdoc figure.img-dx img{margin:0 0 0 auto}
 .pdfdoc figure.img-flt-sx{float:left;width:45%;margin:4px 16px 8px 0} .pdfdoc figure.img-flt-dx{float:right;width:45%;margin:4px 0 8px 16px}
 .pdfdoc figure.img-flt-sx img,.pdfdoc figure.img-flt-dx img{width:100%}
-.pdfdoc figcaption{font-family:${f.etich};font-size:${r(0.78)}px;color:#7b8a83;margin-top:4px}
+.pdfdoc figcaption{font-family:${f.etich};font-size:${r(0.78)}px;color:#78879a;margin-top:4px}
 .pdfdoc .grp{margin:0}
 .pdfdoc .grp-t{margin:0 0 6px}
 .pdfdoc .grp-c{margin:0;padding:0}
 .pdfdoc .grp-c > *:first-child{margin-top:0}
 .pdfdoc .doc-sep{page-break-after:always}
+
+.pdfdoc table.cal-griglia{table-layout:fixed;margin:4px 0 16px}
+.pdfdoc table.cal-griglia td.cg-mese{border:0;padding:0 0 6px;font-family:${f.corpo};font-size:${r(1.1)}px;font-weight:bold;text-transform:capitalize;background:#fff}
+.pdfdoc table.cal-griglia th{background:#e8edf3;color:#3f4c5a;font-size:${r(0.68)}px;font-weight:normal;text-align:center;padding:3px 2px;text-transform:uppercase;letter-spacing:.05em}
+.pdfdoc table.cal-griglia td.cg-g{height:84px;padding:3px 4px;font-size:${r(0.64)}px;line-height:1.25;overflow:hidden;hyphens:none}
+.pdfdoc table.cal-griglia td.fuori{background:#f4f6f9;color:#b3bdc9}
+.pdfdoc table.cal-griglia td.evento{background:#fdf3e2}
+.pdfdoc table.cal-griglia .cg-n{font-weight:bold;font-size:${r(0.72)}px;color:#3f4c5a;margin:0 0 2px}
+.pdfdoc table.cal-griglia td.fuori .cg-n{color:#b3bdc9;font-weight:normal}
+.pdfdoc table.cal-griglia .cg-v{margin:0 0 2px}
+.pdfdoc table.cal-griglia .cg-v.fatto{color:#8a96a5;text-decoration:line-through}
+.pdfdoc table.cal-griglia .cg-piu{color:#78879a;font-style:italic}
+.pdfdoc p.cal-riep{font-family:${f.etich};font-size:${r(0.82)}px;color:#3f4c5a;margin:0 0 4px}
+.pdfdoc p.cal-legenda{font-family:${f.etich};font-size:${r(0.78)}px;color:#3f4c5a;margin:0 0 8px}
+.pdfdoc p.cal-legenda > span{margin-right:12px;white-space:nowrap}
+.pdfdoc table.cal-elenco td{font-size:${r(0.82)}px;padding:5px 7px;hyphens:none}
+.pdfdoc table.cal-elenco th{padding:5px 7px}
+.pdfdoc table.cal-elenco td.cal-sep{background:#eaf2f9;font-size:${r(0.86)}px}
+.pdfdoc table.cal-elenco tr.cal-fatto td{color:#6b7787}
+.pdfdoc table.cal-elenco .cal-ora{color:#78879a}
 `;
 }
 
@@ -1426,6 +1465,7 @@ function preparaPerPdf(inner){
       t.removeAttribute('width');
       t.style.removeProperty('width');
       t.querySelectorAll('td,th').forEach(td=>td.style.removeProperty('width'));
+      if(t.classList.contains('cal-griglia') || t.classList.contains('cal-elenco')) return;
       if(max >= 10) t.classList.add('col10');
       else if(max >= 8) t.classList.add('col8');
       else if(max >= 6) t.classList.add('col6');
@@ -6036,14 +6076,17 @@ function NewDocModal({onCreate, onClose}){
 /* ═══════════ formato degli export ═══════════ */
 
 /* ═══════════ anteprima di stampa ═══════════ */
-function AnteprimaStampa({doc, sezione, fmt, onSave, onClose}){
+function AnteprimaStampa({doc, sezione, fmt, onSave, onClose, onCal}){
   const o = fmt || FORMATO_DEF;
-  const base = useMemo(()=>docToHtml(doc, sezione), [doc.id]);         // il contenuto di quando si è aperta
+  const [calMode, setCalMode] = useState(doc.exportCal || 'entrambi');   // piani: cosa mettere del calendario
+  const base = useMemo(()=>docToHtml(doc.tipo === 'piano' ? {...doc, exportCal: calMode} : doc, sezione), [doc.id, calMode]);         // il contenuto di quando si è aperta
   const unita = useMemo(()=>unitaStampa(base), [base]);
   const iniziale = () => { const x = doc.stampa || {}; return { ordine: ordinaUnita(unita, x).map(u=>u.k), pb: x.pb || [], insieme: x.insieme || [], via: x.via || [], spazio: x.spazio || [] }; };
   const [st, setStVero] = useState(iniziale);
   /* cronologia dell'impaginazione: ogni modifica si può annullare e ripetere */
   const stRef = useRef(st); stRef.current = st;
+  // cambiando i blocchi (es. calendario sì / no) l'ordine si riallinea, senza finire nella cronologia
+  useEffect(()=>{ setStVero(p=>{ const n = {...p, ordine: ordinaUnita(unita, p).map(u=>u.k)}; stRef.current = n; return n; }); }, [unita]);
   const passi = useRef([]), avanti = useRef([]);
   const setSt = (f) => {
     const p = stRef.current;
@@ -6182,7 +6225,7 @@ function AnteprimaStampa({doc, sezione, fmt, onSave, onClose}){
     try{ await exportPdf(doc.titolo||'Documento', inner, nomeFile, {...o, pdf:'alta'}); } finally { setBusy(''); }
   };
 
-  const evidenzia = sel ? `.st-pag [data-k="${CSS.escape(sel)}"]{outline:2px solid #2f6f4e !important;outline-offset:-2px;box-shadow:inset 0 0 0 9999px rgba(47,111,78,.07)}` : '';
+  const evidenzia = sel ? `.st-pag [data-k="${CSS.escape(sel)}"]{outline:2px solid #1f6fb0 !important;outline-offset:-2px;box-shadow:inset 0 0 0 9999px rgba(31,111,176,.07)}` : '';
   const n = pagine ? pagine.length : 0;
 
   return (
@@ -6192,6 +6235,12 @@ function AnteprimaStampa({doc, sezione, fmt, onSave, onClose}){
         <h3>Anteprima di stampa</h3>
         <span className="st-info">{pagine ? `${n} ${n === 1 ? 'pagina' : 'pagine'} A4` : 'calcolo…'} · le modifiche valgono solo per stampa e PDF</span>
         <span className="spacer" style={{flex:1}}></span>
+        {doc.tipo === 'piano' && (doc.contenuti || []).length > 0 && (
+          <select className="btn sm" value={calMode} title="Cosa mettere del calendario dei contenuti"
+            onChange={e=>{ setCalMode(e.target.value); if(onCal) onCal(e.target.value); }}>
+            {EXPORT_CAL.map(([k, nm])=><option key={k} value={k}>{nm}</option>)}
+          </select>
+        )}
         <button className="btn sm" disabled={!passi.current.length} onClick={indietro} title="Annulla l'ultima modifica (Ctrl/Cmd+Z)">↶ Indietro</button>
         <button className="btn sm" disabled={!avanti.current.length} onClick={avantiDi} title="Rifai la modifica annullata (Ctrl/Cmd+Maiusc+Z)">Avanti ↷</button>
         <button className="btn sm" disabled={!toccato} onClick={()=>{ setSt({ordine: originale, pb:[], insieme:[], via:[], spazio:[]}); setSel(null); }}
@@ -7406,17 +7455,87 @@ function azioniDaModello(tpl, base){
   return (m.azioni || []).map(([g, testo])=>({ id: uid(), testo, note:'', responsabile:'', scadenza: piuGiorni(b, g), fatto:false, parentId:null }));
 }
 
-/* il calendario dei contenuti come tabella, per Word e PDF */
-function pianoHtml(doc){
-  const l = (doc.contenuti || []).slice().sort((a,b)=>((a.data||'9999')+(a.ora||'')).localeCompare((b.data||'9999')+(b.ora||'')));
-  if(!l.length) return '';
-  let h = '<h2>Calendario dei contenuti</h2><table class="grid"><tr><th>Quando</th><th>Canale</th><th>Contenuto</th><th>Formato</th><th>Stato</th><th>Chi</th></tr>';
-  l.forEach(c=>{
-    h += `<tr><td>${c.data ? giornoCorto(c.data) : '—'}${c.ora ? ' ' + escHtml(c.ora) : ''}</td><td>${escHtml(c.canale)}</td>`
-      + `<td>${escHtml(c.titolo)}${c.note && c.note.trim() ? `<div class="note">${escHtml(c.note).replace(/\n/g,'<br>')}</div>` : ''}</td>`
-      + `<td>${escHtml(c.formato)}</td><td>${escHtml(c.stato)}</td><td>${escHtml(c.responsabile)}</td></tr>`;
-  });
+/* ═══ il calendario dei contenuti per Word, PDF e stampa ═══
+   Si può avere il calendario a griglia (un mese per riquadro), l'elenco dettagliato, tutti e due o niente:
+   la scelta sta nel piano (doc.exportCal) e si cambia anche dall'anteprima di stampa. */
+const EXPORT_CAL = [['entrambi','Calendario a griglia + elenco'], ['griglia','Solo calendario a griglia'], ['elenco','Solo elenco dettagliato'], ['nessuno','Senza calendario']];
+const COLORE_STATO = {pubblicato:'#1d6b3c', programmato:'#1f6fb0', pronto:'#1f6fb0', 'da preparare':'#a86a1f', idea:'#78879a'};
+const meseDi = iso => { const n = MESI[parseInt(iso.slice(5,7),10)-1]; return n.charAt(0).toUpperCase() + n.slice(1) + ' ' + iso.slice(0,4); };
+const accorcia = (t, n) => { t = String(t || ''); return t.length > n ? t.slice(0, n - 1).trim() + '…' : t; };
+
+function grigliaMeseHtml(mese, perGiorno, evento, oggi){
+  const [y, m] = mese.split('-').map(Number);
+  const scarto = (new Date(y, m-1, 1).getDay() + 6) % 7;
+  const nSett = Math.ceil((scarto + new Date(y, m, 0).getDate()) / 7);
+  let h = `<table class="cal-griglia st-ins"><colgroup>${'<col style="width:14.28%">'.repeat(7)}</colgroup>`
+    + `<tr><td colspan="7" class="cg-mese">${MESI[m-1]} ${y}</td></tr>`
+    + '<tr>' + GIORNI_SETT.map(g=>`<th>${g}</th>`).join('') + '</tr>';
+  for(let s = 0; s < nSett; s++){
+    h += '<tr>';
+    for(let g = 0; g < 7; g++){
+      const d = new Date(y, m-1, 1 - scarto + s*7 + g), iso = isoDi(d), fuori = d.getMonth() !== m-1;
+      const voci = fuori ? [] : (perGiorno[iso] || []);
+      const cl = ['cg-g']; if(fuori) cl.push('fuori'); if(iso === evento && !fuori) cl.push('evento');
+      let dentro = `<div class="cg-n">${d.getDate()}${iso === evento && !fuori ? ' ★' : ''}</div>`;
+      voci.slice(0, 4).forEach(c=>{
+        const fatto = c.stato === 'pubblicato';
+        dentro += `<div class="cg-v${fatto ? ' fatto' : ''}"><span style="color:${coloreCanale(c.canale)}">■</span> `
+          + `${c.ora ? '<b>' + escHtml(c.ora) + '</b> ' : ''}${escHtml(accorcia(c.titolo || '(senza titolo)', 44))}</div>`;
+      });
+      if(voci.length > 4) dentro += `<div class="cg-piu">+${voci.length - 4} ${voci.length - 4 === 1 ? 'altro' : 'altri'}</div>`;
+      h += `<td class="${cl.join(' ')}">${dentro}</td>`;
+    }
+    h += '</tr>';
+  }
   return h + '</table>';
+}
+
+function pianoHtml(doc){
+  const modo = doc.exportCal || 'entrambi';
+  const l = (doc.contenuti || []).slice().sort((a,b)=>((a.data||'9999')+(a.ora||'99')).localeCompare((b.data||'9999')+(b.ora||'99')));
+  if(!l.length || modo === 'nessuno') return '';
+  const oggi = oggiLoc();
+  const date = l.map(c=>c.data).filter(Boolean);
+  const pubblicati = l.filter(c=>c.stato === 'pubblicato').length;
+  const canali = Array.from(new Set(l.map(c=>(c.canale || '').trim()).filter(Boolean)));
+  let h = '<h2>Calendario dei contenuti</h2>';
+  h += `<p class="cal-riep">${l.length} ${l.length === 1 ? 'uscita' : 'uscite'}`
+    + (date.length ? ` dal ${giornoCorto(date[0])} al ${giornoCorto(date[date.length-1])}/${date[date.length-1].slice(0,4)}` : '')
+    + ` · ${pubblicati} ${pubblicati === 1 ? 'pubblicata' : 'pubblicate'}</p>`;
+  if(canali.length) h += '<p class="cal-legenda">' + canali.map(n=>`<span><span style="color:${coloreCanale(n)}">■</span> ${escHtml(n)}</span>`).join(' ') + '</p>';
+
+  if(modo === 'entrambi' || modo === 'griglia'){
+    const perGiorno = {};
+    l.forEach(c=>{ if(c.data){ (perGiorno[c.data] = perGiorno[c.data] || []).push(c); } });
+    const mesi = Array.from(new Set(date.map(d=>d.slice(0,7)).concat(doc.data ? [doc.data.slice(0,7)] : []))).sort();
+    mesi.forEach(ms=>{ h += grigliaMeseHtml(ms, perGiorno, doc.data || '', oggi); });
+    const senza = l.length - date.length;
+    if(senza && modo === 'griglia') h += `<p class="cal-riep">${senza} ${senza === 1 ? 'contenuto non ha' : 'contenuti non hanno'} ancora una data.</p>`;
+  }
+
+  if(modo === 'entrambi' || modo === 'elenco'){
+    if(modo === 'entrambi') h += '<h3>Elenco delle uscite</h3>';
+    h += '<table class="grid cal-elenco"><colgroup><col style="width:14%"><col style="width:15%"><col style="width:37%"><col style="width:13%"><col style="width:13%"><col style="width:8%"></colgroup>'
+      + '<tr><th>Quando</th><th>Canale</th><th>Contenuto</th><th>Formato</th><th>Stato</th><th>Chi</th></tr>';
+    let ultimo = null;
+    l.forEach(c=>{
+      const ms = c.data ? c.data.slice(0,7) : 'senza';
+      if(ms !== ultimo){
+        ultimo = ms;
+        const n = l.filter(x=>(x.data ? x.data.slice(0,7) : 'senza') === ms).length;
+        h += `<tr><td colspan="6" class="macro-cell cal-sep"><strong>${c.data ? meseDi(c.data) : 'Senza data'}</strong> · ${n} ${n === 1 ? 'uscita' : 'uscite'}</td></tr>`;
+      }
+      const ritardo = c.data && c.data < oggi && c.stato !== 'pubblicato';
+      const stato = (c.stato || 'idea') + (ritardo ? ' · in ritardo' : '');
+      h += `<tr${c.stato === 'pubblicato' ? ' class="cal-fatto"' : ''}><td>${c.data ? giornoCorto(c.data) : '—'}${c.ora ? '<br><span class="cal-ora">' + escHtml(c.ora) + '</span>' : ''}</td>`
+        + `<td>${c.canale ? `<span style="color:${coloreCanale(c.canale)}">■</span> ${escHtml(c.canale)}` : ''}</td>`
+        + `<td><b>${escHtml(c.titolo || '(senza titolo)')}</b>${c.note && c.note.trim() ? `<div class="note">${escHtml(c.note).replace(/\n/g,'<br>')}</div>` : ''}`
+        + `${c.link && /^https?:\/\//.test(c.link) ? `<div class="note">${escHtml(c.link)}</div>` : ''}</td>`
+        + `<td>${escHtml(c.formato)}</td><td style="color:${ritardo ? '#a33c34' : (COLORE_STATO[c.stato] || '#78879a')}">${escHtml(stato)}</td><td>${escHtml(c.responsabile)}</td></tr>`;
+    });
+    h += '</table>';
+  }
+  return h;
 }
 
 /* ═══ calendario del mese: lo usano sia i piani sia la vista generale ═══ */
@@ -7530,7 +7649,7 @@ function ContenutoModal({iniziale, nuovo, onSave, onDelete, onDuplica, onClose, 
 }
 
 /* ═══ il calendario dei contenuti di un piano ═══ */
-function PianoContenuti({doc, onChange, ro}){
+function PianoContenuti({doc, onChange, onExport, ro}){
   const cont = doc.contenuti || [];
   const [vista, setVista] = useState(()=>local.get('proloco:vistaPiano') || 'mese');
   const [mese, setMese] = useState(()=>{
@@ -7605,6 +7724,12 @@ function PianoContenuti({doc, onChange, ro}){
         {!ro && <button className="btn sm primary" onClick={()=>nuovo()}>+ Contenuto</button>}
         <span className="spacer"></span>
         {cont.length > 0 && <button className="btn sm" onClick={copia} title="Copia il calendario come testo, da incollare su WhatsApp o in una mail">{copiato ? '✓ Copiato' : '⧉ Copia'}</button>}
+        {cont.length > 0 && onExport && (
+          <select className="btn sm" value={doc.exportCal || 'entrambi'} disabled={ro} onChange={e=>onExport(e.target.value)}
+            title="Cosa mettere del calendario in Word, PDF e stampa">
+            {EXPORT_CAL.map(([k, n])=><option key={k} value={k}>Export: {n.charAt(0).toLowerCase() + n.slice(1)}</option>)}
+          </select>
+        )}
         {!ro && cont.length > 0 && <button className="btn sm" onClick={spostaTutto} title="Se cambia la data dell'evento: sposta tutte le uscite di alcuni giorni">⇄ Sposta date</button>}
         {!ro && cont.length > 0 && <button className="btn sm" onClick={()=>{ if(confirm('Tolgo dal calendario tutti i ' + cont.length + ' contenuti di questo piano? Resta il piano vuoto, da riempire a mano.')) onChange([]); }}
           title="Toglie tutte le uscite di questo piano, per ripartire da un calendario vuoto">✕ Svuota</button>}
@@ -9520,7 +9645,7 @@ function App(){
           ) : isPiano ? (
             <>
               <div className="sec-h"><h3>Calendario dei contenuti</h3><div className="rule"></div></div>
-              <PianoContenuti key={doc.id} doc={doc} ro={!puoScrivere} onChange={c=>patchDoc({contenuti:c})}/>
+              <PianoContenuti key={doc.id} doc={doc} ro={!puoScrivere} onChange={c=>patchDoc({contenuti:c})} onExport={v=>patchDoc({exportCal:v})}/>
               <div className="sec-h"><h3>Strategia</h3><div className="rule"></div></div>
               <RichText docKey={doc.id} value={doc.corpo} onChange={onBody} ro={!puoScrivere} placeholder="Obiettivi, pubblico, messaggi, canali…"/>
             </>
@@ -9956,7 +10081,7 @@ function App(){
             setModalSposta(null); setScelti([]); setSelMulti(false);
           }}/>
       )}
-      {anteprima && doc && <AnteprimaStampa doc={doc} sezione={sezioni[doc.sezioneId]} fmt={fmt}
+      {anteprima && doc && <AnteprimaStampa doc={doc} sezione={sezioni[doc.sezioneId]} fmt={fmt} onCal={v=>patchDoc({exportCal:v})}
         onClose={()=>setAnteprima(false)}
         onSave={(st, resta)=>{ patchDoc({stampa: st}); if(!resta) setAnteprima(false); }}/>}
       {sceltaLink && (
