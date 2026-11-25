@@ -34,7 +34,7 @@ window.FIREBASE_CONFIG = {
 };
 window.DB_ROOT = "proloco";        // ramo del Realtime Database (lo stesso nome usato nelle regole)
 window.APP_NOME = "Pro Loco Fabbrico";      // nome mostrato in alto e nella pagina di accesso: mettici quello della tua pro loco
-window.APP_VER = "25 nov 2026 (2) · export dei piani: calendario a griglia, elenco per mese, scelta di cosa includere";
+window.APP_VER = "25 nov 2026 (3) · PDF su iPhone e iPad fatto da Safari: niente testo ingrandito o tagliato";
 window.AUTH_EMAIL = "";            // email precompilata al login (facoltativa)
 </script>
 
@@ -1533,8 +1533,40 @@ function loadScript(src){
   });
 }
 
+/* iPhone e iPad: la "fotografia" della pagina (html2canvas) su Safari esce ingrandita e tagliata a destra.
+   Lì il documento si apre in una scheda e lo impagina Safari: Stampa → Condividi → Salva su File dà un PDF con testo vero. */
+const SU_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function apriPerStampa(title, inner, fmt){
+  const o = fmt || FORMATO_DEF;
+  const m = MARGINI[o.margini] || MARGINI.normali;
+  const e = x => String(x || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const html = `<!DOCTYPE html><html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>${e(title)}</title>
+<style>${printCss(o)}
+@page{size:A4;margin:${m[0]}mm ${m[1]}mm ${m[0]+2}mm}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;padding:0}
+.barra-stampa{position:sticky;top:0;z-index:5;background:#1f6fb0;color:#fff;font:14px -apple-system,Helvetica,Arial,sans-serif;line-height:1.35;
+  padding:10px 14px;display:flex;gap:10px;align-items:center;margin:0 0 16px}
+.barra-stampa span{flex:1}
+.barra-stampa button{font:inherit;font-weight:600;border:0;border-radius:7px;padding:9px 14px;background:#fff;color:#165689;white-space:nowrap}
+@media screen{ .pagina-stampa{max-width:178mm;margin:0 auto;padding:0 14px 40px} }
+@media print{ .barra-stampa{display:none} }
+</style></head><body>
+<div class="barra-stampa"><span>Per il PDF: tocca <b>Stampa</b>, poi <b>Condividi</b> in alto e <b>Salva su File</b>.</span><button onclick="window.print()">Stampa</button></div>
+<div class="pagina-stampa">${inner}</div>
+<script>window.addEventListener('load',function(){setTimeout(function(){try{window.print()}catch(x){}},500)});<\/script>
+</body></html>`;
+  const url = URL.createObjectURL(new Blob([html], {type:'text/html'}));
+  const w = window.open(url, '_blank');
+  if(!w) alert('Safari ha bloccato la nuova scheda. Consenti le finestre a comparsa per questo sito e riprova.');
+  setTimeout(()=>URL.revokeObjectURL(url), 120000);
+  return true;
+}
+
 /* stampa dal browser: usata solo come ripiego */
 function printFallback(title, inner, fmt){
+  if(SU_IOS) return apriPerStampa(title, inner, fmt);
   const f = document.createElement('iframe');
   f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
   document.body.appendChild(f);
@@ -1609,6 +1641,7 @@ async function pdfHd(nome, contenuto, o){
 
 async function exportPdf(title, inner, filename, fmt){
   const o = fmt || FORMATO_DEF;
+  if(SU_IOS) return apriPerStampa(title, inner, o);       // prima di qualsiasi attesa: Safari apre la scheda solo se nasce dal tocco
   if(o.pdf === 'nitido'){          // testo vero: lo produce il browser, con il suo pannello di stampa
     printFallback(title, inner, o);
     return true;
