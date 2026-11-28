@@ -34,7 +34,7 @@ window.FIREBASE_CONFIG = {
 };
 window.DB_ROOT = "proloco";        // ramo del Realtime Database (lo stesso nome usato nelle regole)
 window.APP_NOME = "Pro Loco Fabbrico";      // nome mostrato in alto e nella pagina di accesso: mettici quello della tua pro loco
-window.APP_VER = "25 nov 2026 (4) · stampa su iPhone: pulsante Copia testo";
+window.APP_VER = "28 nov 2026 · funziona anche offline: documenti sul telefono, modifiche inviate al ritorno della rete";
 window.AUTH_EMAIL = "";            // email precompilata al login (facoltativa)
 </script>
 
@@ -898,6 +898,10 @@ input,textarea,select{font-family:inherit;font-size:inherit;color:inherit}
 .login-sfondo .login{border:0;box-shadow:0 18px 50px rgba(8,30,52,.35);margin-top:13vh}
 .login-sfondo .login h1{color:#165689}
 .login-logo{width:64px;height:64px;border-radius:15px;display:block;margin:0 0 14px}
+
+.offline-barra{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:200;max-width:calc(100vw - 24px);background:#5c4210;color:#fff;
+  font-size:13px;line-height:1.35;padding:8px 14px;border-radius:20px;box-shadow:0 6px 20px rgba(0,0,0,.25);text-align:center}
+.offline-barra.invio{background:#165689}
 </style>
 </head>
 <body>
@@ -909,6 +913,8 @@ const {useState,useEffect,useRef,useMemo,useCallback} = React;
 /* ═══════════ storage: Firebase se configurato, altrimenti locale ═══════════ */
 const CFG = window.FIREBASE_CONFIG || {};
 const HAS_FB = !!(CFG.apiKey && CFG.databaseURL);
+/* service worker di Piani: tiene pagina e librerie sul telefono, così l'app si apre anche senza rete */
+if('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){ try{ navigator.serviceWorker.register('sw.js').catch(()=>{}); }catch(e){} }
 const ROOT = window.DB_ROOT || 'proloco';
 const APP_NOME = window.APP_NOME || 'Pro Loco';
 let fbApp=null, fbAuth=null, fbDb=null;
@@ -7591,6 +7597,55 @@ function pianoHtml(doc){
   return h;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   OFFLINE
+   - copia dei dati sul telefono (IndexedDB): senza rete l'app mostra l'ultima versione vista
+   - coda delle modifiche (localStorage): quello che salvi senza rete resta qui
+     e parte verso il database appena torna la connessione, anche se nel frattempo chiudi l'app
+   ═══════════════════════════════════════════════════════════════ */
+const offline = (()=>{
+  let dbp = null;
+  const apri = () => dbp || (dbp = new Promise((ok, ko)=>{
+    try{
+      const r = indexedDB.open('proloco-piani-offline', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('kv');
+      r.onsuccess = () => ok(r.result);
+      r.onerror = () => ko(r.error);
+    }catch(e){ ko(e); }
+  }));
+  const chiave = k => ROOT + ':' + k;
+  return {
+    get(k){ return apri().then(db=>new Promise(ok=>{ try{ const q = db.transaction('kv').objectStore('kv').get(chiave(k)); q.onsuccess = () => ok(q.result === undefined ? null : q.result); q.onerror = () => ok(null); }catch(e){ ok(null); } })).catch(()=>null); },
+    set(k, v){ return apri().then(db=>new Promise(ok=>{ try{ const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, chiave(k)); t.oncomplete = () => ok(true); t.onerror = () => ok(false); }catch(e){ ok(false); } })).catch(()=>false); }
+  };
+})();
+
+const coda = (()=>{
+  const K = 'proloco:codaModifiche';
+  let c = {};
+  try{ c = JSON.parse(localStorage.getItem(K) || '{}') || {}; }catch(e){ c = {}; }
+  const ascolta = new Set();
+  const scrivi = () => { try{ localStorage.setItem(K, JSON.stringify(c)); }catch(e){} ascolta.forEach(f=>{ try{ f(Object.keys(c).length); }catch(e){} }); };
+  return {
+    metti(path, v){ const t = Date.now() + Math.random(); c[path] = {v: v === undefined ? null : v, t}; scrivi(); return t; },
+    togli(path, t){ if(c[path] && (t === undefined || c[path].t === t)){ delete c[path]; scrivi(); } },
+    voci(){ return Object.keys(c).map(p=>({path: p, v: c[p].v, t: c[p].t})); },
+    quante(){ return Object.keys(c).length; },
+    sopra(ramo, dati){                       // i dati del server con sopra le modifiche ancora da inviare
+      const pre = ROOT + '/' + ramo + '/';
+      let n = null;
+      Object.keys(c).forEach(p=>{
+        if(p.indexOf(pre) !== 0) return;
+        const id = p.slice(pre.length); if(!id || id.indexOf('/') >= 0) return;
+        if(!n) n = {...(dati || {})};
+        if(c[p].v === null) delete n[id]; else n[id] = c[p].v;
+      });
+      return n || dati || {};
+    },
+    ascolta(f){ ascolta.add(f); return ()=>ascolta.delete(f); }
+  };
+})();
+
 /* ═══ calendario del mese: lo usano sia i piani sia la vista generale ═══ */
 function CalMese({mese, onMese, voci, giorno, onGiorno, onVoce, onSposta, ro}){
   const [y, m] = mese.split('-').map(Number);
@@ -8724,9 +8779,10 @@ function App(){
     if(!user) return;
     const r = fbDb.ref(ROOT+'/utenti/'+user.uid);
     let vivo = true, stacca = null;
+    offline.get('profilo:'+user.uid).then(p=>{ if(vivo && p) setProfilo(x=>x === undefined ? p : x); });   // senza rete: il ruolo dell'ultima volta
     const ascolta = () => {
       if(!vivo) return;
-      const cb = r.on('value', sn=>{ if(vivo) setProfilo(sn.val() || null); }, ()=>{ if(vivo) setProfilo(null); });
+      const cb = r.on('value', sn=>{ if(vivo){ const v = sn.val() || null; setProfilo(v); offline.set('profilo:'+user.uid, v); } }, ()=>{ if(vivo) setProfilo(null); });
       stacca = () => r.off('value', cb);
     };
     r.once('value').then(sn=>{
@@ -8787,6 +8843,10 @@ function App(){
   const [modalSez,setModalSez] = useState(null);  // {sezione|null}
   const [modalNew,setModalNew] = useState(false);
   const [salvato,setSalvato] = useState('');
+  const [inLinea,setInLinea] = useState(true);
+  const inLineaRef = useRef(true); inLineaRef.current = inLinea;
+  const [inAttesa,setInAttesa] = useState(()=>coda.quante());
+  useEffect(()=>coda.ascolta(setInAttesa), []);
   const [mobileView,setMobileView] = useState('nav'); // nav | doc
   /* sul telefono, se il documento aperto sparisce (eliminato, cestinato, archiviato da un altro dispositivo…)
      si torna all'elenco: prima restava una pagina vuota "Nessun documento aperto" senza via d'uscita */
@@ -8810,7 +8870,8 @@ function App(){
     if(HAS_FB){
       if(!user || !membro) return;
       const r = fbDb.ref(ROOT+'/formato');
-      const cb = r.on('value', sn=>{ if(sn.val()) setFmt({...FORMATO_DEF, ...sn.val()}); }, ()=>{});
+      offline.get('formato').then(v=>{ if(v) setFmt(f=>f === FORMATO_DEF ? {...FORMATO_DEF, ...v} : f); });
+      const cb = r.on('value', sn=>{ if(sn.val()){ setFmt({...FORMATO_DEF, ...sn.val()}); offline.set('formato', sn.val()); } }, ()=>{});
       return ()=>r.off('value',cb);
     } else {
       const v = local.get(ROOT+':formato');
@@ -8844,11 +8905,17 @@ function App(){
   useEffect(()=>{
     if(HAS_FB){
       if(!user || !membro) return;
+      let vivo = true; const arrivati = {s:false, d:false};
+      Promise.all([offline.get('sezioni'), offline.get('documenti')]).then(([cs, cd])=>{
+        if(!vivo) return;
+        if(cs && !arrivati.s){ setSezioni(coda.sopra('sezioni', cs)); setPronto(true); }
+        if(cd && !arrivati.d) setDocumenti(coda.sopra('documenti', cd));
+      });
       const rs = fbDb.ref(ROOT+'/sezioni');
       const rd = fbDb.ref(ROOT+'/documenti');
-      const a = rs.on('value', s=>{ setSezioni(s.val()||{}); setPronto(true); }, ()=>{});
-      const b = rd.on('value', s=>setDocumenti(s.val()||{}), ()=>{});
-      return ()=>{ rs.off('value',a); rd.off('value',b); };
+      const a = rs.on('value', s=>{ arrivati.s = true; const v = s.val()||{}; offline.set('sezioni', v); setSezioni(coda.sopra('sezioni', v)); setPronto(true); }, ()=>{});
+      const b = rd.on('value', s=>{ arrivati.d = true; const v = s.val()||{}; offline.set('documenti', v); setDocumenti(coda.sopra('documenti', v)); }, ()=>{});
+      return ()=>{ vivo = false; rs.off('value',a); rd.off('value',b); };
     } else {
       setSezioni(local.get(ROOT+':sezioni')||{});
       setDocumenti(local.get(ROOT+':documenti')||{});
@@ -8861,8 +8928,26 @@ function App(){
     if(!scriveRef.current) return;                 // sola lettura: non si scrive niente
     setSezioni(p=>{ const n={...p}; if(obj) n[id]=obj; else delete n[id];
       if(!HAS_FB) local.set(ROOT+':sezioni', n); return n; });
-    if(HAS_FB) fbDb.ref(ROOT+'/sezioni/'+id).set(obj||null).catch(()=>{});
+    if(HAS_FB){ const path = ROOT+'/sezioni/'+id, t = coda.metti(path, obj||null);
+      fbDb.ref(path).set(obj||null).then(()=>coda.togli(path, t)).catch(()=>coda.togli(path, t)); }
   },[]);
+
+  /* connessione: quando torna, partono le modifiche fatte offline (anche quelle di prima di chiudere l'app) */
+  useEffect(()=>{
+    if(!HAS_FB || !user || !membro) return;
+    let timer = null;
+    const r = fbDb.ref('.info/connected');
+    const cb = r.on('value', sn=>{
+      clearTimeout(timer);
+      if(sn.val() === true){
+        setInLinea(true);
+        coda.voci().forEach(x=>fbDb.ref(x.path).set(x.v).then(()=>coda.togli(x.path, x.t)).catch(()=>coda.togli(x.path, x.t)));
+      } else timer = setTimeout(()=>setInLinea(false), 2500);     // all'avvio la connessione arriva dopo un attimo
+    });
+    const giu = () => setInLinea(false);
+    window.addEventListener('offline', giu);
+    return ()=>{ r.off('value', cb); clearTimeout(timer); window.removeEventListener('offline', giu); };
+  },[user,membro]);
 
   /* copia di sicurezza: tengo le ultime versioni di ogni documento */
   const ultimoBackup = useRef({});
@@ -8909,9 +8994,11 @@ function App(){
       const n={...p}; if(obj) n[id]=obj; else delete n[id];
       if(!HAS_FB) local.set(ROOT+':documenti', n); return n;
     });
-    if(HAS_FB) fbDb.ref(ROOT+'/documenti/'+id).set(obj||null)
-      .catch(()=>{ setSalvato('Non salvato: permesso negato'); setTimeout(()=>setSalvato(''), 5000); });
-    setSalvato('Salvato'); setTimeout(()=>setSalvato(s=>s === 'Salvato' ? '' : s), 1600);
+    if(HAS_FB){ const path = ROOT+'/documenti/'+id, t = coda.metti(path, obj||null);
+      fbDb.ref(path).set(obj||null).then(()=>coda.togli(path, t))
+        .catch(()=>{ coda.togli(path, t); setSalvato('Non salvato: permesso negato'); setTimeout(()=>setSalvato(''), 5000); }); }
+    const msg = (HAS_FB && !inLineaRef.current) ? 'Salvato sul telefono' : 'Salvato';
+    setSalvato(msg); setTimeout(()=>setSalvato(s=>s === msg ? '' : s), 1600);
   },[]);
 
   /* selezione iniziale */
@@ -9873,6 +9960,13 @@ function App(){
 
   return (
     <div className={'app'+(puoScrivere?'':' sola')}>
+      {HAS_FB && (!inLinea || inAttesa > 0) && (
+        <div className={'offline-barra' + (inLinea ? ' invio' : '')} role="status">
+          {!inLinea
+            ? <>Sei offline: puoi leggere e modificare, le modifiche restano sul telefono{inAttesa ? ` (${inAttesa} da inviare)` : ''}.</>
+            : <>Invio {inAttesa} {inAttesa === 1 ? 'modifica fatta' : 'modifiche fatte'} offline…</>}
+        </div>
+      )}
       {/* colonna sezioni */}
       <div className={'col-sections'+mobileHide('nav')}>
         <div className="brand">
